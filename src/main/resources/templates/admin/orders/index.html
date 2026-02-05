@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <!-- PAGE TITLE -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">
+            Quản lý đơn hàng
+        </h1>
+    </div>
+
+    <!-- FLASH MESSAGE -->
+    <div th:if="${success}" 
+         class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        <strong>Thành công:</strong>
+        <span th:text="${success}"></span>
+    </div>
+
+    <div th:if="${error}" 
+         class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <strong>Lỗi:</strong>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm text-left text-gray-700">
+
+            <!-- HEADER -->
+            <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+            <tr>
+                <th class="px-6 py-4 font-medium">ID</th>
+                <th class="px-6 py-4 font-medium">Khách hàng</th>
+                <th class="px-6 py-4 font-medium text-right">Tổng tiền</th>
+                <th class="px-6 py-4 font-medium">Trạng thái</th>
+                <th class="px-6 py-4 font-medium">Ngày tạo</th>
+                <th class="px-6 py-4 font-medium text-right">Hành động</th>
+            </tr>
+            </thead>
+
+            <!-- BODY -->
+            <tbody class="divide-y divide-gray-200">
+
+            <!-- LOOP ORDER -->
+            <tr th:each="o : ${orders}"
+                class="hover:bg-gray-50 transition duration-150">
+
+                <!-- ID -->
+                <td class="px-6 py-4 font-medium text-gray-900">
+                    #<span th:text="${o.id}"></span>
+                </td>
+
+                <!-- CUSTOMER -->
+                <td class="px-6 py-4">
+                    <div class="font-medium text-gray-900"
+                         th:text="${o.customerName}"></div>
+
+                    <div class="text-xs text-gray-500"
+                         th:text="${o.user != null ? o.user.email : 'Khách vãng lai'}">
+                    </div>
+                </td>
+
+                <!-- TOTAL PRICE -->
+                <td class="px-6 py-4 text-right font-medium text-gray-900">
+                    <span th:text="${
+                        o.total != null
+                        ? #numbers.formatDecimal(o.total,0,'POINT',0,'COMMA')
+                        : '-'
+                    }"></span> ₫
+                </td>
+
+                <!-- STATUS -->
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                        th:classappend="${
+                                o.status == 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                o.status == 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
+                                o.status == 'SHIPPING' ? 'bg-indigo-100 text-indigo-800' :
+                                o.status == 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                        }">
+
+                        <span th:text="${o.status}"></span>
+                    </span>
+                </td>
+
+                <!-- CREATED DATE -->
+                <td class="px-6 py-4 text-gray-600">
+                    <span th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                </td>
+
+                <!-- ACTION -->
+                <td class="px-6 py-4 text-right">
+                    <a th:href="@{/admin/orders/{id}(id=${o.id})}"
+                       class="text-indigo-600 hover:text-indigo-900 font-medium text-sm transition">
+                        Xem chi tiết
+                    </a>
+                </td>
+
+            </tr>
+
+            <!-- EMPTY -->
+            <tr th:if="${#lists.isEmpty(orders)}">
+                <td colspan="6"
+                    class="px-6 py-10 text-center text-gray-500">
+                    Chưa có đơn hàng nào.
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+</html>

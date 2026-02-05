@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout/base :: html">
+
+<div th:fragment="content" class="max-w-md mx-auto py-20">
+
+    <h1 class="text-2xl font-semibold mb-8 text-center">
+        Register
+    </h1>
+
+    <form method="post" th:action="@{/register}" class="space-y-5">
+
+        <!-- EMAIL -->
+        <input type="email"
+               name="email"
+               placeholder="Email"
+               required
+               class="w-full border px-4 py-3 focus:outline-none focus:border-black">
+
+        <!-- PASSWORD -->
+        <input type="password"
+               name="password"
+               placeholder="Password"
+               required
+               class="w-full border px-4 py-3 focus:outline-none focus:border-black">
+
+        <!-- SUBMIT -->
+        <button
+            class="w-full bg-black text-white py-3 hover:opacity-90 transition">
+            REGISTER
+        </button>
+    </form>
+
+    <!-- LINK -->
+    <div class="text-center text-sm mt-6">
+        <a href="/login"
+           class="underline hover:text-gray-500">
+            Already have an account? Login
+        </a>
+    </div>
+
+</div>
+</html>

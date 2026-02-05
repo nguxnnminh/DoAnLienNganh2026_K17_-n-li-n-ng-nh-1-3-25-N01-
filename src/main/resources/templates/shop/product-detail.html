@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: html}">
+
+<div th:fragment="content">
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+
+        <!-- LEFT: IMAGES -->
+        <div>
+            <img th:if="${product.images != null and !product.images.isEmpty()}" th:src="${product.images[0].imageUrl}"
+                class="w-full aspect-[3/4] object-cover bg-gray-100" />
+
+            <div class="flex gap-2 mt-4">
+                <img th:each="img : ${product.images}" th:src="${img.imageUrl}"
+                    class="w-20 h-20 object-cover border cursor-pointer">
+            </div>
+        </div>
+
+        <!-- RIGHT: INFO -->
+        <div class="space-y-6">
+
+            <h1 class="text-2xl font-semibold uppercase" th:text="${product.name}">
+            </h1>
+
+            <p class="text-gray-600" th:text="${product.description}">
+            </p>
+
+            <!-- PRICE -->
+            <div class="text-lg font-medium">
+                <span th:text="${#numbers.formatDecimal(product.productVariants[0].price,0,'COMMA',0,'POINT')}">
+                </span> ₫
+            </div>
+
+            <!-- ADD TO CART -->
+            <form method="post" th:action="@{/cart/add}" class="space-y-5">
+
+                <!-- QUAN TRỌNG: variantId -->
+                <input type="hidden" name="variantId" th:value="${product.productVariants[0].id}" />
+
+                <!-- COLOR -->
+                <div>
+                    <label class="block text-sm mb-1">Color</label>
+                    <select name="color" class="w-full border px-3 py-2">
+                        <option th:each="v : ${product.productVariants}" th:value="${v.color}" th:text="${v.color}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- SIZE -->
+                <div>
+                    <label class="block text-sm mb-1">Size</label>
+                    <select name="size" class="w-full border px-3 py-2">
+                        <option th:each="v : ${product.productVariants}" th:value="${v.size}" th:text="${v.size}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- STOCK -->
+                <p class="text-sm text-gray-500">
+                    In stock:
+                    <span th:text="${product.productVariants[0].stock}"></span>
+                </p>
+
+                <!-- SUBMIT -->
+                <button class="w-full border border-black py-3 hover:bg-black hover:text-white transition">
+                    ADD TO CART
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' | NOVA Admin'">NOVA Admin</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        fadeIn: 'fadeIn 0.6s ease forwards'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            'from': { opacity: '0' },
+                            'to': { opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            opacity: 0;
+            animation: fadeInBody 0.8s ease forwards;
+        }
+
+        @keyframes fadeInBody {
+            to { opacity: 1; }
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .glass {
+            background: rgba(31, 41, 55, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Toast */
+        .toast {
+            animation: slideIn 0.4s ease, slideOut 0.4s 2.6s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            to { transform: translateX(120%); opacity: 0; }
+        }
+    </style>
+</head>
+
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
+
+<!-- Mobile Menu Overlay -->
+<div id="mobileOverlay" class="fixed inset-0 bg-black/60 z-50 hidden lg:hidden"></div>
+
+<!-- Mobile Menu -->
+<div id="mobileMenu" 
+     class="fixed top-0 right-0 bottom-0 w-80 bg-white dark:bg-zinc-900 shadow-2xl translate-x-full transition-transform duration-300 z-50 lg:hidden">
+    <div class="p-6">
+        <button id="mobileClose" class="text-3xl float-right">&times;</button>
+        <div class="mt-10 space-y-6">
+            <a th:href="@{/admin}" class="block py-2 text-lg font-medium">Bảng điều khiển</a>
+            <a th:href="@{/admin/orders}" class="block py-2 text-lg font-medium">Đơn hàng</a>
+            <a th:href="@{/admin/products}" class="block py-2 text-lg font-medium">Sản phẩm</a>
+            <a th:href="@{/admin/users}" class="block py-2 text-lg font-medium">Người dùng</a>
+            <a th:href="@{/logout}" class="block py-2 text-red-600 font-medium">Đăng xuất</a>
+        </div>
+    </div>
+</div>
+
+<div class="flex min-h-screen">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="hidden lg:flex w-72 flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-8 border-b border-zinc-200 dark:border-zinc-800">
+            <span class="text-2xl font-light tracking-tighter text-zinc-900 dark:text-white">NOVA ADMIN</span>
+        </div>
+
+        <!-- Nav -->
+        <nav class="flex-1 px-4 py-6">
+            <ul class="space-y-1">
+                <li>
+                    <a th:href="@{/admin}"
+                       class="flex items-center px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                       th:classappend="${currentUri == '/admin'} ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : ''">
+                        Bảng điều khiển
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/orders}"
+                       class="flex items-center px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                       th:classappend="${#strings.contains(currentUri, '/admin/orders')} ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : ''">
+                        Đơn hàng
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/products}"
+                       class="flex items-center px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                       th:classappend="${#strings.contains(currentUri, '/admin/products')} ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : ''">
+                        Sản phẩm
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/admin/users}"
+                       class="flex items-center px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                       th:classappend="${#strings.contains(currentUri, '/admin/users')} ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : ''">
+                        Người dùng
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- User bottom -->
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div class="flex items-center gap-3 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">A</div>
+                <div>
+                    <div class="font-medium">Admin</div>
+                    <div class="text-xs text-zinc-500">Quản trị viên</div>
+                </div>
+            </div>
+            <a th:href="@{/logout}" class="block mt-4 text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2">Đăng xuất</a>
+        </div>
+    </aside>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <div class="flex-1 flex flex-col">
+
+        <!-- Top Header -->
+        <header class="h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center px-6 z-30">
+            <div class="flex-1 flex items-center gap-6">
+                <!-- Hamburger mobile -->
+                <button id="hamburger" class="lg:hidden text-2xl">☰</button>
+
+                <!-- Search -->
+                <div class="flex-1 max-w-xl relative">
+                    <input type="text" placeholder="Tìm kiếm đơn hàng, sản phẩm..." 
+                           class="w-full bg-zinc-100 dark:bg-zinc-800 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 rounded-full py-2.5 pl-11 pr-4 text-sm outline-none">
+                    <div class="absolute left-4 top-3 text-zinc-400">🔍</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="relative">
+                    <div class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center cursor-pointer">🔔</div>
+                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white">3</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <div class="font-medium">Admin</div>
+                        <div class="text-xs text-zinc-500">Quản trị viên</div>
+                    </div>
+                    <div class="w-9 h-9 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-medium">A</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-auto p-6 lg:p-10">
+            <!-- Toast Container -->
+            <div id="toastContainer" class="fixed top-6 right-6 z-50 space-y-3"></div>
+
+            <!-- Main Content Fragment -->
+            <div th:insert="~{::content}"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-8 px-10 text-sm text-zinc-500">
+            <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="font-semibold text-zinc-900 dark:text-white mb-3">Về NOVA</div>
+                    <div>Thương hiệu thời trang tối giản dành cho người hiện đại.</div>
+                </div>
+                <div>
+                    <div class="font-semibold text-zinc-900 dark:text-white mb-3">Liên kết nhanh</div>
+                    <div class="space-y-1">
+                        <div>Trang chủ</div>
+                        <div>Sản phẩm</div>
+                        <div>Đơn hàng</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="font-semibold text-zinc-900 dark:text-white mb-3">Chính sách</div>
+                    <div class="space-y-1">
+                        <div>Bảo mật</div>
+                        <div>Điều khoản sử dụng</div>
+                        <div>Đổi trả</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="font-semibold text-zinc-900 dark:text-white mb-3">Kết nối</div>
+                    <div>Đăng ký nhận tin ưu đãi mới nhất</div>
+                </div>
+            </div>
+            <div class="text-center mt-12 text-xs">
+                © 2026 NOVA Fashion. All rights reserved.
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Toast Script -->
+<script>
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast glass px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 min-w-[320px] ${type === 'success' ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'}`;
+        
+        toast.innerHTML = `
+            <div class="${type === 'success' ? 'text-green-500' : 'text-red-500'} text-xl">
+                ${type === 'success' ? 'Thành công' : 'Lỗi'}
+            </div>
+            <div class="flex-1">
+                <div class="font-medium">${type === 'success' ? 'Thành công' : 'Lỗi'}</div>
+                <div class="text-sm">${message}</div>
+            </div>
+        `;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const successMsg = /*[[${success}]]*/ '';
+        const errorMsg = /*[[${error}]]*/ '';
+        
+        if (successMsg) showToast(successMsg, 'success');
+        if (errorMsg) showToast(errorMsg, 'error');
+    });
+</script>
+
+<!-- Mobile menu script -->
+<script>
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileClose = document.getElementById('mobileClose');
+
+    if (hamburger && mobileMenu && mobileOverlay && mobileClose) {
+        hamburger.addEventListener('click', () => {
+            mobileMenu.classList.remove('translate-x-full');
+            mobileOverlay.classList.remove('hidden');
+        });
+
+        mobileClose.addEventListener('click', () => {
+            mobileMenu.classList.add('translate-x-full');
+            mobileOverlay.classList.add('hidden');
+        });
+
+        mobileOverlay.addEventListener('click', () => {
+            mobileMenu.classList.add('translate-x-full');
+            mobileOverlay.classList.add('hidden');
+        });
+    }
+</script>
+
+</body>
+</html>

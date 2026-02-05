@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <!-- PAGE TITLE -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">
+            Dashboard Quản trị
+        </h1>
+
+        <span class="text-sm text-gray-500">
+            Cập nhật lúc:
+            <span th:text="${#temporals.format(T(java.time.LocalDateTime).now(),'dd/MM/yyyy HH:mm')}"></span>
+        </span>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- TOTAL ORDERS -->
+        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Tổng đơn hàng</p>
+            <p class="text-3xl font-bold mt-2" th:text="${totalOrders ?: 0}"></p>
+        </div>
+
+        <!-- PENDING -->
+        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Đơn đang chờ</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-2"
+               th:text="${pendingOrders ?: 0}">
+            </p>
+        </div>
+
+        <!-- COMPLETED -->
+        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Đơn hoàn thành</p>
+            <p class="text-3xl font-bold text-green-600 mt-2"
+               th:text="${completedOrders ?: 0}">
+            </p>
+        </div>
+
+        <!-- REVENUE -->
+        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Doanh thu</p>
+
+            <p class="text-3xl font-bold text-green-700 mt-2">
+                <span th:text="${#numbers.formatDecimal(totalRevenue ?: 0,0,'POINT',0,'COMMA')}"></span>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- USERS -->
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
+            <p class="text-sm text-gray-500">Tổng người dùng</p>
+            <p class="text-3xl font-bold text-indigo-600 mt-2"
+               th:text="${totalUsers ?: 0}">
+            </p>
+        </div>
+    </div>
+
+</div>
+</html>

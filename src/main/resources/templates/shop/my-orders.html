@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout/base :: html">
+
+<div th:fragment="content">
+
+    <h1 class="text-2xl font-semibold mb-8">
+        My Orders
+    </h1>
+
+    <div th:if="${#lists.isEmpty(orders)}"
+         class="text-gray-500 text-center py-20">
+        You have not placed any orders yet.
+    </div>
+
+    <div th:if="${!#lists.isEmpty(orders)}"
+         class="space-y-6">
+
+        <div th:each="order : ${orders}"
+             class="border p-6 flex justify-between items-center">
+
+            <div>
+                <p class="text-sm text-gray-500">
+                    Order #
+                    <span th:text="${order.id}"></span>
+                </p>
+
+                <p class="mt-1">
+                    Placed on
+                    <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                </p>
+
+                <p class="mt-1 text-sm">
+                    Status:
+                    <span class="font-medium"
+                          th:text="${order.status}"></span>
+                </p>
+            </div>
+
+            <div class="text-right">
+                <p class="font-semibold text-lg">
+                    <span th:text="${order.total}"></span> ₫
+                </p>
+
+                <a th:href="@{/orders/{id}(id=${order.id})}"
+                   class="inline-block mt-2 text-sm underline hover:text-gray-500">
+                    View details
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout/base :: html">
+
+<div th:fragment="content">
+
+    <h1 class="text-2xl font-semibold mb-8">
+        Shopping Cart
+    </h1>
+
+    <!-- EMPTY CART -->
+    <div th:if="${#lists.isEmpty(cartItems)}"
+         class="text-center py-20 text-gray-500">
+        <p class="mb-6">Your cart is currently empty.</p>
+        <a href="/"
+           class="inline-block border border-black px-6 py-3 hover:bg-black hover:text-white transition">
+            Continue Shopping
+        </a>
+    </div>
+
+    <!-- CART CONTENT -->
+    <div th:if="${!#lists.isEmpty(cartItems)}"
+         class="grid grid-cols-12 gap-10">
+
+        <!-- ITEMS -->
+        <div class="col-span-8 space-y-6">
+
+            <div th:each="item : ${cartItems}"
+                 class="flex gap-6 border-b pb-6">
+
+                <!-- IMAGE -->
+                <img th:src="${item.imageUrl}"
+                     class="w-28 h-36 object-cover border">
+
+                <!-- INFO -->
+                <div class="flex-1">
+                    <h3 class="font-medium"
+                        th:text="${item.productName}"></h3>
+
+                    <p class="text-sm text-gray-500 mt-1">
+                        Size:
+                        <span th:text="${item.size}"></span>
+                        · Color:
+                        <span th:text="${item.color}"></span>
+                    </p>
+
+                    <!-- UPDATE -->
+                    <form th:action="@{/cart/update}"
+                          method="post"
+                          class="mt-4 flex items-center gap-3">
+
+                        <input type="hidden"
+                               name="variantId"
+                               th:value="${item.variantId}">
+
+                        <input type="number"
+                               name="quantity"
+                               min="1"
+                               th:value="${item.quantity}"
+                               class="w-20 border px-2 py-1 text-sm">
+
+                        <button class="text-sm underline hover:text-gray-500">
+                            Update
+                        </button>
+                    </form>
+                </div>
+
+                <!-- PRICE + REMOVE -->
+                <div class="text-right min-w-[120px]">
+                    <p class="font-medium">
+                        <span th:text="${item.price}"></span> ₫
+                    </p>
+
+                    <form th:action="@{/cart/remove}"
+                          method="post"
+                          class="mt-4">
+                        <input type="hidden"
+                               name="variantId"
+                               th:value="${item.variantId}">
+                        <button class="text-sm text-red-500 hover:underline">
+                            Remove
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="col-span-4 border p-6 h-fit">
+
+            <h3 class="font-semibold mb-4">
+                Order Summary
+            </h3>
+
+            <div class="flex justify-between text-sm mb-2">
+                <span>Subtotal</span>
+                <span>
+                    <span th:text="${total}"></span> ₫
+                </span>
+            </div>
+
+            <div class="flex justify-between text-sm mb-4">
+                <span>Shipping</span>
+                <span>Free</span>
+            </div>
+
+            <hr class="mb-4">
+
+            <div class="flex justify-between font-medium text-lg mb-6">
+                <span>Total</span>
+                <span>
+                    <span th:text="${total}"></span> ₫
+                </span>
+            </div>
+
+            <a href="/checkout"
+               class="block text-center bg-black text-white py-3 mb-3 hover:opacity-90 transition">
+                Checkout
+            </a>
+
+            <form th:action="@{/cart/clear}" method="post">
+                <button class="w-full border py-3 text-sm hover:bg-gray-100 transition">
+                    Clear Cart
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <!-- Flash message -->
+    <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        <strong>Thành công:</strong>
+        <span th:text="${success}"></span>
+    </div>
+
+    <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <strong>Lỗi:</strong>
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- Back -->
+    <a href="/admin/orders"
+       class="text-sm text-gray-600 hover:text-gray-900 underline mb-6 inline-block">
+        ← Quay lại danh sách đơn hàng
+    </a>
+
+    <!-- Title -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-bold">
+            Chi tiết đơn hàng #<span th:text="${order.id}"></span>
+        </h1>
+
+        <!-- Status badge -->
+        <span class="px-3 py-1 rounded-full text-sm font-medium"
+              th:classappend="${order.status == 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                               order.status == 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
+                               order.status == 'SHIPPING' ? 'bg-indigo-100 text-indigo-800' :
+                               order.status == 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                               'bg-red-100 text-red-800'}">
+            <span th:text="${order.status}"></span>
+        </span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- LEFT -->
+        <div class="lg:col-span-8 bg-white border rounded-xl shadow-sm p-6">
+
+            <h3 class="text-lg font-semibold mb-4">Sản phẩm trong đơn hàng</h3>
+
+            <div th:each="item : ${order.items}"
+                 class="flex justify-between items-center border-b py-4">
+
+                <div>
+                    <p class="font-medium" th:text="${item.productName}"></p>
+
+                    <p class="text-sm text-gray-600">
+                        Size:
+                        <span th:text="${item.size}"></span>
+                        ·
+                        Màu:
+                        <span th:text="${item.color}"></span>
+                    </p>
+
+                    <p class="text-sm text-gray-600">
+                        Số lượng:
+                        <strong th:text="${item.quantity}"></strong>
+                    </p>
+                </div>
+
+                <!-- PRICE -->
+                <div class="font-medium">
+                    <span th:text="${
+                        item.price != null
+                        ? #numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')
+                        : '-'
+                    }"></span> ₫
+                </div>
+
+            </div>
+
+            <!-- TOTAL -->
+            <div class="mt-6 flex justify-between border-t pt-4">
+                <span class="text-lg font-semibold">Tổng cộng</span>
+
+                <span class="text-xl font-bold">
+                    <span th:text="${
+                        order.total != null
+                        ? #numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')
+                        : '-'
+                    }"></span> ₫
+                </span>
+            </div>
+
+            <!-- DATE -->
+            <div class="mt-4 text-sm text-gray-500">
+                Ngày tạo:
+                <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="lg:col-span-4 bg-white border rounded-xl shadow-sm p-6">
+
+            <h3 class="text-lg font-semibold mb-4">Thông tin đơn hàng</h3>
+
+            <div class="space-y-3">
+                <div>
+                    <span class="text-sm text-gray-600">Khách hàng:</span>
+                    <p class="font-medium" th:text="${order.customerName}"></p>
+                </div>
+
+                <div>
+                    <span class="text-sm text-gray-600">SĐT:</span>
+                    <p class="font-medium" th:text="${order.phone}"></p>
+                </div>
+
+                <div>
+                    <span class="text-sm text-gray-600">Địa chỉ:</span>
+                    <p class="font-medium" th:text="${order.address}"></p>
+                </div>
+
+                <div>
+                    <span class="text-sm text-gray-600">User:</span>
+                    <p class="font-medium"
+                       th:text="${order.user != null ? order.user.email : 'Khách vãng lai'}"></p>
+                </div>
+            </div>
+
+            <!-- Update status -->
+            <div class="mt-8">
+                <h4 class="font-medium mb-3">Cập nhật trạng thái</h4>
+
+                <form th:action="@{/admin/orders/{id}/status(id=${order.id})}"
+                      method="post"
+                      class="space-y-4">
+
+                    <select name="status"
+                            class="w-full border rounded px-4 py-2">
+
+                        <option th:each="s : ${statuses}"
+                                th:value="${s}"
+                                th:selected="${s == order.status}"
+                                th:text="${s}">
+                        </option>
+
+                    </select>
+
+                    <button type="submit"
+                            class="w-full bg-black text-white py-3 rounded hover:bg-gray-800">
+                        Cập nhật trạng thái
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</html>

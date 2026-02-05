@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <h1 class="text-2xl font-semibold mb-8">Thêm Sản Phẩm Mới</h1>
+
+    <!-- ERROR MESSAGE -->
+    <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-6 rounded">
+        <span th:text="${error}"></span>
+    </div>
+
+    <!-- FORM -->
+    <form th:action="@{/admin/products/create}"
+          th:object="${productDTO}"
+          method="post"
+          enctype="multipart/form-data"
+          class="bg-white border rounded-lg p-8 space-y-6">
+
+        <!-- TÊN SẢN PHẨM -->
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Tên sản phẩm <span class="text-red-600">*</span>
+            </label>
+
+            <input type="text"
+                   th:field="*{name}"
+                   class="w-full border px-4 py-2 rounded focus:outline-none focus:border-black">
+
+            <div th:if="${#fields.hasErrors('name')}"
+                 class="text-red-600 text-sm mt-1"
+                 th:errors="*{name}">
+            </div>
+        </div>
+
+        <!-- DANH MỤC PHỤ -->
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Danh mục phụ <span class="text-red-600">*</span>
+            </label>
+
+            <select th:field="*{subCategoryId}"
+                    class="w-full border px-4 py-2 rounded">
+
+                <option value="">Chọn danh mục phụ</option>
+
+                <option th:each="sc : ${subCategories}"
+                        th:value="${sc.id}"
+                        th:text="${sc.name} + ' (' + ${sc.category.name} + ')'">
+                </option>
+
+            </select>
+
+            <div th:if="${#fields.hasErrors('subCategoryId')}"
+                 class="text-red-600 text-sm mt-1"
+                 th:errors="*{subCategoryId}">
+            </div>
+        </div>
+
+        <!-- MÔ TẢ -->
+        <div>
+            <label class="block text-sm font-medium mb-2">Mô tả</label>
+
+            <textarea th:field="*{description}"
+                      rows="4"
+                      class="w-full border px-4 py-2 rounded">
+            </textarea>
+        </div>
+
+        <!-- VARIANTS -->
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Biến thể (Size - Màu - Giá - Tồn kho)
+            </label>
+
+            <div id="variants-container" class="space-y-4">
+
+                <div class="variant-row flex gap-4 items-end">
+
+                    <input type="text"
+                           name="variants[0].size"
+                           placeholder="Size"
+                           class="border px-3 py-2 rounded w-1/4">
+
+                    <input type="text"
+                           name="variants[0].color"
+                           placeholder="Màu"
+                           class="border px-3 py-2 rounded w-1/4">
+
+                    <input type="number"
+                           name="variants[0].price"
+                           placeholder="Giá"
+                           step="0.01"
+                           class="border px-3 py-2 rounded w-1/4">
+
+                    <input type="number"
+                           name="variants[0].stock"
+                           placeholder="Tồn kho"
+                           class="border px-3 py-2 rounded w-1/4">
+
+                    <button type="button"
+                            class="remove-variant text-red-600 hover:text-red-800">
+                        Xóa
+                    </button>
+
+                </div>
+
+            </div>
+
+            <button type="button"
+                    id="add-variant"
+                    class="mt-3 text-blue-600 hover:underline">
+                + Thêm biến thể
+            </button>
+        </div>
+
+        <!-- UPLOAD ẢNH -->
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Ảnh sản phẩm
+            </label>
+
+            <input type="file"
+                   name="images"
+                   multiple
+                   accept="image/*"
+                   class="w-full border px-4 py-2 rounded">
+        </div>
+
+        <!-- ACTIVE -->
+        <div class="flex items-center">
+            <input type="checkbox"
+                   th:field="*{active}">
+            <label class="ml-2 text-sm">Hiển thị sản phẩm</label>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="flex justify-end">
+            <button type="submit"
+                    class="bg-black text-white px-8 py-3 rounded hover:bg-gray-800">
+                Tạo Sản Phẩm
+            </button>
+        </div>
+
+    </form>
+
+    <!-- JS ADD VARIANT -->
+    <script th:inline="javascript">
+        let variantIndex = 1;
+
+        document.getElementById('add-variant').addEventListener('click', function() {
+
+            const container = document.getElementById('variants-container');
+
+            const newRow = document.createElement('div');
+
+            newRow.className = 'variant-row flex gap-4 items-end';
+
+            newRow.innerHTML = `
+                <input type="text" name="variants[${variantIndex}].size" placeholder="Size" class="border px-3 py-2 rounded w-1/4">
+                <input type="text" name="variants[${variantIndex}].color" placeholder="Màu" class="border px-3 py-2 rounded w-1/4">
+                <input type="number" name="variants[${variantIndex}].price" placeholder="Giá" step="0.01" class="border px-3 py-2 rounded w-1/4">
+                <input type="number" name="variants[${variantIndex}].stock" placeholder="Tồn kho" class="border px-3 py-2 rounded w-1/4">
+                <button type="button" class="remove-variant text-red-600 hover:text-red-800">Xóa</button>
+            `;
+
+            container.appendChild(newRow);
+            variantIndex++;
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-variant')) {
+                e.target.closest('.variant-row').remove();
+            }
+        });
+    </script>
+
+</div>
+</html>

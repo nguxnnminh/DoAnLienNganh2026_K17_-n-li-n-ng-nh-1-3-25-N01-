@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-2xl font-semibold">Quản Lý Sản Phẩm</h1>
+
+        <a th:href="@{/admin/products/create}"
+           class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">
+            + Thêm Sản Phẩm Mới
+        </a>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white border rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+
+            <!-- Table Head -->
+            <thead class="bg-gray-100 text-gray-600">
+            <tr>
+                <th class="p-4 text-left">Tên</th>
+                <th class="p-4 text-left">Danh mục phụ</th>
+                <th class="p-4 text-center">Giá</th>
+                <th class="p-4 text-center">Tồn kho tổng</th>
+                <th class="p-4 text-center">Trạng thái</th>
+                <th class="p-4 text-right">Hành động</th>
+            </tr>
+            </thead>
+
+            <!-- Table Body -->
+            <tbody>
+
+            <!-- Loop Product -->
+            <tr th:each="product : ${products}"
+                class="border-t hover:bg-gray-50">
+
+                <!-- Tên -->
+                <td class="p-4"
+                    th:text="${product.name}">
+                </td>
+
+                <!-- SubCategory -->
+                <td class="p-4"
+                    th:text="${product.subCategory.name}">
+                </td>
+
+                <!-- Giá thấp nhất -->
+                <td class="p-4 text-center">
+
+                    <span th:text="${
+                        product.minPrice != null
+                        ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')
+                        : '-'
+                    }">
+                    </span> ₫
+
+                </td>
+
+                <!-- Tổng tồn kho -->
+                <td class="p-4 text-center"
+                    th:text="${product.totalStock}">
+                </td>
+
+                <!-- Trạng thái -->
+                <td class="p-4 text-center">
+
+                    <span th:if="${product.active}"
+                          class="text-green-600 font-medium">
+                        Active
+                    </span>
+
+                    <span th:unless="${product.active}"
+                          class="text-red-600 font-medium">
+                        Inactive
+                    </span>
+
+                </td>
+
+                <!-- Actions -->
+                <td class="p-4 text-right space-x-3">
+
+                    <!-- Edit -->
+                    <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+                       class="text-blue-600 hover:underline">
+                        Sửa
+                    </a>
+
+                    <!-- Delete -->
+                    <form th:action="@{/admin/products/{id}(id=${product.id})}"
+                          method="post"
+                          class="inline"
+                          onsubmit="return confirm('Xác nhận xóa sản phẩm?')">
+
+                        <input type="hidden" name="_method" value="DELETE"/>
+
+                        <button type="submit"
+                                class="text-red-600 hover:underline">
+                            Xóa
+                        </button>
+
+                    </form>
+
+                </td>
+
+            </tr>
+
+            <!-- Empty Data -->
+            <tr th:if="${#lists.isEmpty(products)}">
+                <td colspan="6"
+                    class="p-8 text-center text-gray-500">
+                    Chưa có sản phẩm nào
+                </td>
+            </tr>
+
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+</html>

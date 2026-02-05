@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CLOTHING STORE</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Alpine cloak -->
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body class="font-sans text-gray-900 bg-white">
+
+    <!-- HEADER -->
+    <header class="border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+            <!-- Logo -->
+            <a href="/" class="text-lg font-semibold tracking-wide">
+                CLOTHING
+            </a>
+
+            <!-- Navigation -->
+            <nav class="flex items-center gap-8 text-sm uppercase tracking-wide">
+
+                <!-- Product Dropdown -->
+                <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+
+                    <button class="hover:text-gray-500 transition">
+                        Product
+                    </button>
+
+                    <!-- Mega menu -->
+                    <div x-show="open" x-cloak x-transition
+                        class="absolute left-0 top-full mt-6 w-[720px] bg-white shadow-xl border border-gray-100 p-8 grid grid-cols-3 gap-8 z-50">
+
+                        <!-- TOP -->
+                        <div>
+                            <a href="/shop?category=top" class="font-semibold mb-4 block hover:underline">
+                                Top
+                            </a>
+                            <ul class="space-y-2 text-gray-600">
+                                <li><a href="/shop?category=top&sub=tee" class="hover:text-black">Tee</a></li>
+                                <li><a href="/shop?category=top&sub=shirt" class="hover:text-black">Shirt</a></li>
+                                <li><a href="/shop?category=top&sub=jacket" class="hover:text-black">Jacket</a></li>
+                                <li><a href="/shop?category=top&sub=hoodie" class="hover:text-black">Hoodie</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- BOTTOM -->
+                        <div>
+                            <a href="/shop?category=bottom" class="font-semibold mb-4 block hover:underline">
+                                Bottom
+                            </a>
+                            <ul class="space-y-2 text-gray-600">
+                                <li><a href="/shop?category=bottom&sub=jeans" class="hover:text-black">Jeans</a></li>
+                                <li><a href="/shop?category=bottom&sub=shorts" class="hover:text-black">Shorts</a></li>
+                                <li><a href="/shop?category=bottom&sub=pants" class="hover:text-black">Pants</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- ACCESSORIES -->
+                        <div>
+                            <a href="/shop?category=accessories" class="font-semibold mb-4 block hover:underline">
+                                Accessories
+                            </a>
+                            <ul class="space-y-2 text-gray-600">
+                                <li><a href="/shop?category=accessories&sub=shoes" class="hover:text-black">Shoes</a>
+                                </li>
+                                <li><a href="/shop?category=accessories&sub=bag" class="hover:text-black">Bag</a></li>
+                                <li><a href="/shop?category=accessories&sub=cap" class="hover:text-black">Cap</a></li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+
+                <a href="/my-orders" class="hover:text-gray-500 transition">
+                    Orders
+                </a>
+
+                <a href="/cart" class="hover:text-gray-500 transition">
+                    Cart
+                </a>
+            </nav>
+
+            <!-- Auth -->
+            <div class="flex items-center gap-4 text-sm uppercase tracking-wide">
+
+                <!-- Guest -->
+                <div th:if="${#authorization.expression('!isAuthenticated()')}">
+                    <a href="/login" class="hover:text-gray-500 transition mr-3">
+                        Login
+                    </a>
+                    <a href="/register"
+                        class="border border-gray-900 px-4 py-2 hover:bg-gray-900 hover:text-white transition">
+                        Register
+                    </a>
+                </div>
+
+                <!-- User -->
+                <div th:if="${#authorization.expression('isAuthenticated()')}">
+                    <a href="/logout" class="hover:text-gray-500 transition">
+                        Logout
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div th:insert="~{::content}"></div>
+    </main>
+
+    <!-- Alpine JS (BẮT BUỘC) -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+</body>
+
+</html>

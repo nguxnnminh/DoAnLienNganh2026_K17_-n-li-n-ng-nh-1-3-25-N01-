@@ -1,114 +1,140 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/admin :: html}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
 
 <div th:fragment="content">
 
     <!-- PAGE TITLE -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <h1 class="text-2xl font-semibold tracking-tight">
             Quản lý đơn hàng
         </h1>
     </div>
 
-    <!-- FLASH MESSAGE -->
-    <div th:if="${success}" 
-         class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+
+    <!-- FLASH -->
+    <div th:if="${success}"
+        class="glass border border-green-500/30 text-green-700 dark:text-green-400 px-5 py-4 rounded-2xl mb-6">
         <strong>Thành công:</strong>
         <span th:text="${success}"></span>
     </div>
 
-    <div th:if="${error}" 
-         class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+    <div th:if="${error}"
+        class="glass border border-red-500/30 text-red-700 dark:text-red-400 px-5 py-4 rounded-2xl mb-6">
         <strong>Lỗi:</strong>
         <span th:text="${error}"></span>
     </div>
 
+
     <!-- TABLE -->
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <div class="glass rounded-2xl overflow-x-auto border border-zinc-200 dark:border-zinc-800">
 
-        <table class="w-full text-sm text-left text-gray-700">
+        <table class="w-full table-fixed text-sm text-zinc-700 dark:text-zinc-300">
 
-            <!-- HEADER -->
-            <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-            <tr>
-                <th class="px-6 py-4 font-medium">ID</th>
-                <th class="px-6 py-4 font-medium">Khách hàng</th>
-                <th class="px-6 py-4 font-medium text-right">Tổng tiền</th>
-                <th class="px-6 py-4 font-medium">Trạng thái</th>
-                <th class="px-6 py-4 font-medium">Ngày tạo</th>
-                <th class="px-6 py-4 font-medium text-right">Hành động</th>
-            </tr>
+            <!-- LOCK WIDTH -->
+            <colgroup>
+                <col style="width:10%">
+                <col style="width:30%">
+                <col style="width:15%">
+                <col style="width:15%">
+                <col style="width:15%">
+                <col style="width:15%">
+            </colgroup>
+
+
+            <thead class="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-500 uppercase text-xs tracking-wide">
+                <tr>
+                    <th class="px-6 py-5 text-left font-medium">ID</th>
+                    <th class="px-6 py-5 text-left font-medium">Khách hàng</th>
+                    <th class="px-6 py-5 text-right font-medium">Tổng tiền</th>
+                    <th class="px-6 py-5 text-center font-medium">Trạng thái</th>
+                    <th class="px-6 py-5 text-center font-medium">Ngày tạo</th>
+                    <th class="px-6 py-5 text-right font-medium">Hành động</th>
+                </tr>
             </thead>
 
-            <!-- BODY -->
-            <tbody class="divide-y divide-gray-200">
 
-            <!-- LOOP ORDER -->
-            <tr th:each="o : ${orders}"
-                class="hover:bg-gray-50 transition duration-150">
+            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
 
-                <!-- ID -->
-                <td class="px-6 py-4 font-medium text-gray-900">
-                    #<span th:text="${o.id}"></span>
-                </td>
+                <tr th:each="o : ${orders}" class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition">
 
-                <!-- CUSTOMER -->
-                <td class="px-6 py-4">
-                    <div class="font-medium text-gray-900"
-                         th:text="${o.customerName}"></div>
 
-                    <div class="text-xs text-gray-500"
-                         th:text="${o.user != null ? o.user.email : 'Khách vãng lai'}">
-                    </div>
-                </td>
+                    <!-- ID -->
+                    <td
+                        class="px-6 py-5 whitespace-nowrap font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                        #<span th:text="${o.id}"></span>
+                    </td>
 
-                <!-- TOTAL PRICE -->
-                <td class="px-6 py-4 text-right font-medium text-gray-900">
-                    <span th:text="${
-                        o.total != null
-                        ? #numbers.formatDecimal(o.total,0,'POINT',0,'COMMA')
-                        : '-'
-                    }"></span> ₫
-                </td>
 
-                <!-- STATUS -->
-                <td class="px-6 py-4">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                        th:classappend="${
-                                o.status == 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                o.status == 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
-                                o.status == 'SHIPPING' ? 'bg-indigo-100 text-indigo-800' :
-                                o.status == 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                'bg-red-100 text-red-800'
-                        }">
+                    <!-- CUSTOMER -->
+                    <td class="px-6 py-5 truncate">
 
-                        <span th:text="${o.status}"></span>
-                    </span>
-                </td>
+                        <div class="font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
+                            th:text="${o.customerName ?: (o.user != null ? o.user.fullName : 'Khách vãng lai')}">
+                        </div>
 
-                <!-- CREATED DATE -->
-                <td class="px-6 py-4 text-gray-600">
-                    <span th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
-                </td>
+                        <div class="text-xs text-zinc-500 mt-1 truncate"
+                            th:text="${o.user != null ? o.user.email : 'Guest'}">
+                        </div>
 
-                <!-- ACTION -->
-                <td class="px-6 py-4 text-right">
-                    <a th:href="@{/admin/orders/{id}(id=${o.id})}"
-                       class="text-indigo-600 hover:text-indigo-900 font-medium text-sm transition">
-                        Xem chi tiết
-                    </a>
-                </td>
+                    </td>
 
-            </tr>
 
-            <!-- EMPTY -->
-            <tr th:if="${#lists.isEmpty(orders)}">
-                <td colspan="6"
-                    class="px-6 py-10 text-center text-gray-500">
-                    Chưa có đơn hàng nào.
-                </td>
-            </tr>
+                    <!-- TOTAL -->
+                    <td class="px-6 py-5 text-right whitespace-nowrap">
+
+                        <span class="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100" th:text="${
+          o.total != null 
+          ? #numbers.formatDecimal(o.total,0,'POINT',0,'COMMA')
+          : '-'
+      }"></span> ₫
+
+                    </td>
+
+
+                    <!-- STATUS -->
+                    <td class="px-6 py-5 text-center whitespace-nowrap">
+
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium tracking-tight"
+                            th:classappend="${
+        o.status.name() == 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' :
+        o.status.name() == 'PROCESSING' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
+        o.status.name() == 'SHIPPING' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300' :
+        o.status.name() == 'COMPLETED' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
+        'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+      }">
+
+                            <span th:text="${o.status}"></span>
+
+                        </span>
+
+                    </td>
+
+
+                    <!-- DATE -->
+                    <td class="px-6 py-5 text-center whitespace-nowrap text-zinc-500">
+                        <span th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                    </td>
+
+
+                    <!-- ACTION -->
+                    <td class="px-6 py-5 text-right whitespace-nowrap">
+
+                        <a th:href="@{/admin/orders/{id}(id=${o.id})}"
+                            class="text-blue-600 hover:underline text-sm font-medium tracking-tight">
+                            Xem chi tiết →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- EMPTY -->
+                <tr th:if="${#lists.isEmpty(orders)}">
+                    <td colspan="6" class="px-6 py-16 text-center text-zinc-500">
+                        Chưa có đơn hàng nào.
+                    </td>
+                </tr>
 
             </tbody>
         </table>
@@ -116,4 +142,5 @@
     </div>
 
 </div>
+
 </html>

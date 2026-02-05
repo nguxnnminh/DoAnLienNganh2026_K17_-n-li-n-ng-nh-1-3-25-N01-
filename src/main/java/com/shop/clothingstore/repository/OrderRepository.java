@@ -13,17 +13,18 @@ import com.shop.clothingstore.entity.User;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    // ===============================
-    // USER
-    // ===============================
+    // =====================================================
+    // USER QUERIES
+    // =====================================================
 
     List<Order> findByUser(User user);
 
     List<Order> findByUserOrderByCreatedAtDesc(User user);
 
-    // ===============================
-    // ADMIN
-    // ===============================
+
+    // =====================================================
+    // ADMIN QUERIES
+    // =====================================================
 
     List<Order> findAllByOrderByCreatedAtDesc();
 
@@ -32,16 +33,24 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status);
 
     long countByStatus(OrderStatus status);
+
     long countByStatusAndStatusNotNull(OrderStatus status);
 
-    // ===============================
-    // DASHBOARD
-    // ===============================
 
+    // =====================================================
+    // DASHBOARD QUERIES
+    // =====================================================
+
+    // ⭐ Tổng doanh thu theo trạng thái
     @Query("""
-        select coalesce(sum(o.total), 0)
-        from Order o
-        where o.status = :status
+        SELECT COALESCE(SUM(o.total), 0)
+        FROM Order o
+        WHERE o.status = :status
     """)
     BigDecimal getTotalRevenueByStatus(@Param("status") OrderStatus status);
+
+
+    // ⭐ 5 đơn hàng mới nhất (Dashboard)
+    List<Order> findTop5ByOrderByCreatedAtDesc();
+
 }

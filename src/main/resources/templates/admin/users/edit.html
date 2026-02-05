@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <!-- BACK -->
+    <a th:href="@{/admin/users}" class="text-sm text-zinc-500 hover:underline mb-6 inline-block">
+        ← Quay lại danh sách khách hàng
+    </a>
+
+
+    <!-- TITLE -->
+    <h1 class="text-2xl font-semibold tracking-tight mb-8">
+        Chỉnh sửa khách hàng #<span th:text="${user.id}"></span>
+    </h1>
+
+
+    <!-- FLASH -->
+    <div th:if="${success}" class="glass border border-green-500/30 text-green-600 px-5 py-4 rounded-2xl mb-6">
+        <span th:text="${success}"></span>
+    </div>
+
+    <div th:if="${error}" class="glass border border-red-500/30 text-red-600 px-5 py-4 rounded-2xl mb-6">
+        <span th:text="${error}"></span>
+    </div>
+
+
+    <!-- FORM -->
+    <div class="glass rounded-2xl p-8 border border-zinc-200 dark:border-zinc-800">
+
+        <form th:object="${user}" th:action="@{/admin/users/{id}(id=${user.id})}" method="post" class="space-y-6">
+
+            <input type="hidden" name="_method" value="PUT" />
+
+
+            <!-- EMAIL -->
+            <div>
+                <label class="block text-sm text-zinc-500 mb-2">Email</label>
+
+                <input th:field="*{email}" readonly
+                    class="w-full px-4 py-3 rounded-xl border border-zinc-300 bg-zinc-100 text-zinc-500 cursor-not-allowed">
+            </div>
+
+
+            <!-- NAME -->
+            <div>
+                <label class="block text-sm text-zinc-500 mb-2">Họ tên</label>
+
+                <input th:field="*{fullName}"
+                    class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+
+            <!-- PHONE -->
+            <div>
+                <label class="block text-sm text-zinc-500 mb-2">Số điện thoại</label>
+
+                <input th:field="*{phone}"
+                    class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+
+            <!-- ADDRESS -->
+            <div>
+                <label class="block text-sm text-zinc-500 mb-2">Địa chỉ</label>
+
+                <textarea th:field="*{address}" rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500">
+</textarea>
+            </div>
+
+
+            <!-- ROLE -->
+            <div>
+                <label class="block text-sm text-zinc-500 mb-2">Vai trò</label>
+
+                <select th:field="*{role}"
+                    class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500">
+
+                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">
+                    </option>
+
+                </select>
+            </div>
+
+
+            <!-- SUBMIT -->
+            <div class="flex justify-end gap-4 pt-6 border-t">
+
+                <a th:href="@{/admin/users}"
+                    class="px-6 py-3 border border-zinc-300 rounded-xl hover:bg-zinc-100 transition">
+                    Hủy
+                </a>
+
+                <button type="submit"
+                    class="px-8 py-3 bg-black text-white rounded-xl hover:bg-zinc-800 transition font-medium">
+                    Cập nhật
+                </button>
+
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+</html>

@@ -1,66 +1,174 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/admin :: html}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
 
 <div th:fragment="content">
 
     <!-- PAGE TITLE -->
     <div class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">
-            Dashboard Quản trị
+        <h1 class="text-2xl font-semibold tracking-tight">
+            Bảng điều khiển
         </h1>
 
-        <span class="text-sm text-gray-500">
+        <span class="text-sm text-zinc-500">
             Cập nhật lúc:
             <span th:text="${#temporals.format(T(java.time.LocalDateTime).now(),'dd/MM/yyyy HH:mm')}"></span>
         </span>
     </div>
 
-    <!-- STAT CARDS -->
+
+    <!-- ================= STAT CARDS ================= -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        <!-- TOTAL ORDERS -->
-        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
-            <p class="text-sm text-gray-500">Tổng đơn hàng</p>
-            <p class="text-3xl font-bold mt-2" th:text="${totalOrders ?: 0}"></p>
+        <div class="glass rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <p class="text-sm text-zinc-500">Tổng đơn hàng</p>
+
+                <p class="text-4xl font-semibold mt-3 tracking-tight" th:text="${totalOrders ?: 0}">
+                </p>
+            </div>
+
+            <a th:href="@{/admin/orders}" class="text-sm mt-6 text-blue-600 hover:underline">
+                Xem tất cả →
+            </a>
         </div>
 
-        <!-- PENDING -->
-        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
-            <p class="text-sm text-gray-500">Đơn đang chờ</p>
-            <p class="text-3xl font-bold text-yellow-600 mt-2"
-               th:text="${pendingOrders ?: 0}">
-            </p>
+
+        <div class="glass rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <p class="text-sm text-zinc-500">Đơn đang chờ</p>
+
+                <p class="text-4xl font-semibold mt-3 tracking-tight" th:text="${pendingOrders ?: 0}">
+                </p>
+            </div>
+
+            <a th:href="@{/admin/orders}" class="text-sm mt-6 text-blue-600 hover:underline">
+                Xem tất cả →
+            </a>
         </div>
 
-        <!-- COMPLETED -->
-        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
-            <p class="text-sm text-gray-500">Đơn hoàn thành</p>
-            <p class="text-3xl font-bold text-green-600 mt-2"
-               th:text="${completedOrders ?: 0}">
-            </p>
+
+        <div class="glass rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <p class="text-sm text-zinc-500">Đơn hoàn thành</p>
+
+                <p class="text-4xl font-semibold mt-3 tracking-tight" th:text="${completedOrders ?: 0}">
+                </p>
+            </div>
+
+            <a th:href="@{/admin/orders}" class="text-sm mt-6 text-blue-600 hover:underline">
+                Xem tất cả →
+            </a>
         </div>
 
-        <!-- REVENUE -->
-        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
-            <p class="text-sm text-gray-500">Doanh thu</p>
 
-            <p class="text-3xl font-bold text-green-700 mt-2">
-                <span th:text="${#numbers.formatDecimal(totalRevenue ?: 0,0,'POINT',0,'COMMA')}"></span>
-            </p>
+        <div class="glass rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <p class="text-sm text-zinc-500">Doanh thu</p>
+
+                <p class="text-4xl font-semibold mt-3 tracking-tight">
+                    <span th:text="${#numbers.formatDecimal(totalRevenue ?: 0,0,'POINT',0,'COMMA')}"></span>
+                </p>
+            </div>
+
+            <a th:href="@{/admin/orders}" class="text-sm mt-6 text-blue-600 hover:underline">
+                Xem tất cả →
+            </a>
         </div>
 
     </div>
 
-    <!-- USERS -->
-    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition">
-            <p class="text-sm text-gray-500">Tổng người dùng</p>
-            <p class="text-3xl font-bold text-indigo-600 mt-2"
-               th:text="${totalUsers ?: 0}">
-            </p>
+
+    <!-- ================= CHART + RECENT ORDERS ================= -->
+    <div class="grid lg:grid-cols-2 gap-6 mt-8">
+
+        <!-- REVENUE CHART -->
+        <div class="glass rounded-2xl p-6">
+
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold text-lg">Biểu đồ doanh thu</h2>
+
+                <a th:href="@{/admin/orders}" class="text-sm text-blue-600 hover:underline">
+                    Xem tất cả →
+                </a>
+            </div>
+
+            <canvas id="revenueChart" height="120"></canvas>
+
         </div>
+
+
+        <!-- RECENT ORDERS -->
+        <div class="glass rounded-2xl p-6">
+
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold text-lg">5 đơn hàng mới nhất</h2>
+
+                <a th:href="@{/admin/orders}" class="text-sm text-blue-600 hover:underline">
+                    Xem tất cả →
+                </a>
+            </div>
+
+            <table class="w-full text-sm">
+                <thead class="text-zinc-500 border-b">
+                    <tr>
+                        <th class="text-left py-2">Mã</th>
+                        <th class="text-left">Khách</th>
+                        <th class="text-right">Tổng</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr th:each="o : ${latestOrders}" class="border-b border-zinc-100 dark:border-zinc-800">
+
+                        <td class="py-3 font-medium" th:text="'#' + ${o.id}">
+                        </td>
+
+                        <!-- ⭐ FIX NULL USER -->
+                        <td class="font-medium"
+                            th:text="${o.user != null ? o.user.fullName : (o.customerName ?: 'Khách lẻ')}">
+                        </td>
+
+                        <!-- ⭐ FIX NULL TOTAL -->
+                        <td class="text-right font-medium"
+                            th:text="${#numbers.formatDecimal(o.total ?: 0,0,'POINT',0,'COMMA')}">
+                        </td>
+
+                    </tr>
+
+                </tbody>
+            </table>
+
+        </div>
+
     </div>
 
 </div>
+
+
+<!-- ================= CHART.JS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('revenueChart');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: /*[[${revenueLabels}]]*/[],
+            datasets: [{
+                label: 'Doanh thu',
+                data: /*[[${revenueData}]]*/[],
+                borderWidth: 2,
+                tension: 0.4
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+
 </html>

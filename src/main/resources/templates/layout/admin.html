@@ -38,7 +38,7 @@
             to { opacity: 1; }
         }
 
-        /* Glassmorphism */
+        /* Glassmorphism giống Laravel */
         .glass {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
@@ -92,10 +92,16 @@
 
     <!-- ================= SIDEBAR ================= -->
     <aside class="hidden lg:flex w-72 flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
-        <!-- Logo -->
-        <div class="h-16 flex items-center px-8 border-b border-zinc-200 dark:border-zinc-800">
-            <span class="text-2xl font-light tracking-tighter text-zinc-900 dark:text-white">NOVA ADMIN</span>
-        </div>
+        <!-- Logo giống Laravel - Click được -->
+        <a th:href="@{/admin}" class="h-16 flex items-center px-8 border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
+            <div class="flex items-center gap-3">
+                <!-- SVG Logo giống Laravel -->
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                <span class="text-2xl font-light tracking-[-0.05em] text-zinc-900 dark:text-white">NOVA</span>
+            </div>
+        </a>
 
         <!-- Nav -->
         <nav class="flex-1 px-4 py-6">
@@ -153,19 +159,23 @@
                 <!-- Hamburger mobile -->
                 <button id="hamburger" class="lg:hidden text-2xl">☰</button>
 
-                <!-- Search -->
+                <!-- Search (không icon kính lúp) -->
                 <div class="flex-1 max-w-xl relative">
                     <input type="text" placeholder="Tìm kiếm đơn hàng, sản phẩm..." 
-                           class="w-full bg-zinc-100 dark:bg-zinc-800 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 rounded-full py-2.5 pl-11 pr-4 text-sm outline-none">
-                    <div class="absolute left-4 top-3 text-zinc-400">🔍</div>
+                           class="w-full bg-zinc-100 dark:bg-zinc-800 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 rounded-full py-2.5 pl-5 pr-4 text-sm outline-none">
                 </div>
             </div>
 
             <div class="flex items-center gap-6">
+                <!-- Notification (không icon chuông) -->
                 <div class="relative">
-                    <div class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center cursor-pointer">🔔</div>
-                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white">3</div>
+                    <div class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">
+                        <span class="text-sm font-medium">Thông báo</span>
+                        <div class="ml-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-medium">3</div>
+                    </div>
                 </div>
+
+                <!-- User -->
                 <div class="flex items-center gap-3">
                     <div class="text-right">
                         <div class="font-medium">Admin</div>
@@ -228,9 +238,6 @@
         toast.className = `toast glass px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 min-w-[320px] ${type === 'success' ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'}`;
         
         toast.innerHTML = `
-            <div class="${type === 'success' ? 'text-green-500' : 'text-red-500'} text-xl">
-                ${type === 'success' ? 'Thành công' : 'Lỗi'}
-            </div>
             <div class="flex-1">
                 <div class="font-medium">${type === 'success' ? 'Thành công' : 'Lỗi'}</div>
                 <div class="text-sm">${message}</div>

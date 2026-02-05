@@ -1,10 +1,11 @@
 package com.shop.clothingstore.service;
 
-import com.shop.clothingstore.entity.SubCategory;
-import com.shop.clothingstore.repository.SubCategoryRepository;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.shop.clothingstore.entity.SubCategory;
+import com.shop.clothingstore.repository.SubCategoryRepository;
 
 @Service
 public class SubCategoryService {
@@ -17,5 +18,10 @@ public class SubCategoryService {
 
     public List<SubCategory> getAllSubCategories() {
         return subCategoryRepository.findAll();
+    }
+
+    // Thêm method này
+    public List<SubCategory> getSubCategoriesByCategoryId(Long categoryId) {
+        return subCategoryRepository.findByCategoryId(categoryId);
     }
 }

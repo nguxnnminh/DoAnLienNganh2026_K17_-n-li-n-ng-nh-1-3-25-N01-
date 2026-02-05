@@ -1,124 +1,152 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/admin :: html}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
 
 <div th:fragment="content">
 
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-2xl font-semibold">Quản Lý Sản Phẩm</h1>
+    <!-- PAGE TITLE -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+
+        <h1 class="text-2xl font-semibold tracking-tight">
+            Quản lý sản phẩm
+        </h1>
 
         <a th:href="@{/admin/products/create}"
-           class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">
-            + Thêm Sản Phẩm Mới
+            class="bg-black dark:bg-zinc-800 text-white px-6 py-2.5 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-700 transition font-medium">
+            + Thêm sản phẩm mới
         </a>
+
     </div>
 
-    <!-- Table -->
-    <div class="bg-white border rounded-lg overflow-hidden">
-        <table class="w-full text-sm">
 
-            <!-- Table Head -->
-            <thead class="bg-gray-100 text-gray-600">
-            <tr>
-                <th class="p-4 text-left">Tên</th>
-                <th class="p-4 text-left">Danh mục phụ</th>
-                <th class="p-4 text-center">Giá</th>
-                <th class="p-4 text-center">Tồn kho tổng</th>
-                <th class="p-4 text-center">Trạng thái</th>
-                <th class="p-4 text-right">Hành động</th>
-            </tr>
+    <!-- TABLE -->
+    <div class="glass rounded-2xl overflow-x-auto border border-zinc-200 dark:border-zinc-800">
+
+        <table class="w-full table-fixed text-sm text-zinc-700 dark:text-zinc-300">
+
+            <!-- LOCK COLUMN WIDTH -->
+            <colgroup>
+                <col style="width:30%">
+                <col style="width:20%">
+                <col style="width:15%">
+                <col style="width:10%">
+                <col style="width:10%">
+                <col style="width:15%">
+            </colgroup>
+
+
+            <!-- HEADER -->
+            <thead class="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-500 uppercase text-xs tracking-wide">
+                <tr>
+                    <th class="px-6 py-5 font-medium text-left">Tên sản phẩm</th>
+                    <th class="px-6 py-5 font-medium text-left">Danh mục phụ</th>
+                    <th class="px-6 py-5 font-medium text-center">Giá</th>
+                    <th class="px-6 py-5 font-medium text-center">Tồn kho tổng</th>
+                    <th class="px-6 py-5 font-medium text-center">Trạng thái</th>
+                    <th class="px-6 py-5 font-medium text-right">Hành động</th>
+                </tr>
             </thead>
 
-            <!-- Table Body -->
-            <tbody>
 
-            <!-- Loop Product -->
-            <tr th:each="product : ${products}"
-                class="border-t hover:bg-gray-50">
+            <!-- BODY -->
+            <tbody class="divide-y divide պետականLet's produce correct text: divide-zinc-200 dark:divide-zinc-800">
 
-                <!-- Tên -->
-                <td class="p-4"
-                    th:text="${product.name}">
-                </td>
 
-                <!-- SubCategory -->
-                <td class="p-4"
-                    th:text="${product.subCategory.name}">
-                </td>
+                <tr th:each="product : ${products}" class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition">
 
-                <!-- Giá thấp nhất -->
-                <td class="p-4 text-center">
 
-                    <span th:text="${
-                        product.minPrice != null
-                        ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')
-                        : '-'
-                    }">
-                    </span> ₫
+                    <!-- NAME -->
+                    <td class="px-6 py-5 truncate font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                        <span th:text="${product.name}"></span>
+                    </td>
 
-                </td>
 
-                <!-- Tổng tồn kho -->
-                <td class="p-4 text-center"
-                    th:text="${product.totalStock}">
-                </td>
+                    <!-- SUB CATEGORY -->
+                    <td class="px-6 py-5 truncate text-zinc-600 dark:text-zinc-400">
 
-                <!-- Trạng thái -->
-                <td class="p-4 text-center">
+                        <span th:text="${
+        product.subCategory != null 
+        ? product.subCategory.name 
+        : 'Chưa phân loại'
+    }"></span>
 
-                    <span th:if="${product.active}"
-                          class="text-green-600 font-medium">
-                        Active
-                    </span>
+                    </td>
 
-                    <span th:unless="${product.active}"
-                          class="text-red-600 font-medium">
-                        Inactive
-                    </span>
 
-                </td>
+                    <!-- MIN PRICE -->
+                    <td
+                        class="px-6 py-5 text-center whitespace-nowrap font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
 
-                <!-- Actions -->
-                <td class="p-4 text-right space-x-3">
+                        <span th:text="${
+        product.minPrice != null
+        ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')
+        : '-'
+    }"></span> ₫
 
-                    <!-- Edit -->
-                    <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
-                       class="text-blue-600 hover:underline">
-                        Sửa
-                    </a>
+                    </td>
 
-                    <!-- Delete -->
-                    <form th:action="@{/admin/products/{id}(id=${product.id})}"
-                          method="post"
-                          class="inline"
-                          onsubmit="return confirm('Xác nhận xóa sản phẩm?')">
 
-                        <input type="hidden" name="_method" value="DELETE"/>
+                    <!-- TOTAL STOCK -->
+                    <td
+                        class="px-6 py-5 text-center whitespace-nowrap font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                        <span th:text="${product.totalStock ?: 0}"></span>
+                    </td>
 
-                        <button type="submit"
-                                class="text-red-600 hover:underline">
-                            Xóa
-                        </button>
 
-                    </form>
+                    <!-- STATUS -->
+                    <td class="px-6 py-5 text-center whitespace-nowrap">
 
-                </td>
+                        <span th:if="${product.active}"
+                            class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                            Active
+                        </span>
 
-            </tr>
+                        <span th:unless="${product.active}"
+                            class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                            Inactive
+                        </span>
 
-            <!-- Empty Data -->
-            <tr th:if="${#lists.isEmpty(products)}">
-                <td colspan="6"
-                    class="p-8 text-center text-gray-500">
-                    Chưa có sản phẩm nào
-                </td>
-            </tr>
+                    </td>
+
+
+                    <!-- ACTION -->
+                    <td class="px-6 py-5 text-right whitespace-nowrap space-x-4">
+
+                        <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition">
+                            Sửa
+                        </a>
+
+
+                        <form th:action="@{/admin/products/{id}(id=${product.id})}" method="post" class="inline"
+                            onsubmit="return confirm('Xác nhận xóa sản phẩm này?')">
+
+                            <input type="hidden" name="_method" value="DELETE" />
+
+                            <button type="submit"
+                                class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium text-sm transition">
+                                Xóa
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- EMPTY -->
+                <tr th:if="${#lists.isEmpty(products)}">
+                    <td colspan="6" class="px-6 py-16 text-center text-zinc-500">
+                        Chưa có sản phẩm nào.
+                    </td>
+                </tr>
+
 
             </tbody>
-
         </table>
+
     </div>
 
 </div>
+
 </html>

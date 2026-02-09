@@ -169,10 +169,20 @@
                 <form th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post" class="space-y-4">
 
                     <select name="status"
-                        class="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800">
+                            class="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2.5">
 
-                        <option th:each="s : ${statuses}" th:value="${s}" th:selected="${s == order.status}"
-                            th:text="${s}">
+                        <option th:each="s : ${statuses}"
+                                th:value="${s}"
+                                th:selected="${s == order.status}"
+
+                                th:disabled="${
+                                    (order.status.name() == 'COMPLETED' and s.name() != 'COMPLETED') or
+                                    (order.status.name() == 'SHIPPING' and !(s.name() == 'SHIPPING' or s.name() == 'COMPLETED')) or
+                                    (order.status.name() == 'PROCESSING' and !(s.name() == 'PROCESSING' or s.name() == 'SHIPPING')) or
+                                    (order.status.name() == 'PENDING' and !(s.name() == 'PENDING' or s.name() == 'PROCESSING'))
+                                }"
+
+                                th:text="${s}">
                         </option>
 
                     </select>

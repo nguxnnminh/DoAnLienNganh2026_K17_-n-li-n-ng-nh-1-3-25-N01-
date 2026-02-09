@@ -21,13 +21,11 @@ public class ProductSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
 
-            // ⭐ JOIN 1 lần duy nhất
-            Join<Product, ProductVariant> variantJoin =
-                    root.join("productVariants", JoinType.LEFT);
+            Join<Product, ProductVariant> variantJoin = null;
 
-            // =============================
-            // SEARCH NAME
-            // =============================
+            // ==================================================
+            // SEARCH BY NAME
+            // ==================================================
             if (filter.getKeyword() != null && !filter.getKeyword().isBlank()) {
 
                 predicates.add(
@@ -38,9 +36,9 @@ public class ProductSpecification {
                 );
             }
 
-            // =============================
+            // ==================================================
             // FILTER CATEGORY
-            // =============================
+            // ==================================================
             if (filter.getCategoryId() != null) {
 
                 predicates.add(
@@ -53,9 +51,9 @@ public class ProductSpecification {
                 );
             }
 
-            // =============================
+            // ==================================================
             // FILTER SUB CATEGORY
-            // =============================
+            // ==================================================
             if (filter.getSubCategoryId() != null) {
 
                 predicates.add(
@@ -66,34 +64,40 @@ public class ProductSpecification {
                 );
             }
 
-            // =============================
-            // FILTER MIN PRICE
-            // =============================
-            if (filter.getMinPrice() != null) {
+            // ==================================================
+            // FILTER PRICE (JOIN ONLY WHEN NEEDED)
+            // ==================================================
+            if (filter.getMinPrice() != null || filter.getMaxPrice() != null) {
 
-                predicates.add(
-                        cb.greaterThanOrEqualTo(
-                                variantJoin.get("price"),
-                                filter.getMinPrice()
-                        )
-                );
+                variantJoin = root.join("productVariants", JoinType.LEFT);
+
+                if (filter.getMinPrice() != null) {
+
+                    predicates.add(
+                            cb.greaterThanOrEqualTo(
+                                    variantJoin.get("price"),
+                                    filter.getMinPrice()
+                            )
+                    );
+                }
+
+                if (filter.getMaxPrice() != null) {
+
+                    predicates.add(
+                            cb.lessThanOrEqualTo(
+                                    variantJoin.get("price"),
+                                    filter.getMaxPrice()
+                            )
+                    );
+                }
+
+                query.distinct(true);
             }
 
-            // =============================
-            // FILTER MAX PRICE
-            // =============================
-            if (filter.getMaxPrice() != null) {
-
-                predicates.add(
-                        cb.lessThanOrEqualTo(
-                                variantJoin.get("price"),
-                                filter.getMaxPrice()
-                        )
-                );
-            }
-
-            // ⭐ tránh duplicate product
-            query.distinct(true);
+            // ==================================================
+            // ONLY ACTIVE PRODUCT
+            // ==================================================
+            predicates.add(cb.isTrue(root.get("active")));
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

@@ -1,97 +1,136 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: html}">
+      th:replace="~{layout/base :: layout(~{::content}, 'Thanh toán')}">
 
 <div th:fragment="content">
 
-    <div class="grid grid-cols-12 gap-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
-        <!-- FORM -->
-        <div class="col-span-7">
+        <!-- ================= FORM ================= -->
+        <div class="lg:col-span-7 space-y-10">
 
-            <h1 class="text-2xl font-semibold mb-8">
-                Checkout
-            </h1>
+            <!-- TITLE -->
+            <div>
+                <h1 class="text-3xl font-semibold tracking-tight">
+                    Thanh toán
+                </h1>
+                <p class="text-sm text-zinc-500 mt-2">
+                    Vui lòng kiểm tra thông tin trước khi đặt hàng
+                </p>
+            </div>
 
             <form th:action="@{/checkout}" method="post" class="space-y-6">
 
-                <!-- FULL NAME -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">
-                        Full name
+                <!-- HỌ TÊN -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Họ và tên
                     </label>
+
                     <input type="text"
                            name="customerName"
                            th:value="${user != null ? user.fullName : ''}"
                            required
-                           class="w-full border px-4 py-3 focus:outline-none focus:border-black">
+                           class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
+                                  bg-white dark:bg-zinc-900
+                                  px-4 py-3 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                 </div>
 
-                <!-- PHONE -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">
-                        Phone
+                <!-- SĐT -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Số điện thoại
                     </label>
+
                     <input type="text"
                            name="phone"
                            th:value="${user != null ? user.phone : ''}"
                            required
-                           class="w-full border px-4 py-3 focus:outline-none focus:border-black">
+                           class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
+                                  bg-white dark:bg-zinc-900
+                                  px-4 py-3 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                 </div>
 
-                <!-- ADDRESS -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">
-                        Address
+                <!-- ĐỊA CHỈ -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Địa chỉ giao hàng
                     </label>
+
                     <textarea name="address"
                               rows="4"
                               required
-                              class="w-full border px-4 py-3 focus:outline-none focus:border-black"
+                              class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
+                                     bg-white dark:bg-zinc-900
+                                     px-4 py-3 text-sm
+                                     focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                               th:text="${user != null ? user.address : ''}">
                     </textarea>
                 </div>
 
                 <!-- ERROR -->
                 <div th:if="${error}"
-                     class="border border-red-500 text-red-600 px-4 py-3 text-sm">
+                     class="rounded-xl border border-red-500/40 bg-red-50 dark:bg-red-900/20
+                            text-red-600 dark:text-red-400 px-4 py-3 text-sm">
                     <span th:text="${error}"></span>
                 </div>
 
-                <!-- SUBMIT -->
-                <button class="bg-black text-white px-10 py-3 hover:opacity-90 transition">
-                    PLACE ORDER
+                <!-- BUTTON -->
+                <button
+                    class="w-full sm:w-auto
+                           bg-black dark:bg-white
+                           text-white dark:text-black
+                           px-12 py-3 rounded-xl
+                           text-sm font-medium tracking-wide
+                           hover:opacity-90 transition">
+                    ĐẶT HÀNG
                 </button>
 
             </form>
         </div>
 
-        <!-- SUMMARY -->
-        <div class="col-span-5 border p-6 h-fit">
+        <!-- ================= ORDER SUMMARY ================= -->
+        <div class="lg:col-span-5">
 
-            <h3 class="font-semibold mb-4">
-                Order Summary
-            </h3>
+            <div class="sticky top-32 rounded-2xl border border-zinc-200 dark:border-zinc-800
+                        bg-white dark:bg-zinc-900 p-6 space-y-6">
 
-            <div class="flex justify-between text-sm mb-2">
-                <span>Subtotal</span>
-                <span>
-                    <span th:text="${total}"></span> ₫
-                </span>
-            </div>
+                <h3 class="text-lg font-semibold">
+                    Tóm tắt đơn hàng
+                </h3>
 
-            <div class="flex justify-between text-sm mb-4">
-                <span>Shipping</span>
-                <span>Free</span>
-            </div>
+                <div class="space-y-3 text-sm">
 
-            <hr class="mb-4">
+                    <!-- TẠM TÍNH -->
+                    <div class="flex justify-between">
+                        <span class="text-zinc-500">Tạm tính</span>
+                        <span class="font-medium">
+                            <span th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}"></span> ₫
+                        </span>
+                    </div>
 
-            <div class="flex justify-between font-medium text-lg">
-                <span>Total</span>
-                <span>
-                    <span th:text="${total}"></span> ₫
-                </span>
+                    <!-- SHIPPING -->
+                    <div class="flex justify-between">
+                        <span class="text-zinc-500">Vận chuyển</span>
+                        <span class="font-medium text-green-600">
+                            Miễn phí
+                        </span>
+                    </div>
+
+                </div>
+
+                <hr class="border-zinc-200 dark:border-zinc-800">
+
+                <!-- TOTAL -->
+                <div class="flex justify-between items-center text-lg font-semibold">
+                    <span>Tổng cộng</span>
+                    <span>
+                        <span th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}"></span> ₫
+                    </span>
+                </div>
+
             </div>
 
         </div>

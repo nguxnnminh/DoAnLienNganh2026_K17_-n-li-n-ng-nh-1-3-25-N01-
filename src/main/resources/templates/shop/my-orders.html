@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout/base :: html">
+      th:replace="~{layout/base :: layout(~{::content}, 'Tên trang')}"
+>
 
 <div th:fragment="content">
 

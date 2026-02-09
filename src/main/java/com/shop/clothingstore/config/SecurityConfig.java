@@ -31,33 +31,46 @@ public class SecurityConfig {
 
         http
             .authorizeHttpRequests(auth -> auth
+
+                // ================= PUBLIC =================
                 .requestMatchers(
+                        "/",
                         "/login",
                         "/register",
-                        "/product/**",
+                        "/products/**",
                         "/cart/**",
-                        "/checkout/**",
+                        "/checkout/**", // ⭐ cho phép guest checkout
                         "/forgot-password",
                         "/reset-password",
                         "/css/**",
                         "/js/**",
-                        "/images/**",
-                        "/"
+                        "/images/**"
                 ).permitAll()
 
+                // ================= USER ONLY =================
+                .requestMatchers(
+                        "/my-orders",
+                        "/profile"
+                ).authenticated()
+
+                // ================= ADMIN ONLY =================
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/checkout/**").authenticated()
-                .anyRequest().authenticated()
+
+                // ================= DEFAULT =================
+                .anyRequest().permitAll()
             )
+
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .successHandler(successHandler) // ⭐ QUAN TRỌNG
+                .successHandler(successHandler)
                 .permitAll()
             )
+
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
+                .permitAll()
             );
 
         return http.build();

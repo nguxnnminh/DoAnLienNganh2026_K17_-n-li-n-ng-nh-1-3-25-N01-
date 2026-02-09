@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,11 +39,16 @@ public class ProductService {
         this.subCategoryRepository = subCategoryRepository;
     }
 
+    // =====================================================
+    // GET ALL
+    // =====================================================
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    // ================= CREATE =================
+    // =====================================================
+    // CREATE PRODUCT
+    // =====================================================
     @Transactional
     public Product createProduct(ProductCreateDTO dto) throws IOException {
 
@@ -55,25 +61,35 @@ public class ProductService {
         product.setSubCategory(subCategory);
         product.setActive(dto.getActive() != null ? dto.getActive() : true);
 
+        // ⭐ Generate slug
+        product.setSlug(generateUniqueSlug(dto.getName()));
+
+        // ================= VARIANTS =================
         if (dto.getVariants() != null) {
             for (VariantDTO v : dto.getVariants()) {
+
                 ProductVariant variant = new ProductVariant();
                 variant.setSize(v.getSize());
                 variant.setColor(v.getColor());
                 variant.setPrice(v.getPrice());
                 variant.setStock(v.getStock());
+                variant.setSold(0); // ⭐ mặc định
+
                 product.addVariant(variant);
             }
         }
 
         Product saved = productRepository.save(product);
 
+        // ================= IMAGES =================
         saveImages(saved, dto.getImages(), dto.getPrimaryImageIndex());
 
         return saved;
     }
 
-    // ================= UPDATE =================
+    // =====================================================
+    // UPDATE PRODUCT
+    // =====================================================
     @Transactional
     public Product updateProduct(Long id, ProductUpdateDTO dto) throws IOException {
 
@@ -83,33 +99,41 @@ public class ProductService {
         SubCategory subCategory = subCategoryRepository.findById(dto.getSubCategoryId())
                 .orElseThrow(() -> new RuntimeException("SubCategory không tồn tại"));
 
+        // ⭐ Nếu đổi tên -> update slug
+        if (!product.getName().equals(dto.getName())) {
+            product.setSlug(generateUniqueSlug(dto.getName()));
+        }
+
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setSubCategory(subCategory);
         product.setActive(dto.getActive());
 
-        // Clear variants cũ
+        // ================= VARIANTS =================
         product.getProductVariants().clear();
 
-        // Add variants mới
         if (dto.getVariants() != null) {
             for (VariantDTO v : dto.getVariants()) {
+
                 ProductVariant variant = new ProductVariant();
                 variant.setSize(v.getSize());
                 variant.setColor(v.getColor());
                 variant.setPrice(v.getPrice());
                 variant.setStock(v.getStock());
+                variant.setSold(0);
+
+
                 product.addVariant(variant);
             }
         }
 
-        // Xóa ảnh được chọn
+        // ================= DELETE IMAGE =================
         if (dto.getImagesToDelete() != null) {
             product.getImages().removeIf(img ->
                     dto.getImagesToDelete().contains(img.getId()));
         }
 
-        // Thêm ảnh mới
+        // ================= ADD NEW IMAGE =================
         if (dto.getNewImages() != null && !dto.getNewImages().isEmpty()) {
             saveImages(product, dto.getNewImages(), dto.getPrimaryImageIndex());
         }
@@ -117,7 +141,9 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    // ================= DELETE =================
+    // =====================================================
+    // DELETE
+    // =====================================================
     @Transactional
     public void deleteProduct(Long id) {
 
@@ -132,7 +158,9 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
     }
 
-    // ================= SAVE IMAGE =================
+    // =====================================================
+    // SAVE IMAGE
+    // =====================================================
     private void saveImages(Product product,
                             List<MultipartFile> files,
                             Integer primaryIndex) throws IOException {
@@ -140,6 +168,7 @@ public class ProductService {
         if (files == null || files.isEmpty()) return;
 
         Path uploadPath = Paths.get(uploadDir);
+
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
@@ -160,5 +189,33 @@ public class ProductService {
 
             product.addImage(image);
         }
+    }
+
+    // =====================================================
+    // SLUG GENERATOR ⭐⭐⭐
+    // =====================================================
+    private String generateUniqueSlug(String name) {
+
+        String baseSlug = toSlug(name);
+        String slug = baseSlug;
+        int i = 1;
+
+        while (productRepository.findBySlug(slug).isPresent()) {
+            slug = baseSlug + "-" + i++;
+        }
+
+        return slug;
+    }
+
+    private String toSlug(String input) {
+
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        String slug = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+        slug = slug.toLowerCase();
+        slug = slug.replaceAll("[^a-z0-9\\s-]", "");
+        slug = slug.replaceAll("\\s+", "-");
+
+        return slug;
     }
 }

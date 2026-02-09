@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false, unique = true)
+    private String slug;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -62,7 +65,12 @@ public class Product {
                 .sum();
     }
 
-    // helper methods
+    public Integer getTotalSold() {
+        return productVariants.stream()
+                .mapToInt(ProductVariant::getSold)
+                .sum();
+    }
+
     public void addVariant(ProductVariant variant) {
         variant.setProduct(this);
         productVariants.add(variant);

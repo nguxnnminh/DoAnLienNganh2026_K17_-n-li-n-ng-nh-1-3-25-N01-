@@ -12,12 +12,43 @@ public interface ProductRepository
         extends JpaRepository<Product, Long>,
                 JpaSpecificationExecutor<Product> {
 
+    /*
+     * =========================
+     * PRODUCT DETAIL BY ID
+     * =========================
+     *
+     * ⚠ KHÔNG FETCH images cùng lúc
+     * → tránh MultipleBagFetchException
+     */
+
     @Override
     @EntityGraph(attributePaths = {
             "productVariants",
-            "images",
             "subCategory",
             "subCategory.category"
     })
     Optional<Product> findById(Long id);
+
+
+    /*
+     * =========================
+     * PRODUCT DETAIL BY SLUG
+     * =========================
+     */
+
+    @EntityGraph(attributePaths = {
+            "productVariants",
+            "subCategory",
+            "subCategory.category"
+    })
+    Optional<Product> findBySlug(String slug);
+
+
+    /*
+     * =========================
+     * SIMPLE SEARCH
+     * =========================
+     */
+
+    Optional<Product> findByName(String name);
 }

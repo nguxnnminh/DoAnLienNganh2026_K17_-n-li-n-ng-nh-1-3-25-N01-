@@ -1,80 +1,122 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout/base :: html">
+      th:replace="~{layout/base :: layout(~{::content}, 'Trang chủ')}">
 
-<div th:fragment="content">
+<div th:fragment="content" class="space-y-28">
 
-    <!-- HERO -->
-    <section class="mb-24">
-        <div class="text-center max-w-3xl mx-auto">
-            <h1 class="text-5xl font-semibold tracking-tight mb-6">
-                Modern Essentials
-            </h1>
-            <p class="text-gray-600 text-lg mb-10">
-                Premium basics designed for everyday wear.
-            </p>
+    <!-- ================= HERO ================= -->
+    <section class="text-center max-w-3xl mx-auto space-y-8">
 
-            <a href="/shop"
-               class="inline-block border border-gray-900 px-10 py-3 text-sm uppercase tracking-wide
-                      hover:bg-gray-900 hover:text-white transition">
-                Shop Now
-            </a>
-        </div>
+        <h1 class="text-5xl md:text-6xl font-semibold tracking-tight leading-tight">
+            Modern Essentials
+        </h1>
+
+        <p class="text-zinc-500 text-lg">
+            Premium basics designed for everyday wear
+        </p>
+
+        <a th:href="@{/products}"
+           class="inline-block px-10 py-3 border border-zinc-900 dark:border-zinc-100 
+                  text-sm uppercase tracking-wider 
+                  hover:bg-zinc-900 hover:text-white 
+                  dark:hover:bg-white dark:hover:text-black 
+                  transition">
+            Shop Now
+        </a>
+
     </section>
 
-    <!-- PRODUCT GRID -->
-    <section>
+
+
+    <!-- ================= FEATURED ================= -->
+    <section class="space-y-16">
+
+        <div class="text-center space-y-2">
+            <h2 class="text-3xl font-semibold tracking-tight">
+                Featured Products
+            </h2>
+
+            <p class="text-zinc-500 text-sm">
+                Curated pieces selected by NOVA
+            </p>
+        </div>
+
+
+
+        <!-- GRID -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
-    <div th:each="product : ${products}">
-        <a th:href="@{/product/{id}(id=${product.id})}"
-           class="group block">
 
-            <!-- IMAGE -->
-            <div class="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+            <div th:each="product : ${products}"
+                 class="group">
 
-                            <!-- Primary image -->
-                            <img
-                            th:if="${product.images != null and !product.images.isEmpty()}"
-                            th:src="${product.images[0].imageUrl}"
-                            class="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
-                            />
+                <a th:href="${
+                        product.subCategory != null and product.subCategory.category != null
+                        ? '/products/' + product.subCategory.category.slug + '/' + product.subCategory.slug + '/' + product.id
+                        : '/product/' + product.id
+                }"
+                   class="block space-y-4">
 
-                            <!-- Hover image -->
-                            <img
-                            th:if="${product.images.size() > 1}"
-                            th:src="${product.images[1].imageUrl}"
-                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                            />
+                    <!-- IMAGE -->
+                    <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
 
-                            <!-- Fallback -->
-                            <div th:if="${product.images == null or product.images.isEmpty()}"
-                                class="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-                                No image
-                            </div>
+                        <!-- PRIMARY -->
+                        <img th:if="${product.images != null and !product.images.isEmpty()}"
+                             th:src="${product.images[0].imageUrl}"
+                             class="w-full h-full object-cover transition duration-700 group-hover:scale-105" />
+
+                        <!-- SECOND IMAGE -->
+                        <img th:if="${product.images != null and product.images.size() > 1}"
+                             th:src="${product.images[1].imageUrl}"
+                             class="absolute inset-0 w-full h-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
+
+                        <!-- FALLBACK -->
+                        <div th:if="${product.images == null or product.images.isEmpty()}"
+                             class="flex items-center justify-center h-full text-sm text-zinc-400">
+                            No image
                         </div>
 
-                        <!-- INFO -->
-                        <div class="mt-4 space-y-1">
-                            <h3 class="text-sm font-medium uppercase tracking-wide"
-                                th:text="${product.name}">
-                            </h3>
+                    </div>
 
-                            <p class="text-sm text-gray-600">
-                                <span
-                                th:if="${product.productVariants != null and !product.productVariants.isEmpty()}"
-                                th:text="${#numbers.formatDecimal(product.productVariants[0].price, 0, 'COMMA', 0, 'POINT')}">
-                                </span>
-                                ₫
-                            </p>
-                        </div>
 
-                    </a>
-                </div>
+                    <!-- INFO -->
+                    <div class="space-y-1">
+
+                        <h3 class="text-sm font-medium tracking-wide uppercase 
+                                   group-hover:text-blue-600 transition"
+                            th:text="${product.name}">
+                        </h3>
+
+                        <p class="text-sm text-zinc-500">
+
+                            <span th:if="${product.productVariants != null and !product.productVariants.isEmpty()}"
+                                  th:text="${#numbers.formatDecimal(product.productVariants[0].price, 0, 'COMMA', 0, 'POINT')}">
+                            </span>
+
+                            <span th:if="${product.productVariants == null or product.productVariants.isEmpty()}">
+                                Liên hệ
+                            </span>
+
+                            ₫
+                        </p>
+
+                    </div>
+
+                </a>
+
             </div>
-            <!-- END PRODUCT ITEM -->
+
+
+
+            <!-- EMPTY -->
+            <div th:if="${#lists.isEmpty(products)}"
+                 class="col-span-full text-center py-20 text-zinc-400">
+                Chưa có sản phẩm nổi bật.
+            </div>
 
         </div>
+
     </section>
 
 </div>
+
 </html>

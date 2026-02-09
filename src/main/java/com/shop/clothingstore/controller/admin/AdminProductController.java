@@ -21,6 +21,7 @@ import com.shop.clothingstore.dto.ProductUpdateDTO;
 import com.shop.clothingstore.dto.VariantDTO;
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.ProductVariant;
+import com.shop.clothingstore.service.CategoryService;
 import com.shop.clothingstore.service.ProductService;
 import com.shop.clothingstore.service.SubCategoryService;
 
@@ -31,12 +32,17 @@ import jakarta.validation.Valid;
 public class AdminProductController {
 
     private final ProductService productService;
-    private final SubCategoryService subCategoryService;  // Bạn cần tạo service này hoặc inject repository
+    private final SubCategoryService subCategoryService;
+    private final CategoryService categoryService;
 
-    public AdminProductController(ProductService productService, SubCategoryService subCategoryService) {
+    public AdminProductController(ProductService productService,
+                                SubCategoryService subCategoryService,
+                                CategoryService categoryService) {
         this.productService = productService;
         this.subCategoryService = subCategoryService;
+        this.categoryService = categoryService;
     }
+
 
     // DANH SÁCH SẢN PHẨM
     @GetMapping
@@ -50,9 +56,12 @@ public class AdminProductController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("productDTO", new ProductCreateDTO());
-        model.addAttribute("subCategories", subCategoryService.getAllSubCategories());
+
+        model.addAttribute("categories", categoryService.getAllCategories());
+
         return "admin/products/create";
     }
+
 
     @PostMapping("/create")
     public String createProduct(
@@ -117,6 +126,9 @@ public class AdminProductController {
             model.addAttribute("subCategories", subCategoryService.getAllSubCategories());
             model.addAttribute("existingImages", product.getImages());
             model.addAttribute("productId", id);
+            model.addAttribute("categories", categoryService.getAllCategories());
+            model.addAttribute("selectedCategoryId",
+                product.getSubCategory().getCategory().getId());
 
             return "admin/products/edit";
         } catch (Exception e) {

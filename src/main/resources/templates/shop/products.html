@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(content=~{::content}, title='Sản phẩm')}">
+
+<div th:fragment="content" class="max-w-7xl mx-auto px-4 py-10">
+
+    <!-- ================= BREADCRUMB ================= -->
+    <div class="mb-8 text-sm text-gray-500">
+        <a href="/" class="hover:text-black transition">Trang chủ</a>
+        <span class="mx-2">/</span>
+        <a href="/products" class="hover:text-black transition">Sản phẩm</a>
+
+        <span th:if="${currentCategory != null}">
+            <span class="mx-2">/</span>
+            <span th:text="${currentCategory.name}"></span>
+        </span>
+
+        <span th:if="${currentSubCategory != null}">
+            <span class="mx-2">/</span>
+            <span th:text="${currentSubCategory.name}"></span>
+        </span>
+    </div>
+
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="space-y-8">
+
+            <!-- CATEGORY -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Danh mục</h3>
+
+                <div class="space-y-2">
+                    <a th:each="cat : ${categories}" th:href="@{/products/{slug}(slug=${cat.slug})}"
+                        class="block transition hover:text-black" th:classappend="${currentCategory != null and currentCategory.id == cat.id
+                       ? 'font-semibold text-black'
+                       : 'text-gray-600'}">
+
+                        <span th:text="${cat.name}"></span>
+                    </a>
+                </div>
+            </div>
+
+
+            <!-- SUB CATEGORY -->
+            <div th:if="${currentCategory != null}">
+                <h3 class="text-lg font-semibold mb-4">Danh mục phụ</h3>
+
+                <div class="space-y-2">
+                    <a th:each="sub : ${subCategories}" th:href="@{/products/{catSlug}/{subSlug}
+                       (catSlug=${currentCategory.slug}, subSlug=${sub.slug})}"
+                        class="block transition hover:text-black" th:classappend="${currentSubCategory != null and currentSubCategory.id == sub.id
+                       ? 'font-semibold text-black'
+                       : 'text-gray-600'}">
+
+                        <span th:text="${sub.name}"></span>
+                    </a>
+                </div>
+            </div>
+
+        </aside>
+
+
+
+        <!-- ================= PRODUCT GRID ================= -->
+        <section class="md:col-span-3 space-y-6">
+
+            <!-- ================= SORT BAR ================= -->
+            <div class="flex justify-between items-center">
+
+                <p class="text-sm text-gray-500">
+                    Tìm thấy <span th:text="${products.totalElements}"></span> sản phẩm
+                </p>
+
+                <select class="border rounded px-3 py-2 text-sm" onchange="window.location.href=this.value">
+
+                    <!-- ===== ALL ===== -->
+                    <option th:if="${currentCategory == null}" th:value="@{/products(sort='newest')}"
+                        th:selected="${sort == 'newest'}">
+                        Mới nhất
+                    </option>
+
+                    <option th:if="${currentCategory == null}" th:value="@{/products(sort='price_asc')}"
+                        th:selected="${sort == 'price_asc'}">
+                        Giá thấp → cao
+                    </option>
+
+                    <option th:if="${currentCategory == null}" th:value="@{/products(sort='price_desc')}"
+                        th:selected="${sort == 'price_desc'}">
+                        Giá cao → thấp
+                    </option>
+
+                    <option th:if="${currentCategory == null}" th:value="@{/products(sort='best_seller')}"
+                        th:selected="${sort == 'best_seller'}">
+                        Bán chạy
+                    </option>
+
+
+                    <!-- ===== CATEGORY ===== -->
+                    <option th:if="${currentCategory != null and currentSubCategory == null}"
+                        th:value="@{/products/{slug}(slug=${currentCategory.slug}, sort='newest')}"
+                        th:selected="${sort == 'newest'}">
+                        Mới nhất
+                    </option>
+
+                    <option th:if="${currentCategory != null and currentSubCategory == null}"
+                        th:value="@{/products/{slug}(slug=${currentCategory.slug}, sort='price_asc')}"
+                        th:selected="${sort == 'price_asc'}">
+                        Giá thấp → cao
+                    </option>
+
+                    <option th:if="${currentCategory != null and currentSubCategory == null}"
+                        th:value="@{/products/{slug}(slug=${currentCategory.slug}, sort='price_desc')}"
+                        th:selected="${sort == 'price_desc'}">
+                        Giá cao → thấp
+                    </option>
+
+                    <option th:if="${currentCategory != null and currentSubCategory == null}"
+                        th:value="@{/products/{slug}(slug=${currentCategory.slug}, sort='best_seller')}"
+                        th:selected="${sort == 'best_seller'}">
+                        Bán chạy
+                    </option>
+
+
+                    <!-- ===== SUB CATEGORY ===== -->
+                    <option th:if="${currentSubCategory != null}" th:value="@{/products/{catSlug}/{subSlug}
+                            (catSlug=${currentCategory.slug},
+                            subSlug=${currentSubCategory.slug},
+                            sort='newest')}" th:selected="${sort == 'newest'}">
+                        Mới nhất
+                    </option>
+
+                    <option th:if="${currentSubCategory != null}" th:value="@{/products/{catSlug}/{subSlug}
+                            (catSlug=${currentCategory.slug},
+                            subSlug=${currentSubCategory.slug},
+                            sort='price_asc')}" th:selected="${sort == 'price_asc'}">
+                        Giá thấp → cao
+                    </option>
+
+                    <option th:if="${currentSubCategory != null}" th:value="@{/products/{catSlug}/{subSlug}
+                            (catSlug=${currentCategory.slug},
+                            subSlug=${currentSubCategory.slug},
+                            sort='price_desc')}" th:selected="${sort == 'price_desc'}">
+                        Giá cao → thấp
+                    </option>
+
+                    <option th:if="${currentSubCategory != null}" th:value="@{/products/{catSlug}/{subSlug}
+                            (catSlug=${currentCategory.slug},
+                            subSlug=${currentSubCategory.slug},
+                            sort='best_seller')}" th:selected="${sort == 'best_seller'}">
+                        Bán chạy
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- EMPTY -->
+            <div th:if="${products.content.isEmpty()}" class="text-center py-20 text-gray-500">
+                Không có sản phẩm
+            </div>
+
+
+            <!-- PRODUCT LIST -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-6" th:if="${!products.content.isEmpty()}">
+
+                <div th:each="product : ${products.content}"
+                    class="border rounded-lg overflow-hidden group hover:shadow-md transition relative">
+
+                    <a th:href="@{/products/{catSlug}/{subSlug}/{id}
+                        (catSlug=${product.subCategory.category.slug},
+                         subSlug=${product.subCategory.slug},
+                         id=${product.id})}">
+
+                        <!-- HẾT HÀNG -->
+                        <span th:if="${product.totalStock != null and product.totalStock == 0}"
+                            class="absolute top-2 left-2 bg-gray-700 text-white text-xs px-2 py-1 rounded">
+                            Hết hàng
+                        </span>
+
+                        <!-- LOW STOCK -->
+                        <span
+                            th:if="${product.totalStock != null and product.totalStock > 0 and product.totalStock <= 5}"
+                            class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                            Còn <span th:text="${product.totalStock}"></span> sản phẩm
+                        </span>
+
+
+                        <!-- IMAGE -->
+                        <img class="w-full aspect-square object-cover group-hover:scale-105 transition" th:src="${product.images != null and !product.images.isEmpty()
+                                     ? product.images[0].imageUrl
+                                     : '/images/no-image.png'}" />
+
+
+                        <!-- INFO -->
+                        <div class="p-4 space-y-2">
+
+                            <h3 class="font-semibold line-clamp-2" th:text="${product.name}">
+                            </h3>
+
+                            <p class="text-sm text-gray-600">
+                                <span
+                                    th:text="${#numbers.formatDecimal(product.minPrice ?: 0, 0, 'POINT', 0, 'COMMA')}"></span>
+                                ₫
+                            </p>
+
+                        </div>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ================= PAGINATION ================= -->
+            <div class="mt-10 flex justify-center items-center gap-3" th:if="${products.totalPages > 1}">
+
+                <!-- PREV -->
+                <a th:if="${products.number > 0}" th:href="${currentSubCategory != null} ?
+                @{/products/{catSlug}/{subSlug}
+                    (catSlug=${currentCategory.slug},
+                    subSlug=${currentSubCategory.slug},
+                    page=${products.number - 1},
+                    sort=${sort})}
+                :
+                (${currentCategory != null} ?
+                @{/products/{slug}
+                    (slug=${currentCategory.slug},
+                    page=${products.number - 1},
+                    sort=${sort})}
+                :
+                @{/products(page=${products.number - 1}, sort=${sort})})"
+                    class="px-4 py-2 border rounded hover:bg-gray-100 transition">
+                    Trước
+                </a>
+
+                <!-- CURRENT -->
+                <span class="px-4 py-2 border rounded bg-gray-50">
+                    Trang <span th:text="${products.number + 1}"></span>
+                    /
+                    <span th:text="${products.totalPages}"></span>
+                </span>
+
+                <!-- NEXT -->
+                <a th:if="${products.number < products.totalPages - 1}" th:href="${currentSubCategory != null} ?
+                @{/products/{catSlug}/{subSlug}
+                    (catSlug=${currentCategory.slug},
+                    subSlug=${currentSubCategory.slug},
+                    page=${products.number + 1},
+                    sort=${sort})}
+                :
+                (${currentCategory != null} ?
+                @{/products/{slug}
+                    (slug=${currentCategory.slug},
+                    page=${products.number + 1},
+                    sort=${sort})}
+                :
+                @{/products(page=${products.number + 1}, sort=${sort})})"
+                    class="px-4 py-2 border rounded hover:bg-gray-100 transition">
+                    Sau
+                </a>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+</html>

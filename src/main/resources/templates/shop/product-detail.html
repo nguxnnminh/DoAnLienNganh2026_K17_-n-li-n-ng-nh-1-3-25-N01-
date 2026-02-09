@@ -1,75 +1,269 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: html}">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ${product.name})}">
 
-<div th:fragment="content">
+<div th:fragment="content" class="grid md:grid-cols-2 gap-12">
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+    <!-- ================= IMAGE ================= -->
+    <div class="space-y-4">
 
-        <!-- LEFT: IMAGES -->
-        <div>
-            <img th:if="${product.images != null and !product.images.isEmpty()}" th:src="${product.images[0].imageUrl}"
-                class="w-full aspect-[3/4] object-cover bg-gray-100" />
+        <img id="mainImage"
+             class="w-full aspect-square object-cover rounded-2xl border"
+             th:src="${product.images != null and !product.images.isEmpty()}
+                ? ${product.images[0].imageUrl}
+                : '/images/no-image.png'" />
 
-            <div class="flex gap-2 mt-4">
-                <img th:each="img : ${product.images}" th:src="${img.imageUrl}"
-                    class="w-20 h-20 object-cover border cursor-pointer">
-            </div>
-        </div>
-
-        <!-- RIGHT: INFO -->
-        <div class="space-y-6">
-
-            <h1 class="text-2xl font-semibold uppercase" th:text="${product.name}">
-            </h1>
-
-            <p class="text-gray-600" th:text="${product.description}">
-            </p>
-
-            <!-- PRICE -->
-            <div class="text-lg font-medium">
-                <span th:text="${#numbers.formatDecimal(product.productVariants[0].price,0,'COMMA',0,'POINT')}">
-                </span> ₫
-            </div>
-
-            <!-- ADD TO CART -->
-            <form method="post" th:action="@{/cart/add}" class="space-y-5">
-
-                <!-- QUAN TRỌNG: variantId -->
-                <input type="hidden" name="variantId" th:value="${product.productVariants[0].id}" />
-
-                <!-- COLOR -->
-                <div>
-                    <label class="block text-sm mb-1">Color</label>
-                    <select name="color" class="w-full border px-3 py-2">
-                        <option th:each="v : ${product.productVariants}" th:value="${v.color}" th:text="${v.color}">
-                        </option>
-                    </select>
-                </div>
-
-                <!-- SIZE -->
-                <div>
-                    <label class="block text-sm mb-1">Size</label>
-                    <select name="size" class="w-full border px-3 py-2">
-                        <option th:each="v : ${product.productVariants}" th:value="${v.size}" th:text="${v.size}">
-                        </option>
-                    </select>
-                </div>
-
-                <!-- STOCK -->
-                <p class="text-sm text-gray-500">
-                    In stock:
-                    <span th:text="${product.productVariants[0].stock}"></span>
-                </p>
-
-                <!-- SUBMIT -->
-                <button class="w-full border border-black py-3 hover:bg-black hover:text-white transition">
-                    ADD TO CART
-                </button>
-
-            </form>
-
+        <div class="flex gap-3 overflow-x-auto">
+            <img th:each="img,iter : ${product.images}"
+                 th:src="${img.imageUrl}"
+                 th:data-src="${img.imageUrl}"
+                 th:classappend="${iter.index == 0 ? 'active-thumb' : ''}"
+                 class="thumb w-20 h-20 object-cover rounded-xl border cursor-pointer" />
         </div>
     </div>
+
+    <!-- ================= INFO ================= -->
+    <div class="space-y-6">
+
+        <h1 class="text-3xl font-semibold" th:text="${product.name}"></h1>
+
+        <p id="priceText" class="text-xl font-medium text-blue-600"></p>
+
+        <p class="text-gray-600" th:text="${product.description}"></p>
+
+        <!-- ================= VARIANTS ================= -->
+        <div class="space-y-5">
+
+            <!-- SIZE -->
+            <div>
+                <p class="text-sm font-medium mb-2">Size</p>
+                <div class="flex gap-2 flex-wrap">
+                    <button th:each="s : ${sizes}"
+                            type="button"
+                            th:data-size="${s}"
+                            th:text="${s}"
+                            class="variant-btn size-btn px-4 py-2 border rounded-md text-sm transition">
+                    </button>
+                </div>
+            </div>
+
+            <!-- COLOR -->
+            <div>
+                <p class="text-sm font-medium mb-2">Color</p>
+                <div class="flex gap-2 flex-wrap">
+                    <button th:each="c : ${colors}"
+                            type="button"
+                            th:data-color="${c}"
+                            th:text="${c}"
+                            class="variant-btn color-btn px-4 py-2 border rounded-md text-sm transition">
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= ADD TO CART ================= -->
+        <form method="post" th:action="@{/cart/add}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <input type="hidden" id="variantIdInput" name="variantId" />
+
+            <div class="flex gap-4">
+                <input type="number"
+                       name="quantity"
+                       min="1"
+                       value="1"
+                       class="w-20 border rounded-lg px-3 py-2 text-center" />
+
+                <button type="submit"
+                        id="addBtn"
+                        class="flex-1 bg-black text-white py-3 rounded-xl hover:bg-gray-800">
+                    Thêm vào giỏ
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+    <!-- ================= STYLE ================= -->
+    <style>
+        .thumb { opacity: 0.6; transition: 0.2s; }
+        .thumb.active-thumb { opacity: 1; border: 2px solid black !important; }
+
+        .variant-btn.active {
+            background: black !important;
+            color: white !important;
+            border-color: black !important;
+        }
+
+        .variant-btn.out {
+            opacity: 0.4;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .add-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <!-- ================= SCRIPT ================= -->
+    <script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const variants = /*[[${variantsJson}]]*/ [];
+
+        let selectedSize = null;
+        let selectedColor = null;
+        let currentVariant = null;
+
+        const priceText = document.getElementById("priceText");
+        const variantInput = document.getElementById("variantIdInput");
+        const addBtn = document.getElementById("addBtn");
+        const qtyInput = document.querySelector("input[name='quantity']");
+
+        const stockMsg = document.createElement("p");
+        stockMsg.className = "text-sm font-medium";
+        priceText.after(stockMsg);
+
+        /* ===== INIT STATE ===== */
+        addBtn.disabled = true;
+        addBtn.classList.add("add-disabled");
+
+        /* IMAGE SWITCH */
+        document.querySelectorAll(".thumb").forEach(el => {
+            el.addEventListener("click", () => {
+                document.getElementById("mainImage").src = el.dataset.src;
+                document.querySelectorAll(".thumb").forEach(t => t.classList.remove("active-thumb"));
+                el.classList.add("active-thumb");
+            });
+        });
+
+        function findVariant(size, color) {
+            return variants.find(v => v.size === size && v.color === color);
+        }
+
+        /* ===== AVAILABILITY (MỜ NHƯNG VẪN BẤM ĐƯỢC) ===== */
+        function updateAvailability() {
+
+            document.querySelectorAll(".size-btn").forEach(btn => {
+                const size = btn.dataset.size;
+                const hasStock = variants.some(v => v.size === size && v.stock > 0);
+                btn.classList.toggle("out", !hasStock);
+            });
+
+            document.querySelectorAll(".color-btn").forEach(btn => {
+                const color = btn.dataset.color;
+                const hasStock = variants.some(v => v.color === color && v.stock > 0);
+                btn.classList.toggle("out", !hasStock);
+            });
+        }
+
+        function validateQuantity() {
+            if (!currentVariant) return;
+
+            const qty = Number(qtyInput.value);
+
+            if (qty > currentVariant.stock) {
+                stockMsg.innerHTML = "Số lượng vượt quá tồn kho";
+                stockMsg.className = "text-red-500 text-sm font-medium";
+                disableAdd();
+            } else {
+                updateStockUI(currentVariant);
+            }
+        }
+
+        function disableAdd() {
+            addBtn.disabled = true;
+            addBtn.classList.add("add-disabled");
+        }
+
+        function enableAdd() {
+            addBtn.disabled = false;
+            addBtn.classList.remove("add-disabled");
+        }
+
+        function updateStockUI(v) {
+
+            if (!v || v.stock === 0) {
+                stockMsg.innerHTML = "Hết hàng";
+                stockMsg.className = "text-red-500 text-sm font-medium";
+                disableAdd();
+                return;
+            }
+
+            if (Number(qtyInput.value) > v.stock) {
+                stockMsg.innerHTML = "Số lượng vượt quá tồn kho";
+                stockMsg.className = "text-red-500 text-sm font-medium";
+                disableAdd();
+                return;
+            }
+
+            if (v.stock <= 5) {
+                stockMsg.innerHTML = "Chỉ còn " + v.stock + " sản phẩm";
+                stockMsg.className = "text-orange-500 text-sm font-medium";
+            } else {
+                stockMsg.innerHTML = "";
+            }
+
+            enableAdd();
+        }
+
+        function updateVariant() {
+
+            /* CHƯA CHỌN ĐỦ */
+            if (!selectedSize || !selectedColor) {
+                disableAdd();
+                stockMsg.innerHTML = "";
+                return;
+            }
+
+            const v = findVariant(selectedSize, selectedColor);
+            if (!v) return;
+
+            currentVariant = v;
+            variantInput.value = v.id;
+            priceText.innerHTML = Number(v.price).toLocaleString("vi-VN") + " ₫";
+
+            updateStockUI(v);
+        }
+
+        document.querySelectorAll(".size-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                selectedSize = btn.dataset.size;
+                updateVariant();
+            });
+        });
+
+        document.querySelectorAll(".color-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                selectedColor = btn.dataset.color;
+                updateVariant();
+            });
+        });
+
+        qtyInput.addEventListener("input", validateQuantity);
+
+        updateAvailability();
+
+        /* ===== ALL OUT OF STOCK ===== */
+        if (variants.length && variants.every(v => v.stock === 0)) {
+            stockMsg.innerHTML = "Sản phẩm đã hết hàng";
+            stockMsg.className = "text-red-500 text-sm font-medium";
+            disableAdd();
+            document.querySelectorAll(".variant-btn").forEach(b => b.classList.add("out"));
+        }
+
+    });
+    </script>
 
 </div>
 

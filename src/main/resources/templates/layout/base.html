@@ -1,147 +1,332 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" class="scroll-smooth" th:fragment="layout(content, title)">
 
 <head>
     <meta charset="UTF-8">
-    <title>CLOTHING STORE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 
-    <!-- Tailwind CSS CDN -->
+    <title th:text="${title} ?: 'NOVA Fashion'">NOVA Fashion</title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif']
                     }
                 }
             }
         }
     </script>
 
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    <!-- Alpine cloak -->
     <style>
-        [x-cloak] {
-            display: none !important;
+        body {
+            opacity: 0;
+            animation: fadeIn .6s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .glass-dropdown {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark .glass-dropdown {
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
 
-<body class="font-sans text-gray-900 bg-white">
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
 
     <!-- HEADER -->
-    <header class="border-b border-gray-200">
+    <header
+        class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
-            <!-- Logo -->
-            <a href="/" class="text-lg font-semibold tracking-wide">
-                CLOTHING
+            <!-- LOGO -->
+            <a th:href="@{/}" class="text-2xl font-light tracking-[-0.05em] text-black dark:text-white">
+                NOVA
             </a>
 
-            <!-- Navigation -->
-            <nav class="flex items-center gap-8 text-sm uppercase tracking-wide">
+            <!-- NAV -->
+            <nav class="hidden lg:flex items-center gap-10 text-sm font-medium">
 
-                <!-- Product Dropdown -->
-                <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+                <!-- PRODUCTS DROPDOWN -->
+                <div class="relative" id="productDropdownWrapper">
 
-                    <button class="hover:text-gray-500 transition">
-                        Product
-                    </button>
+                    <a th:href="@{/products}" id="productDropdownBtn"
+                        class="hover:text-blue-600 transition cursor-pointer">
+                        Shop
+                    </a>
 
-                    <!-- Mega menu -->
-                    <div x-show="open" x-cloak x-transition
-                        class="absolute left-0 top-full mt-6 w-[720px] bg-white shadow-xl border border-gray-100 p-8 grid grid-cols-3 gap-8 z-50">
+                    <div id="productDropdown" class="absolute left-0 top-full mt-4 w-64 glass-dropdown rounded-2xl p-6 space-y-6
+                            opacity-0 invisible translate-y-2 transition-all duration-300">
 
-                        <!-- TOP -->
+                        <!-- Top -->
                         <div>
-                            <a href="/shop?category=top" class="font-semibold mb-4 block hover:underline">
+                            <a th:href="@{/products/top}" class="block font-semibold mb-3 hover:text-blue-600">
                                 Top
                             </a>
-                            <ul class="space-y-2 text-gray-600">
-                                <li><a href="/shop?category=top&sub=tee" class="hover:text-black">Tee</a></li>
-                                <li><a href="/shop?category=top&sub=shirt" class="hover:text-black">Shirt</a></li>
-                                <li><a href="/shop?category=top&sub=jacket" class="hover:text-black">Jacket</a></li>
-                                <li><a href="/shop?category=top&sub=hoodie" class="hover:text-black">Hoodie</a></li>
-                            </ul>
+                            <div class="space-y-2">
+                                <a th:href="@{/products/top/tee}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Tee</a>
+                                <a th:href="@{/products/top/hoodie}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Hoodie</a>
+                                <a th:href="@{/products/top/shirt}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Shirt</a>
+                            </div>
                         </div>
 
-                        <!-- BOTTOM -->
+                        <!-- Bottom -->
                         <div>
-                            <a href="/shop?category=bottom" class="font-semibold mb-4 block hover:underline">
+                            <a th:href="@{/products/bottom}" class="block font-semibold mb-3 hover:text-blue-600">
                                 Bottom
                             </a>
-                            <ul class="space-y-2 text-gray-600">
-                                <li><a href="/shop?category=bottom&sub=jeans" class="hover:text-black">Jeans</a></li>
-                                <li><a href="/shop?category=bottom&sub=shorts" class="hover:text-black">Shorts</a></li>
-                                <li><a href="/shop?category=bottom&sub=pants" class="hover:text-black">Pants</a></li>
-                            </ul>
+                            <div class="space-y-2">
+                                <a th:href="@{/products/bottom/pants}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Pants</a>
+                                <a th:href="@{/products/bottom/shorts}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Shorts</a>
+                                <a th:href="@{/products/bottom/jeans}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Jeans</a>
+                            </div>
                         </div>
 
-                        <!-- ACCESSORIES -->
+                        <!-- Accessories -->
                         <div>
-                            <a href="/shop?category=accessories" class="font-semibold mb-4 block hover:underline">
+                            <a th:href="@{/products/accessories}" class="block font-semibold mb-3 hover:text-blue-600">
                                 Accessories
                             </a>
-                            <ul class="space-y-2 text-gray-600">
-                                <li><a href="/shop?category=accessories&sub=shoes" class="hover:text-black">Shoes</a>
-                                </li>
-                                <li><a href="/shop?category=accessories&sub=bag" class="hover:text-black">Bag</a></li>
-                                <li><a href="/shop?category=accessories&sub=cap" class="hover:text-black">Cap</a></li>
-                            </ul>
+                            <div class="space-y-2">
+                                <a th:href="@{/products/accessories/bag}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Bag</a>
+                                <a th:href="@{/products/accessories/shoes}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Shoes</a>
+                                <a th:href="@{/products/accessories/cap}"
+                                    class="block text-zinc-600 dark:text-zinc-300 hover:text-blue-600">Cap</a>
+                            </div>
                         </div>
 
                     </div>
                 </div>
 
-                <a href="/my-orders" class="hover:text-gray-500 transition">
-                    Orders
+                <a href="#" class="hover:text-blue-600 transition">
+                    Lookbook
                 </a>
 
-                <a href="/cart" class="hover:text-gray-500 transition">
-                    Cart
+                <a href="#" class="hover:text-blue-600 transition">
+                    About
                 </a>
+
             </nav>
 
-            <!-- Auth -->
-            <div class="flex items-center gap-4 text-sm uppercase tracking-wide">
+            <!-- RIGHT ICONS -->
+            <div class="flex items-center gap-6">
 
-                <!-- Guest -->
-                <div th:if="${#authorization.expression('!isAuthenticated()')}">
-                    <a href="/login" class="hover:text-gray-500 transition mr-3">
+                <!-- CART -->
+                <a th:href="@{/cart}" class="relative hover:text-blue-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+
+                    <span th:if="${cartItems != null and !cartItems.isEmpty()}"
+                        class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5"
+                        th:text="${cartItems.size()}"></span>
+                </a>
+
+                <!-- USER -->
+                <div class="relative group">
+
+                    <div th:if="${#authorization.expression('isAuthenticated()')}"
+                        class="cursor-pointer flex items-center gap-2">
+                        <div
+                            class="w-8 h-8 bg-blue-600 rounded-full text-white flex items-center justify-center text-sm font-medium">
+                            U
+                        </div>
+                    </div>
+
+                    <a th:unless="${#authorization.expression('isAuthenticated()')}" th:href="@{/login}"
+                        class="hover:text-blue-600">
                         Login
                     </a>
-                    <a href="/register"
-                        class="border border-gray-900 px-4 py-2 hover:bg-gray-900 hover:text-white transition">
-                        Register
-                    </a>
+
+                    <div th:if="${#authorization.expression('isAuthenticated()')}"
+                        class="absolute right-0 top-full mt-4 w-48 glass-dropdown rounded-2xl p-3 space-y-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+
+                        <a th:href="@{/profile}"
+                            class="block px-3 py-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                            Profile
+                        </a>
+
+                        <a th:href="@{/my-orders}"
+                            class="block px-3 py-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                            Orders
+                        </a>
+
+                        <a th:href="@{/logout}"
+                            class="block px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            Logout
+                        </a>
+
+                    </div>
                 </div>
 
-                <!-- User -->
-                <div th:if="${#authorization.expression('isAuthenticated()')}">
-                    <a href="/logout" class="hover:text-gray-500 transition">
-                        Logout
-                    </a>
-                </div>
+                <!-- MOBILE BUTTON -->
+                <button id="hamburger" class="lg:hidden text-2xl text-zinc-900 dark:text-white">
+                    ☰
+                </button>
 
             </div>
-
         </div>
     </header>
 
+    <!-- MOBILE MENU -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-black/60 hidden z-40"></div>
+
+    <aside id="mobileMenu"
+        class="fixed inset-y-0 right-0 w-80 bg-white dark:bg-zinc-900 shadow-2xl translate-x-full transition duration-300 z-50">
+
+        <div class="p-6">
+            <button id="mobileClose" class="text-3xl float-right text-zinc-900 dark:text-white">&times;</button>
+
+            <div class="mt-12 space-y-6 text-lg font-medium">
+
+                <a th:href="@{/products}" class="block">Products</a>
+                <a th:href="@{/cart}" class="block">Cart</a>
+
+                <a th:href="@{/profile}" th:if="${#authorization.expression('isAuthenticated()')}" class="block">
+                    Profile
+                </a>
+
+                <a th:href="@{/login}" th:unless="${#authorization.expression('isAuthenticated()')}" class="block">
+                    Login
+                </a>
+
+            </div>
+        </div>
+    </aside>
+
     <!-- MAIN -->
-    <main class="max-w-7xl mx-auto px-6 py-10">
-        <div th:insert="~{::content}"></div>
+    <main class="pt-28 pb-16 max-w-7xl mx-auto px-6">
+        <div th:replace="${content}"></div>
     </main>
 
-    <!-- Alpine JS (BẮT BUỘC) -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FOOTER -->
+    <footer class="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-10 text-sm text-zinc-500">
+
+        <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-10 px-6">
+
+            <div>
+                <div class="font-semibold text-zinc-900 dark:text-white mb-3">NOVA Fashion</div>
+                <div>Thời trang tối giản cho người hiện đại</div>
+            </div>
+
+            <div>
+                <div class="font-semibold mb-3 text-zinc-900 dark:text-white">Danh mục</div>
+                <div>Shop</div>
+                <div>Sale</div>
+            </div>
+
+            <div>
+                <div class="font-semibold mb-3 text-zinc-900 dark:text-white">Hỗ trợ</div>
+                <div>Liên hệ</div>
+                <div>Đổi trả</div>
+            </div>
+
+            <div>
+                <div class="font-semibold mb-3 text-zinc-900 dark:text-white">Kết nối</div>
+                <div>Facebook • Instagram • TikTok</div>
+            </div>
+
+        </div>
+
+        <div class="text-center text-xs mt-10">
+            © 2026 NOVA Fashion
+        </div>
+
+    </footer>
+
+    <!-- SCRIPT -->
+    <script>
+        const btn = document.getElementById("productDropdownBtn");
+        const dropdown = document.getElementById("productDropdown");
+        const wrapper = document.getElementById("productDropdownWrapper");
+
+        let open = false;
+
+        function showDropdown() {
+            dropdown.classList.remove("opacity-0", "invisible", "translate-y-2");
+            open = true;
+        }
+
+        function hideDropdown() {
+            dropdown.classList.add("opacity-0", "invisible", "translate-y-2");
+            open = false;
+        }
+
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                open ? hideDropdown() : showDropdown();
+            });
+        }
+
+        if (wrapper) {
+            wrapper.addEventListener("mouseenter", showDropdown);
+            wrapper.addEventListener("mouseleave", hideDropdown);
+        }
+
+        document.addEventListener("click", () => {
+            if (open) hideDropdown();
+        });
+
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const mobileClose = document.getElementById('mobileClose');
+
+        if (hamburger) {
+            hamburger.addEventListener('click', () => {
+                mobileMenu.classList.remove('translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+            });
+        }
+
+        if (mobileClose) {
+            mobileClose.addEventListener('click', () => {
+                mobileMenu.classList.add('translate-x-full');
+                mobileOverlay.classList.add('hidden');
+            });
+        }
+
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', () => {
+                mobileMenu.classList.add('translate-x-full');
+                mobileOverlay.classList.add('hidden');
+            });
+        }
+    </script>
 
 </body>
 

@@ -27,8 +27,11 @@ public class CartController {
     }
 
     @PostMapping("/add")
-    public String add(@RequestParam("variantId") Long variantId) {
-        cartService.addToCart(variantId);
+    public String addToCart(
+            @RequestParam Long variantId,
+            @RequestParam int quantity
+    ) {
+        cartService.addToCart(variantId, quantity);
         return "redirect:/cart";
     }
 

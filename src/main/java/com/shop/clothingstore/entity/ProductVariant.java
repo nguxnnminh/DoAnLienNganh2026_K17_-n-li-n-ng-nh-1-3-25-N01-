@@ -1,5 +1,7 @@
 package com.shop.clothingstore.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -33,5 +35,8 @@ public class ProductVariant {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
+    @JsonIgnore   // ⭐ FIX recursion
     private Product product;
+
+    private int sold;
 }

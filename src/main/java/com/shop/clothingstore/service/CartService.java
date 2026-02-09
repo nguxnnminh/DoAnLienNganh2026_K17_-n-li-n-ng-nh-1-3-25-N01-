@@ -20,56 +20,108 @@ public class CartService {
     private final ProductVariantRepository variantRepository;
     private final HttpSession session;
 
-    public CartService(ProductVariantRepository variantRepository, HttpSession session) {
+    public CartService(ProductVariantRepository variantRepository,
+                       HttpSession session) {
+
         this.variantRepository = variantRepository;
         this.session = session;
     }
 
+    // =====================================================
+    // GET CART
+    // =====================================================
     @SuppressWarnings("unchecked")
     public List<CartItem> getCart() {
-        var cart = (List<CartItem>) session.getAttribute(CART_SESSION_KEY);
+
+        List<CartItem> cart =
+                (List<CartItem>) session.getAttribute(CART_SESSION_KEY);
+
         if (cart == null) {
             cart = new ArrayList<>();
             session.setAttribute(CART_SESSION_KEY, cart);
         }
+
         return cart;
     }
 
-    public void addToCart(Long variantId) {
-        if (variantId == null) return;
+    // =====================================================
+    // ADD TO CART
+    // =====================================================
+    public void addToCart(Long variantId, int quantity) {
 
-        ProductVariant variant = variantRepository.findById(variantId)
-                .orElseThrow();
+        if (variantId == null || quantity < 1) return;
+
+        ProductVariant variant = variantRepository
+                .findById(variantId)
+                .orElse(null);
+
+        if (variant == null) return;
+
+        int stock = variant.getStock();
+
+        // Hết hàng
+        if (stock <= 0) return;
 
         List<CartItem> cart = getCart();
 
         for (CartItem item : cart) {
+
             if (item.getVariantId().equals(variantId)) {
-                item.setQuantity(item.getQuantity() + 1);
+
+                int newQty = item.getQuantity() + quantity;
+
+                // Không cho vượt stock
+                if (newQty > stock) {
+                    newQty = stock;
+                }
+
+                item.setQuantity(newQty);
                 return;
             }
         }
 
-        CartItem item = new CartItem();
-        item.setVariantId(variantId);
-        item.setProductName(variant.getProduct().getName());
-        item.setImageUrl(
+        // Nếu là item mới
+        int finalQty = Math.min(quantity, stock);
+
+        CartItem newItem = new CartItem();
+
+        newItem.setVariantId(variantId);
+        newItem.setProductName(variant.getProduct().getName());
+
+        newItem.setImageUrl(
                 variant.getProduct().getImages().isEmpty()
                         ? ""
                         : variant.getProduct().getImages().get(0).getImageUrl()
         );
-        item.setSize(variant.getSize());
-        item.setColor(variant.getColor());
-        item.setPrice(BigDecimal.valueOf(variant.getPrice()));
-        item.setQuantity(1);
 
-        cart.add(item);
+        newItem.setSize(variant.getSize());
+        newItem.setColor(variant.getColor());
+        newItem.setPrice(BigDecimal.valueOf(variant.getPrice()));
+        newItem.setQuantity(finalQty);
+
+        cart.add(newItem);
     }
 
+    // =====================================================
+    // UPDATE QUANTITY
+    // =====================================================
     public void updateQuantity(Long variantId, int quantity) {
+
         if (variantId == null || quantity < 1) return;
 
+        ProductVariant variant = variantRepository
+                .findById(variantId)
+                .orElse(null);
+
+        if (variant == null) return;
+
+        // Không cho vượt stock
+        if (quantity > variant.getStock()) {
+            quantity = variant.getStock();
+        }
+
         for (CartItem item : getCart()) {
+
             if (item.getVariantId().equals(variantId)) {
                 item.setQuantity(quantity);
                 return;
@@ -77,17 +129,34 @@ public class CartService {
         }
     }
 
+    // =====================================================
+    // REMOVE ITEM
+    // =====================================================
     public void remove(Long variantId) {
-        getCart().removeIf(item -> item.getVariantId().equals(variantId));
+
+        getCart().removeIf(item ->
+                item.getVariantId().equals(variantId)
+        );
     }
 
+    // =====================================================
+    // CLEAR CART
+    // =====================================================
     public void clear() {
         session.removeAttribute(CART_SESSION_KEY);
     }
 
+    // =====================================================
+    // TOTAL PRICE
+    // =====================================================
     public BigDecimal getTotal() {
+
         return getCart().stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item ->
+                        item.getPrice()
+                                .multiply(BigDecimal.valueOf(item.getQuantity()))
+                )
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
 }

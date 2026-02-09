@@ -1,17 +1,62 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Lỗi</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
-        <h1 class="text-6xl font-bold text-red-600 mb-4">Oops!</h1>
-        <h2 class="text-2xl font-semibold mb-4" th:text="${status} + ' - ' + ${error}">500 - Internal Server Error</h2>
-        <p class="text-gray-600 mb-6" th:text="${message}">Có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ admin.</p>
-        <a href="/" class="inline-block bg-black text-white px-6 py-3 rounded hover:bg-gray-800">
-            Quay về trang chủ
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Tailwind Config -->
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Inter','sans-serif']
+                }
+            }
+        }
+    }
+</script>
+
+<!-- Google Font Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- ERROR CARD -->
+<div class="bg-white/80 dark:bg-zinc-900/70 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-3xl p-10 text-center">
+
+    <!-- STATUS CODE -->
+    <h1 class="text-6xl font-bold text-red-500 tracking-tight mb-2">
+        <span th:text="${status} ?: '500'">500</span>
+    </h1>
+
+    <!-- ERROR TITLE -->
+    <h2 class="text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
+        <span th:text="${error} ?: 'Internal Server Error'">
+            Internal Server Error
+        </span>
+    </h2>
+
+    <!-- ERROR MESSAGE -->
+    <p class="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed mb-8"
+       th:text="${message} ?: 'Có lỗi xảy ra. Vui lòng thử lại hoặc liên hệ quản trị viên.'">
+        Có lỗi xảy ra.
+    </p>
+
+    <!-- ACTION BUTTONS -->
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+
+        <a href="/"
+           class="px-6 py-3 rounded-xl bg-black text-white hover:bg-zinc-800 transition font-medium">
+            Trang chủ
         </a>
+
+        <button onclick="history.back()"
+                class="px-6 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
+            Quay lại
+        </button>
+
     </div>
-</body>
-</html>
+
+</div>
+
+<!-- FOOTER -->
+<p class="text-center text-xs text-zinc-400 mt-6">
+    © 2026 Clothing Store
+</p>

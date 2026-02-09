@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout/base :: html">
+      th:replace="~{layout/base :: layout(~{::content}, 'Đăng nhập')}">
 
 <div th:fragment="content" class="max-w-md mx-auto py-20">
 

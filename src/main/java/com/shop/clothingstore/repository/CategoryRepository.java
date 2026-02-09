@@ -8,4 +8,7 @@ import com.shop.clothingstore.entity.Category;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findByName(String name);
+
+    // Thêm để tìm category bằng slug
+    Optional<Category> findBySlug(String slug);
 }

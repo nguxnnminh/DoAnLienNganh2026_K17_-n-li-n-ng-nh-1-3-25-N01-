@@ -1,6 +1,7 @@
 package com.shop.clothingstore.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,14 +35,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByStatus(OrderStatus status);
 
-    long countByStatusAndStatusNotNull(OrderStatus status);
-
 
     // =====================================================
-    // DASHBOARD QUERIES
+    // DASHBOARD KPI
     // =====================================================
 
-    // ⭐ Tổng doanh thu theo trạng thái
+    /**
+     * ⭐ Tổng doanh thu theo trạng thái
+     */
     @Query("""
         SELECT COALESCE(SUM(o.total), 0)
         FROM Order o
@@ -50,7 +51,47 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     BigDecimal getTotalRevenueByStatus(@Param("status") OrderStatus status);
 
 
-    // ⭐ 5 đơn hàng mới nhất (Dashboard)
+    /**
+     * ⭐ 5 đơn hàng mới nhất
+     */
     List<Order> findTop5ByOrderByCreatedAtDesc();
+
+
+    // =====================================================
+    // DASHBOARD CHART
+    // =====================================================
+
+    /**
+     * ⭐ Doanh thu theo ngày
+     *
+     * return:
+     *   Object[0] = java.sql.Date
+     *   Object[1] = Double (SUM)
+     */
+    @Query("""
+        SELECT DATE(o.createdAt), SUM(o.total)
+        FROM Order o
+        WHERE o.status = :status
+        GROUP BY DATE(o.createdAt)
+        ORDER BY DATE(o.createdAt)
+    """)
+    List<Object[]> getRevenueByDate(@Param("status") OrderStatus status);
+
+
+    /**
+     * ⭐ Doanh thu từ ngày X
+     */
+    @Query("""
+        SELECT DATE(o.createdAt), SUM(o.total)
+        FROM Order o
+        WHERE o.status = :status
+        AND o.createdAt >= :startDate
+        GROUP BY DATE(o.createdAt)
+        ORDER BY DATE(o.createdAt)
+    """)
+    List<Object[]> getRevenueSince(
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDate startDate
+    );
 
 }

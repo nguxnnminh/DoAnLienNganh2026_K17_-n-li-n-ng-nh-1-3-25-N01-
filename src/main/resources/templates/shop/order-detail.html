@@ -1,78 +1,121 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout(~{::content}, 'Tên trang')}"
->
+      th:replace="~{layout/base :: layout(~{::content}, 'Chi tiết đơn hàng')}">
 
-<div th:fragment="content">
+<div th:fragment="content" class="max-w-6xl mx-auto">
 
-    <a href="/my-orders"
-       class="text-sm underline mb-6 inline-block">
-        ← Back to My Orders
+    <!-- BACK -->
+    <a th:href="@{/my-orders}"
+       class="text-sm underline underline-offset-4 hover:text-blue-600 transition inline-block mb-8">
+        ← Quay lại đơn hàng
     </a>
 
-    <h1 class="text-2xl font-semibold mb-6">
-        Order #
-        <span th:text="${order.id}"></span>
-    </h1>
 
-    <div class="grid grid-cols-12 gap-10">
+    <!-- TITLE -->
+    <div class="mb-10">
+        <h1 class="text-3xl font-semibold tracking-tight">
+            Đơn hàng #<span th:text="${order.id}"></span>
+        </h1>
 
-        <!-- ITEMS -->
-        <div class="col-span-8 space-y-4">
+        <p class="text-zinc-500 text-sm mt-2">
+            Đặt lúc:
+            <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+        </p>
+    </div>
+
+
+    <div class="grid md:grid-cols-3 gap-10">
+
+        <!-- ================= ITEMS ================= -->
+        <div class="md:col-span-2 space-y-6">
 
             <div th:each="item : ${order.items}"
-                 class="flex justify-between border-b pb-4">
+                 class="flex justify-between items-start border-b border-zinc-200 dark:border-zinc-800 pb-6">
 
-                <div>
-                    <p class="font-medium"
-                       th:text="${item.productName}"></p>
+                <!-- LEFT -->
+                <div class="space-y-2">
 
-                    <p class="text-sm text-gray-500">
+                    <p class="font-medium text-lg"
+                       th:text="${item.productName}">
+                    </p>
+
+                    <p class="text-sm text-zinc-500">
                         Size:
                         <span th:text="${item.size}"></span>
-                        · Color:
+                        ·
+                        Màu:
                         <span th:text="${item.color}"></span>
                     </p>
 
                     <p class="text-sm">
-                        Qty:
+                        Số lượng:
                         <span th:text="${item.quantity}"></span>
                     </p>
+
                 </div>
 
-                <div class="font-medium">
-                    <span th:text="${item.price}"></span> ₫
+
+                <!-- RIGHT -->
+                <div class="font-semibold text-lg">
+                    <span th:text="${#numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')}"></span> ₫
                 </div>
 
             </div>
 
         </div>
 
-        <!-- SUMMARY -->
-        <div class="col-span-4 border p-6 h-fit">
 
-            <h3 class="font-semibold mb-4">
-                Order Summary
+        <!-- ================= SUMMARY ================= -->
+        <div class="border border-zinc-200 dark:border-zinc-800
+                    rounded-2xl p-6 bg-white dark:bg-zinc-900 h-fit">
+
+            <h3 class="font-semibold text-lg mb-6">
+                Tóm tắt đơn hàng
             </h3>
 
-            <div class="flex justify-between mb-2 text-sm">
-                <span>Subtotal</span>
-                <span>
-                    <span th:text="${order.total}"></span> ₫
+
+            <!-- STATUS -->
+            <div class="mb-6">
+                <p class="text-sm text-zinc-500 mb-1">
+                    Trạng thái
+                </p>
+
+                <span class="px-3 py-1 rounded-full text-xs font-medium"
+                      th:text="${order.status}"
+                      th:classappend="
+                      ${order.status.name() == 'PENDING'} ? ' bg-yellow-100 text-yellow-700' :
+                      (${order.status.name() == 'CONFIRMED'} ? ' bg-blue-100 text-blue-700' :
+                      (${order.status.name() == 'SHIPPING'} ? ' bg-purple-100 text-purple-700' :
+                      (${order.status.name() == 'COMPLETED'} ? ' bg-green-100 text-green-700' :
+                      ' bg-red-100 text-red-700')))
+                      ">
                 </span>
             </div>
 
-            <div class="flex justify-between mb-4 text-sm">
-                <span>Shipping</span>
-                <span>Free</span>
+
+            <!-- PRICE -->
+            <div class="space-y-3 text-sm">
+
+                <div class="flex justify-between">
+                    <span>Tạm tính</span>
+                    <span>
+                        <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span> ₫
+                    </span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span>Vận chuyển</span>
+                    <span>Miễn phí</span>
+                </div>
+
             </div>
 
-            <hr class="mb-4">
+            <hr class="my-6 border-zinc-200 dark:border-zinc-800">
 
-            <div class="flex justify-between font-semibold text-lg">
-                <span>Total</span>
+            <div class="flex justify-between text-xl font-semibold tracking-tight">
+                <span>Tổng cộng</span>
                 <span>
-                    <span th:text="${order.total}"></span> ₫
+                    <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span> ₫
                 </span>
             </div>
 
@@ -81,4 +124,5 @@
     </div>
 
 </div>
+
 </html>

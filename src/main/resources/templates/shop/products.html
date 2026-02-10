@@ -200,10 +200,18 @@
                             </h3>
 
                             <p class="text-sm text-gray-600">
-                                <span
-                                    th:text="${#numbers.formatDecimal(product.minPrice ?: 0, 0, 'POINT', 0, 'COMMA')}"></span>
-                                ₫
+
+                                <span th:if="${product.minPrice != null and product.minPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.minPrice, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                                </span>
+
+                                <span th:if="${product.minPrice == null or product.minPrice == 0}">
+                                    Giá đang cập nhật
+
+                                </span>
+
                             </p>
+
 
                         </div>
 

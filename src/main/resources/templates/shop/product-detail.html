@@ -1,24 +1,19 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout(~{::content}, ${product.name})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, ${product.name})}">
 
 <div th:fragment="content" class="grid md:grid-cols-2 gap-12">
 
     <!-- ================= IMAGE ================= -->
     <div class="space-y-4">
 
-        <img id="mainImage"
-             class="w-full aspect-square object-cover rounded-2xl border"
-             th:src="${product.images != null and !product.images.isEmpty()}
+        <img id="mainImage" class="w-full aspect-square object-cover rounded-2xl border" th:src="${product.images != null and !product.images.isEmpty()}
                 ? ${product.images[0].imageUrl}
                 : '/images/no-image.png'" />
 
         <div class="flex gap-3 overflow-x-auto">
-            <img th:each="img,iter : ${product.images}"
-                 th:src="${img.imageUrl}"
-                 th:data-src="${img.imageUrl}"
-                 th:classappend="${iter.index == 0 ? 'active-thumb' : ''}"
-                 class="thumb w-20 h-20 object-cover rounded-xl border cursor-pointer" />
+            <img th:each="img,iter : ${product.images}" th:src="${img.imageUrl}" th:data-src="${img.imageUrl}"
+                th:classappend="${iter.index == 0 ? 'active-thumb' : ''}"
+                class="thumb w-20 h-20 object-cover rounded-xl border cursor-pointer" />
         </div>
     </div>
 
@@ -38,11 +33,8 @@
             <div>
                 <p class="text-sm font-medium mb-2">Size</p>
                 <div class="flex gap-2 flex-wrap">
-                    <button th:each="s : ${sizes}"
-                            type="button"
-                            th:data-size="${s}"
-                            th:text="${s}"
-                            class="variant-btn size-btn px-4 py-2 border rounded-md text-sm transition">
+                    <button th:each="s : ${sizes}" type="button" th:data-size="${s}" th:text="${s}"
+                        class="variant-btn size-btn px-4 py-2 border rounded-md text-sm transition">
                     </button>
                 </div>
             </div>
@@ -51,11 +43,8 @@
             <div>
                 <p class="text-sm font-medium mb-2">Color</p>
                 <div class="flex gap-2 flex-wrap">
-                    <button th:each="c : ${colors}"
-                            type="button"
-                            th:data-color="${c}"
-                            th:text="${c}"
-                            class="variant-btn color-btn px-4 py-2 border rounded-md text-sm transition">
+                    <button th:each="c : ${colors}" type="button" th:data-color="${c}" th:text="${c}"
+                        class="variant-btn color-btn px-4 py-2 border rounded-md text-sm transition">
                     </button>
                 </div>
             </div>
@@ -69,15 +58,10 @@
             <input type="hidden" id="variantIdInput" name="variantId" />
 
             <div class="flex gap-4">
-                <input type="number"
-                       name="quantity"
-                       min="1"
-                       value="1"
-                       class="w-20 border rounded-lg px-3 py-2 text-center" />
+                <input type="number" name="quantity" min="1" value="1"
+                    class="w-20 border rounded-lg px-3 py-2 text-center" />
 
-                <button type="submit"
-                        id="addBtn"
-                        class="flex-1 bg-black text-white py-3 rounded-xl hover:bg-gray-800">
+                <button type="submit" id="addBtn" class="flex-1 bg-black text-white py-3 rounded-xl hover:bg-gray-800">
                     Thêm vào giỏ
                 </button>
             </div>
@@ -87,8 +71,15 @@
 
     <!-- ================= STYLE ================= -->
     <style>
-        .thumb { opacity: 0.6; transition: 0.2s; }
-        .thumb.active-thumb { opacity: 1; border: 2px solid black !important; }
+        .thumb {
+            opacity: 0.6;
+            transition: 0.2s;
+        }
+
+        .thumb.active-thumb {
+            opacity: 1;
+            border: 2px solid black !important;
+        }
 
         .variant-btn.active {
             background: black !important;
@@ -113,156 +104,161 @@
 
     <!-- ================= SCRIPT ================= -->
     <script th:inline="javascript">
-    document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function () {
 
-        const variants = /*[[${variantsJson}]]*/ [];
+            const variants = /*[[${variantsJson}]]*/[];
 
-        let selectedSize = null;
-        let selectedColor = null;
-        let currentVariant = null;
+            let selectedSize = null;
+            let selectedColor = null;
+            let currentVariant = null;
 
-        const priceText = document.getElementById("priceText");
-        const variantInput = document.getElementById("variantIdInput");
-        const addBtn = document.getElementById("addBtn");
-        const qtyInput = document.querySelector("input[name='quantity']");
+            const priceText = document.getElementById("priceText");
+            const variantInput = document.getElementById("variantIdInput");
+            const addBtn = document.getElementById("addBtn");
+            const qtyInput = document.querySelector("input[name='quantity']");
 
-        const stockMsg = document.createElement("p");
-        stockMsg.className = "text-sm font-medium";
-        priceText.after(stockMsg);
+            const stockMsg = document.createElement("p");
+            stockMsg.className = "text-sm font-medium";
+            priceText.after(stockMsg);
 
-        /* ===== INIT STATE ===== */
-        addBtn.disabled = true;
-        addBtn.classList.add("add-disabled");
+            /* ===== INIT STATE ===== */
+            addBtn.disabled = true;
+            addBtn.classList.add("add-disabled");
 
-        /* IMAGE SWITCH */
-        document.querySelectorAll(".thumb").forEach(el => {
-            el.addEventListener("click", () => {
-                document.getElementById("mainImage").src = el.dataset.src;
-                document.querySelectorAll(".thumb").forEach(t => t.classList.remove("active-thumb"));
-                el.classList.add("active-thumb");
+            /* IMAGE SWITCH */
+            document.querySelectorAll(".thumb").forEach(el => {
+                el.addEventListener("click", () => {
+                    document.getElementById("mainImage").src = el.dataset.src;
+                    document.querySelectorAll(".thumb").forEach(t => t.classList.remove("active-thumb"));
+                    el.classList.add("active-thumb");
+                });
             });
-        });
 
-        function findVariant(size, color) {
-            return variants.find(v => v.size === size && v.color === color);
-        }
+            function findVariant(size, color) {
+                return variants.find(v => v.size === size && v.color === color);
+            }
 
-        /* ===== AVAILABILITY (MỜ NHƯNG VẪN BẤM ĐƯỢC) ===== */
-        function updateAvailability() {
+            /* ===== AVAILABILITY (MỜ NHƯNG VẪN BẤM ĐƯỢC) ===== */
+            function updateAvailability() {
+
+                document.querySelectorAll(".size-btn").forEach(btn => {
+                    const size = btn.dataset.size;
+                    const hasStock = variants.some(v => v.size === size && v.stock > 0);
+                    btn.classList.toggle("out", !hasStock);
+                });
+
+                document.querySelectorAll(".color-btn").forEach(btn => {
+                    const color = btn.dataset.color;
+                    const hasStock = variants.some(v => v.color === color && v.stock > 0);
+                    btn.classList.toggle("out", !hasStock);
+                });
+            }
+
+            function validateQuantity() {
+                if (!currentVariant) return;
+
+                const qty = Number(qtyInput.value);
+
+                if (qty > currentVariant.stock) {
+                    stockMsg.innerHTML = "Số lượng vượt quá tồn kho";
+                    stockMsg.className = "text-red-500 text-sm font-medium";
+                    disableAdd();
+                } else {
+                    updateStockUI(currentVariant);
+                }
+            }
+
+            function disableAdd() {
+                addBtn.disabled = true;
+                addBtn.classList.add("add-disabled");
+            }
+
+            function enableAdd() {
+                addBtn.disabled = false;
+                addBtn.classList.remove("add-disabled");
+            }
+
+            function updateStockUI(v) {
+
+                if (!v || v.stock === 0) {
+                    stockMsg.innerHTML = "Hết hàng";
+                    stockMsg.className = "text-red-500 text-sm font-medium";
+                    disableAdd();
+                    return;
+                }
+
+                if (Number(qtyInput.value) > v.stock) {
+                    stockMsg.innerHTML = "Số lượng vượt quá tồn kho";
+                    stockMsg.className = "text-red-500 text-sm font-medium";
+                    disableAdd();
+                    return;
+                }
+
+                if (v.stock <= 5) {
+                    stockMsg.innerHTML = "Chỉ còn " + v.stock + " sản phẩm";
+                    stockMsg.className = "text-orange-500 text-sm font-medium";
+                } else {
+                    stockMsg.innerHTML = "";
+                }
+
+                enableAdd();
+            }
+
+            function updateVariant() {
+
+                /* CHƯA CHỌN ĐỦ */
+                if (!selectedSize || !selectedColor) {
+                    disableAdd();
+                    stockMsg.innerHTML = "";
+                    return;
+                }
+
+                const v = findVariant(selectedSize, selectedColor);
+                if (!v) return;
+
+                currentVariant = v;
+                variantInput.value = v.id;
+                if (!v.price || v.price === 0) {
+                    priceText.innerHTML = "Liên hệ";
+                } else {
+                    priceText.innerHTML = Number(v.price).toLocaleString("vi-VN") + " ₫";
+                }
+
+
+                updateStockUI(v);
+            }
 
             document.querySelectorAll(".size-btn").forEach(btn => {
-                const size = btn.dataset.size;
-                const hasStock = variants.some(v => v.size === size && v.stock > 0);
-                btn.classList.toggle("out", !hasStock);
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    selectedSize = btn.dataset.size;
+                    updateVariant();
+                });
             });
 
             document.querySelectorAll(".color-btn").forEach(btn => {
-                const color = btn.dataset.color;
-                const hasStock = variants.some(v => v.color === color && v.stock > 0);
-                btn.classList.toggle("out", !hasStock);
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    selectedColor = btn.dataset.color;
+                    updateVariant();
+                });
             });
-        }
 
-        function validateQuantity() {
-            if (!currentVariant) return;
+            qtyInput.addEventListener("input", validateQuantity);
 
-            const qty = Number(qtyInput.value);
+            updateAvailability();
 
-            if (qty > currentVariant.stock) {
-                stockMsg.innerHTML = "Số lượng vượt quá tồn kho";
+            /* ===== ALL OUT OF STOCK ===== */
+            if (variants.length && variants.every(v => v.stock === 0)) {
+                stockMsg.innerHTML = "Sản phẩm đã hết hàng";
                 stockMsg.className = "text-red-500 text-sm font-medium";
                 disableAdd();
-            } else {
-                updateStockUI(currentVariant);
-            }
-        }
-
-        function disableAdd() {
-            addBtn.disabled = true;
-            addBtn.classList.add("add-disabled");
-        }
-
-        function enableAdd() {
-            addBtn.disabled = false;
-            addBtn.classList.remove("add-disabled");
-        }
-
-        function updateStockUI(v) {
-
-            if (!v || v.stock === 0) {
-                stockMsg.innerHTML = "Hết hàng";
-                stockMsg.className = "text-red-500 text-sm font-medium";
-                disableAdd();
-                return;
+                document.querySelectorAll(".variant-btn").forEach(b => b.classList.add("out"));
             }
 
-            if (Number(qtyInput.value) > v.stock) {
-                stockMsg.innerHTML = "Số lượng vượt quá tồn kho";
-                stockMsg.className = "text-red-500 text-sm font-medium";
-                disableAdd();
-                return;
-            }
-
-            if (v.stock <= 5) {
-                stockMsg.innerHTML = "Chỉ còn " + v.stock + " sản phẩm";
-                stockMsg.className = "text-orange-500 text-sm font-medium";
-            } else {
-                stockMsg.innerHTML = "";
-            }
-
-            enableAdd();
-        }
-
-        function updateVariant() {
-
-            /* CHƯA CHỌN ĐỦ */
-            if (!selectedSize || !selectedColor) {
-                disableAdd();
-                stockMsg.innerHTML = "";
-                return;
-            }
-
-            const v = findVariant(selectedSize, selectedColor);
-            if (!v) return;
-
-            currentVariant = v;
-            variantInput.value = v.id;
-            priceText.innerHTML = Number(v.price).toLocaleString("vi-VN") + " ₫";
-
-            updateStockUI(v);
-        }
-
-        document.querySelectorAll(".size-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                selectedSize = btn.dataset.size;
-                updateVariant();
-            });
         });
-
-        document.querySelectorAll(".color-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                selectedColor = btn.dataset.color;
-                updateVariant();
-            });
-        });
-
-        qtyInput.addEventListener("input", validateQuantity);
-
-        updateAvailability();
-
-        /* ===== ALL OUT OF STOCK ===== */
-        if (variants.length && variants.every(v => v.stock === 0)) {
-            stockMsg.innerHTML = "Sản phẩm đã hết hàng";
-            stockMsg.className = "text-red-500 text-sm font-medium";
-            disableAdd();
-            document.querySelectorAll(".variant-btn").forEach(b => b.classList.add("out"));
-        }
-
-    });
     </script>
 
 </div>

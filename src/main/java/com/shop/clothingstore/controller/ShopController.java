@@ -46,13 +46,26 @@ public class ShopController {
     @GetMapping("/")
     public String home(Model model) {
 
-        Pageable pageable = PageRequest.of(0, 8, Sort.by("id").descending());
-        Page<Product> featured = productRepository.findAll(pageable);
+        Pageable topPage = PageRequest.of(0, 2);
+        Pageable bottomPage = PageRequest.of(0, 1);
+        Pageable accPage = PageRequest.of(0, 1);
 
-        model.addAttribute("products", featured.getContent());
+        Page<Product> topProducts =
+                productRepository.findBestSellerByCategorySlug("top", topPage);
+
+        Page<Product> bottomProducts =
+                productRepository.findBestSellerByCategorySlug("bottom", bottomPage);
+
+        Page<Product> accessoriesProducts =
+                productRepository.findBestSellerByCategorySlug("accessories", accPage);
+
+        model.addAttribute("topProducts", topProducts.getContent());
+        model.addAttribute("bottomProducts", bottomProducts.getContent());
+        model.addAttribute("accessoriesProducts", accessoriesProducts.getContent());
 
         return "shop/home";
     }
+
 
     // =====================================================
     // HELPER SORT METHOD

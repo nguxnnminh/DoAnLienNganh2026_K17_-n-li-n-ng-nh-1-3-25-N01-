@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title} + ' | NOVA Admin'">NOVA Admin</title>
 
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -38,11 +41,9 @@
             to { opacity: 1; }
         }
 
-        /* Glassmorphism giống Laravel */
         .glass {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
         }
@@ -51,77 +52,117 @@
             background: rgba(31, 41, 55, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        /* Toast */
-        .toast {
-            animation: slideIn 0.4s ease, slideOut 0.4s 2.6s ease forwards;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(120%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOut {
-            to { transform: translateX(120%); opacity: 0; }
-        }
     </style>
 </head>
 
 <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
 
-<!-- Mobile Menu Overlay -->
+<!-- MOBILE MENU -->
 <div id="mobileOverlay" class="fixed inset-0 bg-black/60 z-50 hidden lg:hidden"></div>
 
-<!-- Mobile Menu -->
-<div id="mobileMenu" 
+<div id="mobileMenu"
      class="fixed top-0 right-0 bottom-0 w-80 bg-white dark:bg-zinc-900 shadow-2xl translate-x-full transition-transform duration-300 z-50 lg:hidden">
+
     <div class="p-6">
+
         <button id="mobileClose" class="text-3xl float-right">&times;</button>
+
         <div class="mt-10 space-y-6">
-            <a th:href="@{/admin}" class="block py-2 text-lg font-medium">Bảng điều khiển</a>
-            <a th:href="@{/admin/orders}" class="block py-2 text-lg font-medium">Đơn hàng</a>
-            <a th:href="@{/admin/products}" class="block py-2 text-lg font-medium">Sản phẩm</a>
-            <a th:href="@{/admin/users}" class="block py-2 text-lg font-medium">Người dùng</a>
-            <a th:href="@{/logout}" class="block py-2 text-red-600 font-medium">Đăng xuất</a>
+
+            <a th:href="@{/admin}" class="block py-2 text-lg font-medium">
+                Bảng điều khiển
+            </a>
+
+            <a th:href="@{/admin/orders}" class="block py-2 text-lg font-medium">
+                Đơn hàng
+            </a>
+
+            <a th:href="@{/admin/products}" class="block py-2 text-lg font-medium">
+                Sản phẩm
+            </a>
+
+            <a th:href="@{/admin/users}" class="block py-2 text-lg font-medium">
+                Người dùng
+            </a>
+
+            <!-- LOGOUT FIX -->
+            <form th:action="@{/logout}" method="post">
+                <button type="submit"
+                        class="block py-2 text-red-600 font-medium w-full text-left">
+                    Đăng xuất
+                </button>
+            </form>
+
         </div>
+
     </div>
 </div>
+
 
 <div class="flex min-h-screen">
 
     <!-- SIDEBAR -->
     <aside class="hidden lg:flex w-72 flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
 
-        <a th:href="@{/admin}" class="h-16 flex items-center px-8 border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-            <div class="flex items-center gap-3">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="3">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-                <span class="text-2xl font-light tracking-[-0.05em]">NOVA</span>
-            </div>
+        <a th:href="@{/admin}" class="h-16 flex items-center px-8 border-b border-zinc-200 dark:border-zinc-800">
+            <span class="text-2xl font-light">NOVA</span>
         </a>
 
         <nav class="flex-1 px-4 py-6">
             <ul class="space-y-1">
-                <li><a th:href="@{/admin}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Bảng điều khiển</a></li>
-                <li><a th:href="@{/admin/orders}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Đơn hàng</a></li>
-                <li><a th:href="@{/admin/products}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Sản phẩm</a></li>
-                <li><a th:href="@{/admin/users}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Người dùng</a></li>
+
+                <li>
+                    <a th:href="@{/admin}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        Bảng điều khiển
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/admin/orders}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        Đơn hàng
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/admin/products}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        Sản phẩm
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/admin/users}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        Người dùng
+                    </a>
+                </li>
+
             </ul>
         </nav>
 
+        <!-- USER BOX -->
         <div class="p-4 border-t border-zinc-200 dark:border-zinc-800">
+
             <div class="flex items-center gap-3 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">A</div>
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                    A
+                </div>
                 <div>
                     <div class="font-medium">Admin</div>
                     <div class="text-xs text-zinc-500">Quản trị viên</div>
                 </div>
             </div>
-            <a th:href="@{/logout}" class="block mt-4 text-red-600 text-sm font-medium px-4 py-2">Đăng xuất</a>
+
+            <!-- LOGOUT FIX -->
+            <form th:action="@{/logout}" method="post">
+                <button type="submit"
+                        class="block mt-4 text-red-600 text-sm font-medium px-4 py-2 w-full text-left hover:bg-red-50 rounded-xl transition">
+                    Đăng xuất
+                </button>
+            </form>
+
         </div>
+
     </aside>
+
 
     <!-- MAIN -->
     <div class="flex-1 flex flex-col">
@@ -131,83 +172,43 @@
         </header>
 
         <main class="flex-1 overflow-auto p-6 lg:p-10">
-
-            <!-- Toast Container -->
-            <div id="toastContainer" class="fixed top-6 right-6 z-50 space-y-3"></div>
-
-            <!-- Content -->
             <div th:insert="~{::content}"></div>
-
         </main>
 
         <footer class="border-t py-8 px-10 text-sm text-zinc-500 text-center">
-            © 2026 NOVA Fashion. All rights reserved.
+            © 2026 NOVA Fashion
         </footer>
 
     </div>
+
 </div>
 
-<!-- ================= TOAST SCRIPT (ĐÃ FIX) ================= -->
-<script th:inline="javascript">
 
-function showToast(message, type = 'success') {
-
-    const container = document.getElementById('toastContainer');
-
-    const toast = document.createElement('div');
-
-    toast.className = `toast glass px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 min-w-[320px] ${
-        type === 'success'
-            ? 'border-l-4 border-green-500'
-            : 'border-l-4 border-red-500'
-    }`;
-
-    toast.innerHTML = `
-        <div class="flex-1">
-            <div class="font-medium">${type === 'success' ? 'Thành công' : 'Lỗi'}</div>
-            <div class="text-sm">${message}</div>
-        </div>
-    `;
-
-    container.appendChild(toast);
-
-    setTimeout(() => toast.remove(), 3000);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    let successMsg = /*[[${success}]]*/ null;
-    let errorMsg = /*[[${error}]]*/ null;
-
-    if (successMsg) showToast(successMsg, 'success');
-    if (errorMsg) showToast(errorMsg, 'error');
-
-});
-
-</script>
-
-<!-- Mobile menu script -->
 <script>
     const hamburger = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobileMenu');
     const mobileOverlay = document.getElementById('mobileOverlay');
     const mobileClose = document.getElementById('mobileClose');
 
-    if (hamburger && mobileMenu && mobileOverlay && mobileClose) {
-        hamburger.addEventListener('click', () => {
+    if (hamburger) {
+        hamburger.onclick = () => {
             mobileMenu.classList.remove('translate-x-full');
             mobileOverlay.classList.remove('hidden');
-        });
+        }
+    }
 
-        mobileClose.addEventListener('click', () => {
+    if (mobileClose) {
+        mobileClose.onclick = () => {
             mobileMenu.classList.add('translate-x-full');
             mobileOverlay.classList.add('hidden');
-        });
+        }
+    }
 
-        mobileOverlay.addEventListener('click', () => {
+    if (mobileOverlay) {
+        mobileOverlay.onclick = () => {
             mobileMenu.classList.add('translate-x-full');
             mobileOverlay.classList.add('hidden');
-        });
+        }
     }
 </script>
 

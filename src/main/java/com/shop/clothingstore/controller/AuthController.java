@@ -7,9 +7,7 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import com.shop.clothingstore.entity.PasswordResetToken;
 import com.shop.clothingstore.entity.Role;
@@ -25,17 +23,21 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserRepository userRepository,
-                        PasswordResetTokenRepository tokenRepository,
-                        PasswordEncoder passwordEncoder) {
+                          PasswordResetTokenRepository tokenRepository,
+                          PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
+    // ================= LOGIN =================
+
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login";
     }
+
+    // ================= REGISTER =================
 
     @GetMapping("/register")
     public String registerPage() {
@@ -45,30 +47,64 @@ public class AuthController {
     @PostMapping("/register")
     public String processRegister(
             @RequestParam String email,
-            @RequestParam String password
+            @RequestParam String password,
+            @RequestParam String confirmPassword,
+            Model model
     ) {
+
+        // ===== check email tồn tại =====
+        if (userRepository.findByEmail(email).isPresent()) {
+            model.addAttribute("error", "Email đã tồn tại");
+            return "auth/register";
+        }
+
+        // ===== check confirm password =====
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("error", "Mật khẩu xác nhận không khớp");
+            return "auth/register";
+        }
+
+        // ===== validate password basic =====
+        if (password.length() < 6) {
+            model.addAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
+            return "auth/register";
+        }
+
+        // ===== create user =====
         User user = new User();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(Role.USER);
 
         userRepository.save(user);
-        return "redirect:/login";
+
+        return "redirect:/login?registered";
     }
+
+    // ================= FORGOT PASSWORD =================
+
     @GetMapping("/forgot-password")
     public String forgotPasswordForm() {
         return "auth/forgot-password";
     }
 
     @PostMapping("/forgot-password")
-    public String processForgotPassword(@RequestParam String email) {
+    public String processForgotPassword(
+            @RequestParam String email,
+            Model model
+    ) {
 
         Optional<User> userOpt = userRepository.findByEmail(email);
+
         if (userOpt.isEmpty()) {
-            return "redirect:/forgot-password";
+            model.addAttribute("error", "Email không tồn tại");
+            return "auth/forgot-password";
         }
 
         User user = userOpt.get();
+
+        // delete token cũ nếu có
+        tokenRepository.deleteByUser(user);
 
         PasswordResetToken token = new PasswordResetToken();
         token.setToken(UUID.randomUUID().toString());
@@ -77,31 +113,22 @@ public class AuthController {
 
         tokenRepository.save(token);
 
-        // DEMO: in link ra console
+        // DEMO: in ra console
         System.out.println("RESET LINK: http://localhost:8080/reset-password?token=" + token.getToken());
 
-        return "redirect:/login";
+        model.addAttribute("success", "Link reset đã được gửi (xem console demo)");
+        return "auth/forgot-password";
     }
+
+    // ================= RESET PASSWORD =================
+
     @GetMapping("/reset-password")
-    public String resetPasswordForm(@RequestParam String token, Model model) {
+    public String resetPasswordForm(
+            @RequestParam String token,
+            Model model
+    ) {
 
-        Optional<PasswordResetToken> tokenOpt =
-                tokenRepository.findByToken(token);
-
-        if (tokenOpt.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        model.addAttribute("token", token);
-        return "auth/reset-password";
-    }
-
-    @PostMapping("/reset-password")
-    public String processResetPassword(@RequestParam String token,
-                                    @RequestParam String password) {
-
-        Optional<PasswordResetToken> tokenOpt =
-                tokenRepository.findByToken(token);
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
             return "redirect:/login";
@@ -113,12 +140,42 @@ public class AuthController {
             return "redirect:/login";
         }
 
+        model.addAttribute("token", token);
+        return "auth/reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String processResetPassword(
+            @RequestParam String token,
+            @RequestParam String password,
+            @RequestParam String confirmPassword,
+            Model model
+    ) {
+
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+
+        if (tokenOpt.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        PasswordResetToken resetToken = tokenOpt.get();
+
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            return "redirect:/login";
+        }
+
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("token", token);
+            model.addAttribute("error", "Mật khẩu xác nhận không khớp");
+            return "auth/reset-password";
+        }
+
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(password));
-        userRepository.save(user);
 
+        userRepository.save(user);
         tokenRepository.delete(resetToken);
 
-        return "redirect:/login";
+        return "redirect:/login?resetSuccess";
     }
 }

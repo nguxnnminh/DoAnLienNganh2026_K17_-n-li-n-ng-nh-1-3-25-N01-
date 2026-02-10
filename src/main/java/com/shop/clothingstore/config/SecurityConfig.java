@@ -68,9 +68,12 @@ public class SecurityConfig {
             )
 
             .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
-                .permitAll()
+                    .logoutUrl("/logout")                 // URL logout
+                    .logoutSuccessUrl("/")                // Redirect sau logout
+                    .invalidateHttpSession(true)          // Xóa session
+                    .clearAuthentication(true)            // Xóa authentication
+                    .deleteCookies("JSESSIONID")          // Xóa cookie login
+                    .permitAll()
             );
 
         return http.build();

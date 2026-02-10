@@ -1,6 +1,8 @@
 package com.shop.clothingstore.controller.admin;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;
@@ -31,42 +33,75 @@ public class AdminDashboardController {
     @GetMapping("/admin")
     public String dashboard(Model model, HttpServletRequest request) {
 
-        // ===== STATISTICS =====
+        // ================= KPI =================
+
         long totalOrders = orderRepository.count();
-        long pendingOrders = orderRepository.countByStatus(OrderStatus.PENDING);
-        long completedOrders = orderRepository.countByStatus(OrderStatus.COMPLETED);
+
+        long pendingOrders =
+                orderRepository.countByStatus(OrderStatus.PENDING);
+
+        long completedOrders =
+                orderRepository.countByStatus(OrderStatus.COMPLETED);
 
         BigDecimal totalRevenue =
                 orderRepository.getTotalRevenueByStatus(OrderStatus.COMPLETED);
 
         long totalUsers = userRepository.count();
 
-        // ===== LATEST ORDERS =====
+
+        // ================= REVENUE CHART =================
+
+        List<Object[]> revenueRaw =
+                orderRepository.getRevenueByDate(OrderStatus.COMPLETED);
+
+        List<String> revenueLabels = new ArrayList<>();
+        List<BigDecimal> revenueData = new ArrayList<>();
+
+        for (Object[] row : revenueRaw) {
+
+            if (row[0] == null || row[1] == null) continue;
+
+            // 👉 MySQL trả java.sql.Date
+            java.sql.Date sqlDate = (java.sql.Date) row[0];
+            LocalDate localDate = sqlDate.toLocalDate();
+
+            // 👉 MySQL 5.5 SUM trả Double
+            Number revenueNumber = (Number) row[1];
+            BigDecimal revenue =
+                    BigDecimal.valueOf(revenueNumber.doubleValue());
+
+            revenueLabels.add(localDate.toString());
+            revenueData.add(revenue);
+        }
+
+
+        // ================= LATEST ORDERS =================
+
         List<Order> latestOrders =
                 orderRepository.findTop5ByOrderByCreatedAtDesc();
 
-        // ===== ADD MODEL =====
+
+        // ================= MODEL =================
+
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("pendingOrders", pendingOrders);
         model.addAttribute("completedOrders", completedOrders);
-        model.addAttribute("totalRevenue", totalRevenue);
+
+        model.addAttribute("totalRevenue",
+                totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
+
         model.addAttribute("totalUsers", totalUsers);
+
         model.addAttribute("latestOrders", latestOrders);
 
-        // ⭐ ACTIVE MENU
+        model.addAttribute("revenueLabels", revenueLabels);
+        model.addAttribute("revenueData", revenueData);
+
+
+        // ================= UI SUPPORT =================
         model.addAttribute("currentUri", request.getRequestURI());
-
-        // ⭐ PAGE TITLE
         model.addAttribute("title", "Dashboard");
-
-        // ⭐ DEMO CHART DATA
-        model.addAttribute("revenueLabels",
-                List.of("T2","T3","T4","T5","T6","T7","CN"));
-
-        model.addAttribute("revenueData",
-                List.of(1200000,1500000,800000,2000000,2500000,1800000,2200000));
 
         return "admin/dashboard";
     }
-
 }

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, 'Tài khoản của tôi')}">
+
+<div th:fragment="content" class="max-w-3xl mx-auto">
+
+    <!-- TITLE -->
+    <div class="mb-10">
+        <h1 class="text-3xl font-semibold tracking-tight">
+            Hồ sơ tài khoản
+        </h1>
+
+        <p class="text-zinc-500 text-sm mt-2">
+            Quản lý thông tin cá nhân và liên hệ
+        </p>
+    </div>
+
+
+    <!-- PROFILE CARD -->
+    <div class="border border-zinc-200 dark:border-zinc-800
+                rounded-2xl p-8 bg-white dark:bg-zinc-900">
+
+        <form method="post"
+              th:action="@{/profile/update}"
+              class="space-y-6">
+
+            <!-- EMAIL -->
+            <div>
+                <label class="text-sm text-zinc-500">
+                    Email
+                </label>
+
+                <input type="email"
+                       th:value="${user.email}"
+                       disabled
+                       class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
+                              bg-zinc-100 dark:bg-zinc-800
+                              px-4 py-3 rounded-xl cursor-not-allowed">
+            </div>
+
+
+            <!-- FULL NAME -->
+            <div>
+                <label class="text-sm text-zinc-500">
+                    Họ và tên
+                </label>
+
+                <input type="text"
+                       name="fullName"
+                       th:value="${user.fullName}"
+                       placeholder="Nhập họ và tên"
+                       class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
+                              bg-white dark:bg-zinc-900
+                              px-4 py-3 rounded-xl
+                              focus:outline-none focus:border-black dark:focus:border-white">
+            </div>
+
+
+            <!-- PHONE -->
+            <div>
+                <label class="text-sm text-zinc-500">
+                    Số điện thoại
+                </label>
+
+                <input type="text"
+                       name="phone"
+                       th:value="${user.phone}"
+                       placeholder="Nhập số điện thoại"
+                       class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
+                              px-4 py-3 rounded-xl
+                              focus:outline-none focus:border-black dark:focus:border-white">
+            </div>
+
+
+            <!-- ADDRESS -->
+            <div>
+                <label class="text-sm text-zinc-500">
+                    Địa chỉ giao hàng
+                </label>
+
+                <textarea name="address"
+                          rows="3"
+                          placeholder="Nhập địa chỉ"
+                          class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
+                                 px-4 py-3 rounded-xl
+                                 focus:outline-none focus:border-black dark:focus:border-white"
+                          th:text="${user.address}">
+                </textarea>
+            </div>
+
+
+            <!-- ACTION -->
+            <div class="pt-4 flex justify-between items-center">
+
+                <a th:href="@{/my-orders}"
+                   class="text-sm underline underline-offset-4 hover:text-blue-600 transition">
+                    Xem đơn hàng
+                </a>
+
+                <button type="submit"
+                        class="bg-black text-white px-8 py-3 rounded-xl
+                               hover:opacity-90 transition">
+                    Lưu thay đổi
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- CHANGE PASSWORD CARD -->
+    <div class="border border-zinc-200 dark:border-zinc-800
+                rounded-2xl p-8 bg-white dark:bg-zinc-900 mt-8">
+
+        <h2 class="text-lg font-semibold mb-6">
+            Đổi mật khẩu
+        </h2>
+
+        <form method="post"
+              th:action="@{/profile/change-password}"
+              class="space-y-5">
+
+            <input type="password"
+                   name="oldPassword"
+                   placeholder="Mật khẩu hiện tại"
+                   required
+                   class="w-full border border-zinc-200 dark:border-zinc-700
+                          px-4 py-3 rounded-xl
+                          focus:outline-none focus:border-black dark:focus:border-white">
+
+            <input type="password"
+                   name="newPassword"
+                   placeholder="Mật khẩu mới"
+                   required
+                   class="w-full border border-zinc-200 dark:border-zinc-700
+                          px-4 py-3 rounded-xl
+                          focus:outline-none focus:border-black dark:focus:border-white">
+
+            <input type="password"
+                   name="confirmPassword"
+                   placeholder="Xác nhận mật khẩu"
+                   required
+                   class="w-full border border-zinc-200 dark:border-zinc-700
+                          px-4 py-3 rounded-xl
+                          focus:outline-none focus:border-black dark:focus:border-white">
+
+            <button type="submit"
+                    class="bg-black text-white px-6 py-3 rounded-xl
+                           hover:opacity-90 transition">
+                Cập nhật mật khẩu
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</html>

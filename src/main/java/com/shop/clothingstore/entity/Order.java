@@ -1,47 +1,68 @@
 package com.shop.clothingstore.entity;
 
-import java.time.LocalDateTime;
 import java.util.List;
+
+import com.shop.clothingstore.entity.base.AbstractTransaction;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
 
 @Entity
 @Table(name = "orders")
-@Data
-public class Order {
+public class Order extends AbstractTransaction<OrderStatus> {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @OneToMany(mappedBy = "order",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true)
+    private List<OrderItem> items;
 
-    // Thông tin snapshot lúc checkout
+    private Double total;
+
     private String customerName;
     private String phone;
     private String address;
 
-    private double total;
+    // ===== GETTER SETTER =====
 
-    @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    public List<OrderItem> getItems() {
+        return items;
+    }
 
-    private LocalDateTime createdAt;
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
+    }
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private List<OrderItem> items;
+    public Double getTotal() {
+        return total;
+    }
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = true)
-    private User user;
+    public void setTotal(Double total) {
+        this.total = total;
+    }
 
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }

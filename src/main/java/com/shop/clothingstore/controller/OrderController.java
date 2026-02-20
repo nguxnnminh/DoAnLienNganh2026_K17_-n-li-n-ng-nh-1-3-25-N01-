@@ -44,8 +44,9 @@ public class OrderController {
                 .findByEmail(principal.getName())
                 .orElseThrow();
 
+        // 🔥 SỬA Ở ĐÂY
         List<Order> orders = orderRepository
-                .findByUserOrderByCreatedAtDesc(user);
+                .findByActorOrderByCreatedAtDesc(user);
 
         model.addAttribute("orders", orders);
 
@@ -75,7 +76,8 @@ public class OrderController {
                 .orElseThrow();
 
         // 🔐 bảo mật: chỉ xem đơn của mình
-        if (order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
+        if (order.getActor() == null 
+                || !order.getActor().getId().equals(user.getId())) {
             return "redirect:/my-orders";
         }
 

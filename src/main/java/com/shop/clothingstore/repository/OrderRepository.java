@@ -18,9 +18,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // USER QUERIES
     // =====================================================
 
-    List<Order> findByUser(User user);
+    List<Order> findByActor(User actor);
 
-    List<Order> findByUserOrderByCreatedAtDesc(User user);
+    List<Order> findByActorOrderByCreatedAtDesc(User actor);
 
 
     // =====================================================
@@ -40,9 +40,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // DASHBOARD KPI
     // =====================================================
 
-    /**
-     * ⭐ Tổng doanh thu theo trạng thái
-     */
     @Query("""
         SELECT COALESCE(SUM(o.total), 0)
         FROM Order o
@@ -51,9 +48,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     BigDecimal getTotalRevenueByStatus(@Param("status") OrderStatus status);
 
 
-    /**
-     * ⭐ 5 đơn hàng mới nhất
-     */
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
 
@@ -61,13 +55,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // DASHBOARD CHART
     // =====================================================
 
-    /**
-     * ⭐ Doanh thu theo ngày
-     *
-     * return:
-     *   Object[0] = java.sql.Date
-     *   Object[1] = Double (SUM)
-     */
     @Query("""
         SELECT DATE(o.createdAt), SUM(o.total)
         FROM Order o
@@ -78,9 +65,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Object[]> getRevenueByDate(@Param("status") OrderStatus status);
 
 
-    /**
-     * ⭐ Doanh thu từ ngày X
-     */
     @Query("""
         SELECT DATE(o.createdAt), SUM(o.total)
         FROM Order o
@@ -93,5 +77,4 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate
     );
-
 }

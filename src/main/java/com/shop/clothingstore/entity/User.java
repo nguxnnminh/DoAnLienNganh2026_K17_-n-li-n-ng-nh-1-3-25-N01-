@@ -1,23 +1,20 @@
 package com.shop.clothingstore.entity;
 
+import com.shop.clothingstore.entity.base.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "users")
 @Data
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -25,7 +22,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // Thông tin dùng để autofill checkout
     private String fullName;
     private String phone;
     private String address;

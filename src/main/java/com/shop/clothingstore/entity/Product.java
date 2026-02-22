@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.shop.clothingstore.entity.base.BaseEntity;
+import com.shop.clothingstore.entity.base.SellableItem;     // Thêm import này
+import com.shop.clothingstore.entity.base.ItemVariant;     // Thêm import này
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,7 +22,7 @@ import lombok.EqualsAndHashCode;
 @Table(name = "products")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class Product extends BaseEntity {
+public class Product extends BaseEntity implements SellableItem {
 
     @Column(nullable = false)
     private String name;
@@ -49,6 +51,8 @@ public class Product extends BaseEntity {
             fetch = FetchType.LAZY)
     private List<ProductImage> images = new ArrayList<>();
 
+    // Các method tính toán hiện tại – thêm @Override để khớp interface
+    @Override
     public Double getMinPrice() {
         return productVariants.stream()
                 .map(ProductVariant::getPrice)
@@ -56,18 +60,54 @@ public class Product extends BaseEntity {
                 .orElse(0.0);
     }
 
+    @Override
     public Integer getTotalStock() {
         return productVariants.stream()
                 .mapToInt(ProductVariant::getStock)
                 .sum();
     }
 
+    @Override
     public Integer getTotalSold() {
         return productVariants.stream()
                 .mapToInt(ProductVariant::getSold)
                 .sum();
     }
 
+    // Các method getter cơ bản từ interface – thêm @Override
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getSlug() {
+        return slug;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public boolean isActive() {
+        return active;
+    }
+
+    // Quan hệ variants – trả về List<? extends ItemVariant>
+    @Override
+    public List<? extends ItemVariant> getVariants() {
+        return productVariants;  // ProductVariant implements ItemVariant nên an toàn
+    }
+
+    // Quan hệ images – khớp interface
+    @Override
+    public List<ProductImage> getImages() {
+        return images;
+    }
+
+    // Các method tiện ích hiện tại – giữ nguyên, không cần override vì không thuộc interface
     public void addVariant(ProductVariant variant) {
         variant.setProduct(this);
         productVariants.add(variant);

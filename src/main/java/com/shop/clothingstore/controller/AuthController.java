@@ -2,7 +2,6 @@ package com.shop.clothingstore.controller;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -17,6 +16,8 @@ import com.shop.clothingstore.entity.Role;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.PasswordResetTokenRepository;
 import com.shop.clothingstore.repository.UserRepository;
+import com.shop.clothingstore.service.EmailService;
+import com.shop.clothingstore.service.PasswordResetService;
 
 @Controller
 public class AuthController {
@@ -24,24 +25,28 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetService passwordResetService;
+    private final EmailService emailService;
 
     public AuthController(UserRepository userRepository,
-                          PasswordResetTokenRepository tokenRepository,
-                          PasswordEncoder passwordEncoder) {
+            PasswordResetTokenRepository tokenRepository,
+            PasswordEncoder passwordEncoder,
+            PasswordResetService passwordResetService,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.passwordResetService = passwordResetService;
+        this.emailService = emailService;
     }
 
     // ================= LOGIN =================
-
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login";
     }
 
     // ================= REGISTER =================
-
     @GetMapping("/register")
     public String registerPage() {
         return "auth/register";
@@ -88,66 +93,66 @@ public class AuthController {
         return "redirect:/login";
     }
 
-    // ================= FORGOT PASSWORD =================
-
+    // ================= FORGOT PASSWORD PAGE =================
     @GetMapping("/forgot-password")
-    public String forgotPasswordForm() {
+    public String forgotPasswordPage() {
         return "auth/forgot-password";
     }
 
     @PostMapping("/forgot-password")
     public String processForgotPassword(
             @RequestParam String email,
-            Model model
+            RedirectAttributes redirectAttributes
     ) {
 
         Optional<User> userOpt = userRepository.findByEmail(email);
 
-        if (userOpt.isEmpty()) {
-            model.addAttribute("error", "Email không tồn tại");
-            return "auth/forgot-password";
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi."
+        );
+
+        if (userOpt.isPresent()) {
+
+            User user = userOpt.get();
+
+            PasswordResetToken token
+                    = passwordResetService.createTokenForUser(user);
+
+            String resetLink
+                    = "http://localhost:8080/reset-password?token=" + token.getToken();
+
+            emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         }
 
-        User user = userOpt.get();
-
-        // delete token cũ nếu có
-        tokenRepository.deleteByUser(user);
-
-        PasswordResetToken token = new PasswordResetToken();
-        token.setToken(UUID.randomUUID().toString());
-        token.setUser(user);
-        token.setExpiryDate(LocalDateTime.now().plusMinutes(30));
-
-        tokenRepository.save(token);
-
-        // DEMO: in ra console
-        System.out.println("RESET LINK: http://localhost:8080/reset-password?token=" + token.getToken());
-
-        model.addAttribute("success", "Link reset đã được gửi (xem console demo)");
-        return "auth/forgot-password";
+        return "redirect:/forgot-password";
     }
-
     // ================= RESET PASSWORD =================
 
     @GetMapping("/reset-password")
     public String resetPasswordForm(
             @RequestParam String token,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
 
         Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Link không hợp lệ");
             return "redirect:/login";
         }
 
         PasswordResetToken resetToken = tokenOpt.get();
 
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("error", "Link đã hết hạn");
             return "redirect:/login";
         }
 
+        // 👇 QUAN TRỌNG NHẤT
         model.addAttribute("token", token);
+
         return "auth/reset-password";
     }
 
@@ -156,25 +161,31 @@ public class AuthController {
             @RequestParam String token,
             @RequestParam String password,
             @RequestParam String confirmPassword,
-            Model model
+            RedirectAttributes redirectAttributes
     ) {
 
         Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Link không hợp lệ");
             return "redirect:/login";
         }
 
         PasswordResetToken resetToken = tokenOpt.get();
 
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("error", "Link đã hết hạn");
             return "redirect:/login";
         }
 
         if (!password.equals(confirmPassword)) {
-            model.addAttribute("token", token);
-            model.addAttribute("error", "Mật khẩu xác nhận không khớp");
-            return "auth/reset-password";
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
+            return "redirect:/reset-password?token=" + token;
+        }
+
+        if (password.length() < 6) {
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
+            return "redirect:/reset-password?token=" + token;
         }
 
         User user = resetToken.getUser();
@@ -183,6 +194,8 @@ public class AuthController {
         userRepository.save(user);
         tokenRepository.delete(resetToken);
 
-        return "redirect:/login?resetSuccess";
+        redirectAttributes.addFlashAttribute("success", "Đặt lại mật khẩu thành công");
+
+        return "redirect:/login";
     }
 }

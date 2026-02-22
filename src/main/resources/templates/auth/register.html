@@ -17,11 +17,6 @@
     <!-- FORM -->
     <form method="post" th:action="@{/register}" class="space-y-6" id="registerForm">
 
-        <!-- ERROR BACKEND -->
-        <div th:if="${error}" class="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
-            <span th:text="${error}"></span>
-        </div>
-
         <!-- EMAIL -->
         <div>
             <label class="block text-sm font-medium mb-2">

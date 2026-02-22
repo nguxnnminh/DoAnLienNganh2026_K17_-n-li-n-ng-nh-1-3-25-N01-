@@ -15,7 +15,7 @@ import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.service.OrderService;
 
 @Controller
-public class AdminOrderController {
+public class AdminOrderController extends AdminBaseController {
 
     private final OrderService orderService;
 
@@ -28,11 +28,17 @@ public class AdminOrderController {
     // ===============================
     @GetMapping("/admin/orders")
     public String orders(Model model) {
+
+        model.addAttribute("title", "Quản lý đơn hàng");
+
         List<Order> orders = orderService.getAllOrders();
+
         model.addAttribute("orders", orders);
         model.addAttribute("statuses", OrderStatus.values());
+
         return "admin/orders/index";
     }
+
 
     // ===============================
     // ADMIN - ORDER DETAIL
@@ -40,14 +46,23 @@ public class AdminOrderController {
     @GetMapping("/admin/orders/{id}")
     public String orderDetail(
             @PathVariable Long id,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         Order order = orderService.getOrderById(id);
+
+        if (order == null) {
+            redirectAttributes.addFlashAttribute("error", "Không tìm thấy đơn hàng.");
+            return "redirect:/admin/orders";
+        }
+
+        model.addAttribute("title", "Chi tiết đơn hàng #" + id);
         model.addAttribute("order", order);
         model.addAttribute("statuses", OrderStatus.values());
 
         return "admin/orders/show";
     }
+
 
     // ===============================
     // ADMIN - UPDATE STATUS
@@ -59,12 +74,27 @@ public class AdminOrderController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            Order updatedOrder = orderService.updateOrderStatus(id, status);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái đơn hàng thành công!");
+
+            orderService.updateOrderStatus(id, status);
+
+            redirectAttributes.addFlashAttribute(
+                    "success",
+                    "Cập nhật trạng thái đơn hàng thành công!"
+            );
+
         } catch (IllegalStateException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    e.getMessage()
+            );
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + e.getMessage());
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "Lỗi hệ thống. Vui lòng thử lại."
+            );
         }
 
         return "redirect:/admin/orders/" + id;

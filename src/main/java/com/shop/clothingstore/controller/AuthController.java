@@ -7,7 +7,10 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.shop.clothingstore.entity.PasswordResetToken;
 import com.shop.clothingstore.entity.Role;
@@ -49,25 +52,25 @@ public class AuthController {
             @RequestParam String email,
             @RequestParam String password,
             @RequestParam String confirmPassword,
-            Model model
+            RedirectAttributes redirectAttributes
     ) {
 
         // ===== check email tồn tại =====
         if (userRepository.findByEmail(email).isPresent()) {
-            model.addAttribute("error", "Email đã tồn tại");
-            return "auth/register";
+            redirectAttributes.addFlashAttribute("error", "Email đã tồn tại");
+            return "redirect:/register";
         }
 
         // ===== check confirm password =====
         if (!password.equals(confirmPassword)) {
-            model.addAttribute("error", "Mật khẩu xác nhận không khớp");
-            return "auth/register";
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
+            return "redirect:/register";
         }
 
         // ===== validate password basic =====
         if (password.length() < 6) {
-            model.addAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
-            return "auth/register";
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
+            return "redirect:/register";
         }
 
         // ===== create user =====
@@ -78,7 +81,11 @@ public class AuthController {
 
         userRepository.save(user);
 
-        return "redirect:/login?registered";
+        // ===== SUCCESS TOAST =====
+        redirectAttributes.addFlashAttribute("success",
+                "Đăng ký thành công! Vui lòng đăng nhập.");
+
+        return "redirect:/login";
     }
 
     // ================= FORGOT PASSWORD =================

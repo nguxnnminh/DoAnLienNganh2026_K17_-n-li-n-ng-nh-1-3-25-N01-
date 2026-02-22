@@ -15,7 +15,7 @@ import com.shop.clothingstore.service.UserService;
 
 @Controller
 @RequestMapping("/admin/users")
-public class AdminUserController {
+public class AdminUserController extends AdminBaseController {
 
     private final UserService userService;
 
@@ -23,30 +23,50 @@ public class AdminUserController {
         this.userService = userService;
     }
 
+    // ===============================
     // LIST USERS
+    // ===============================
     @GetMapping
     public String listUsers(Model model) {
+
+        model.addAttribute("title", "Quản lý khách hàng");
+
         model.addAttribute("users", userService.getAllUsers());
+
         return "admin/users/index";
     }
 
-    // FORM EDIT USER
+
+    // ===============================
+    // SHOW EDIT FORM
+    // ===============================
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        User user = userService.getUserById(id)
-                .orElse(null);
+    public String showEditForm(
+            @PathVariable Long id,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        User user = userService.getUserById(id).orElse(null);
 
         if (user == null) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy người dùng");
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "Không tìm thấy người dùng.");
             return "redirect:/admin/users";
         }
 
+        model.addAttribute("title", "Chỉnh sửa khách hàng");
+
         model.addAttribute("user", user);
         model.addAttribute("roles", Role.values());
+
         return "admin/users/edit";
     }
 
+
+    // ===============================
     // UPDATE USER
+    // ===============================
     @PostMapping("/{id}")
     public String updateUser(
             @PathVariable Long id,
@@ -54,26 +74,45 @@ public class AdminUserController {
             RedirectAttributes redirectAttributes) {
 
         try {
+
             userService.updateUser(id, updatedUser);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin người dùng thành công!");
+
+            redirectAttributes.addFlashAttribute(
+                    "success",
+                    "Cập nhật thông tin người dùng thành công!");
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "Cập nhật thất bại.");
         }
 
         return "redirect:/admin/users";
     }
 
+
+    // ===============================
     // DELETE USER
+    // ===============================
     @PostMapping("/{id}/delete")
     public String deleteUser(
             @PathVariable Long id,
             RedirectAttributes redirectAttributes) {
 
         try {
+
             userService.deleteUser(id);
-            redirectAttributes.addFlashAttribute("success", "Xóa người dùng thành công!");
+
+            redirectAttributes.addFlashAttribute(
+                    "success",
+                    "Xóa người dùng thành công!");
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Không thể xóa: " + e.getMessage());
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "Không thể xóa người dùng.");
         }
 
         return "redirect:/admin/users";

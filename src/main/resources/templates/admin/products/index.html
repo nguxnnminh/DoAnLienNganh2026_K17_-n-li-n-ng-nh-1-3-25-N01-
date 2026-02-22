@@ -18,187 +18,198 @@
 
     </div>
 
+    <!-- ================= DESKTOP TABLE ================= -->
+    <div class="hidden lg:block glass rounded-2xl overflow-x-auto border border-zinc-200 dark:border-zinc-800">
 
-    <!-- TABLE -->
-    <div class="glass rounded-2xl overflow-x-auto border border-zinc-200 dark:border-zinc-800">
+        <table class="min-w-[1000px] w-full text-sm text-zinc-700 dark:text-zinc-300">
 
-        <table class="w-full table-fixed text-sm text-zinc-700 dark:text-zinc-300">
-
-            <colgroup>
-                <col style="width:30%">
-                <col style="width:20%">
-                <col style="width:15%">
-                <col style="width:10%">
-                <col style="width:10%">
-                <col style="width:15%">
-            </colgroup>
-
-
-            <!-- HEADER -->
             <thead class="bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-500 uppercase text-xs tracking-wide">
-            <tr>
-                <th class="px-6 py-5 text-left">Tên sản phẩm</th>
-                <th class="px-6 py-5 text-left">Danh mục phụ</th>
-                <th class="px-6 py-5 text-center">Giá</th>
-                <th class="px-6 py-5 text-center">Tồn kho tổng</th>
-                <th class="px-6 py-5 text-center">Trạng thái</th>
-                <th class="px-6 py-5 text-right">Hành động</th>
-            </tr>
+                <tr>
+                    <th class="px-6 py-5 text-left">Tên sản phẩm</th>
+                    <th class="px-6 py-5 text-left">Danh mục phụ</th>
+                    <th class="px-6 py-5 text-center">Giá</th>
+                    <th class="px-6 py-5 text-center">Tồn kho tổng</th>
+                    <th class="px-6 py-5 text-center">Trạng thái</th>
+                    <th class="px-6 py-5 text-center">Hành động</th>
+                </tr>
             </thead>
 
-
-            <!-- BODY -->
             <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
 
             <tr th:each="product : ${products}"
                 class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition">
 
                 <!-- NAME -->
-                <td class="px-6 py-5 truncate font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                    <span th:text="${product.name}"></span>
+                <td class="px-6 py-5 whitespace-nowrap">
+                    <div class="font-medium text-zinc-900 dark:text-zinc-100">
+                        <span th:text="${product.name}"></span>
+                    </div>
                 </td>
-
 
                 <!-- SUB CATEGORY -->
-                <td class="px-6 py-5 truncate text-zinc-600 dark:text-zinc-400">
-                    <span th:text="${
-                        product.subCategory != null
-                        ? product.subCategory.name
-                        : 'Chưa phân loại'
-                    }"></span>
+                <td class="px-6 py-5 whitespace-nowrap text-zinc-500">
+                    <span th:text="${product.subCategory != null ? product.subCategory.name : 'Chưa phân loại'}"></span>
                 </td>
-
 
                 <!-- PRICE -->
-                <td class="px-6 py-5 text-center whitespace-nowrap font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                    <span th:text="${
-                        product.minPrice != null
-                        ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')
-                        : '-'
-                    }"></span> ₫
+                <td class="px-6 py-5 text-center whitespace-nowrap">
+                    <span class="font-semibold text-zinc-900 dark:text-zinc-100"
+                        th:text="${product.minPrice != null ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA') : '-'}">
+                    </span> ₫
                 </td>
 
-
                 <!-- STOCK -->
-                <td class="px-6 py-5 text-center whitespace-nowrap font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                <td class="px-6 py-5 text-center whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">
                     <span th:text="${product.totalStock ?: 0}"></span>
                 </td>
 
-
                 <!-- STATUS -->
                 <td class="px-6 py-5 text-center whitespace-nowrap">
-
                     <span th:if="${product.active}"
-                          class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                        class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
                         Active
                     </span>
 
                     <span th:unless="${product.active}"
-                          class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                        class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
                         Inactive
                     </span>
-
                 </td>
-
 
                 <!-- ACTION -->
-                <td class="px-6 py-5 text-right whitespace-nowrap space-x-4">
+                <td class="px-6 py-5 text-center whitespace-nowrap">
+                    <div class="flex justify-center items-center gap-3">
 
-                    <!-- EDIT -->
-                    <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
-                       class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition">
-                        Sửa
-                    </a>
+                        <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+                            class="px-4 py-2 rounded-xl text-sm font-medium
+                                bg-indigo-50 text-indigo-600
+                                hover:bg-indigo-100
+                                dark:bg-indigo-900/30 dark:text-indigo-300
+                                dark:hover:bg-indigo-900/50
+                                transition">
+                            Sửa
+                        </a>
 
+                        <form th:action="@{/admin/products/{id}(id=${product.id})}"
+                            method="post">
 
-                    <!-- DELETE -->
-                    <form th:action="@{/admin/products/{id}(id=${product.id})}"
-                          method="post"
-                          class="inline delete-form">
+                            <input type="hidden" name="_method" value="DELETE"/>
 
-                        <input type="hidden" name="_method" value="DELETE"/>
+                            <button type="submit"
+                                data-confirm="Bạn chắc chắn muốn xóa sản phẩm này? Hành động không thể hoàn tác."
+                                class="px-4 py-2 rounded-xl text-sm font-medium
+                                    bg-red-50 text-red-600
+                                    hover:bg-red-100
+                                    dark:bg-red-900/30 dark:text-red-300
+                                    dark:hover:bg-red-900/50
+                                    transition">
+                                Xóa
+                            </button>
 
-                        <button type="button"
-                                class="delete-btn text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium text-sm transition">
-                            Xóa
-                        </button>
+                        </form>
 
-                    </form>
-
+                    </div>
                 </td>
 
             </tr>
 
-
-            <!-- EMPTY -->
-            <tr th:if="${#lists.isEmpty(products)}">
-                <td colspan="6"
-                    class="px-6 py-16 text-center text-zinc-500">
-                    Chưa có sản phẩm nào.
-                </td>
-            </tr>
+                <!-- EMPTY -->
+                <tr th:if="${#lists.isEmpty(products)}">
+                    <td colspan="6"
+                        class="px-6 py-16 text-center text-zinc-500">
+                        Chưa có sản phẩm nào.
+                    </td>
+                </tr>
 
             </tbody>
         </table>
     </div>
 
 
-    <!-- DELETE MODAL -->
-    <div id="deleteModal"
-         class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50">
 
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 w-96 shadow-xl">
+    <!-- ================= MOBILE CARD VIEW ================= -->
+    <div class="lg:hidden space-y-4">
 
-            <h2 class="text-lg font-semibold mb-3">
-                Xác nhận xóa
-            </h2>
+        <div th:each="product : ${products}"
+            class="glass rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm">
 
-            <p class="text-zinc-500 mb-6">
-                Bạn có chắc chắn muốn xóa sản phẩm này không?
-            </p>
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <div class="font-semibold text-lg">
+                        <span th:text="${product.name}"></span>
+                    </div>
+                    <div class="text-xs text-zinc-500"
+                        th:text="${product.subCategory != null ? product.subCategory.name : 'Chưa phân loại'}">
+                    </div>
+                </div>
 
+                <span th:if="${product.active}"
+                    class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">
+                    Active
+                </span>
+
+                <span th:unless="${product.active}"
+                    class="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                    Inactive
+                </span>
+            </div>
+
+            <!-- Price + Stock -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                    <span th:text="${product.minPrice != null ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA') : '-'}"></span> ₫
+                </div>
+
+                <div class="text-sm text-zinc-500">
+                    Tồn kho: <span th:text="${product.totalStock ?: 0}"></span>
+                </div>
+            </div>
+
+            <!-- Actions -->
             <div class="flex justify-end gap-3">
 
-                <button id="cancelDelete"
-                        class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-xl">
-                    Hủy
-                </button>
+                <!-- EDIT -->
+                <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+                class="px-4 py-2 rounded-xl text-sm font-medium
+                        bg-indigo-50 text-indigo-600
+                        hover:bg-indigo-100
+                        dark:bg-indigo-900/30 dark:text-indigo-300
+                        dark:hover:bg-indigo-900/50
+                        transition">
+                    Sửa
+                </a>
 
-                <button id="confirmDelete"
-                        class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">
-                    Xóa
-                </button>
+                <!-- DELETE -->
+                <form th:action="@{/admin/products/{id}(id=${product.id})}"
+                    method="post">
+
+                    <input type="hidden" name="_method" value="DELETE"/>
+
+                    <button type="submit"
+                            data-confirm="Bạn chắc chắn muốn xóa sản phẩm này? Hành động không thể hoàn tác."
+                            class="px-4 py-2 rounded-xl text-sm font-medium
+                                bg-red-50 text-red-600
+                                hover:bg-red-100
+                                dark:bg-red-900/30 dark:text-red-300
+                                dark:hover:bg-red-900/50
+                                transition">
+                        Xóa
+                    </button>
+
+                </form>
 
             </div>
+
         </div>
+
+        <!-- EMPTY MOBILE -->
+        <div th:if="${#lists.isEmpty(products)}"
+            class="text-center text-zinc-500 py-16">
+            Chưa có sản phẩm nào.
+        </div>
+
     </div>
-
-
-    <!-- DELETE SCRIPT -->
-    <script>
-        const modal = document.getElementById("deleteModal");
-        const confirmBtn = document.getElementById("confirmDelete");
-        const cancelBtn = document.getElementById("cancelDelete");
-
-        let formToSubmit = null;
-
-        document.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.addEventListener("click", function () {
-                formToSubmit = this.closest("form");
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-            });
-        });
-
-        cancelBtn.onclick = () => {
-            modal.classList.add("hidden");
-        };
-
-        confirmBtn.onclick = () => {
-            if (formToSubmit) formToSubmit.submit();
-        };
-    </script>
-
 
 </div>
 

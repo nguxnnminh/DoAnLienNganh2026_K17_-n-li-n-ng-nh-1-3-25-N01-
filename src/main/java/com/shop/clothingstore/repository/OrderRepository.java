@@ -4,15 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.entity.User;
+import com.shop.clothingstore.repository.base.BaseRepository;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends BaseRepository<Order, Long> {
 
     // =====================================================
     // USER QUERIES

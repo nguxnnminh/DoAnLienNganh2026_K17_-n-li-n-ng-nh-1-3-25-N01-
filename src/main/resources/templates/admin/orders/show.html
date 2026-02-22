@@ -3,13 +3,6 @@
 
 <div th:fragment="content">
 
-    <!-- Flash -->
-    <div th:if="${success}"
-        class="glass border border-green-500/30 text-green-700 dark:text-green-400 px-5 py-4 rounded-2xl mb-6">
-        <strong>Thành công:</strong>
-        <span th:text="${success}"></span>
-    </div>
-
     <div th:if="${error}"
         class="glass border border-red-500/30 text-red-700 dark:text-red-400 px-5 py-4 rounded-2xl mb-6">
         <strong>Lỗi:</strong>

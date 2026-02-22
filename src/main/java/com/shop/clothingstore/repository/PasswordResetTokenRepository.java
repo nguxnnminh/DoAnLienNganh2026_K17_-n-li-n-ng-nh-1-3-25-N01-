@@ -3,13 +3,12 @@ package com.shop.clothingstore.repository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import com.shop.clothingstore.entity.PasswordResetToken;
 import com.shop.clothingstore.entity.User;
+import com.shop.clothingstore.repository.base.BaseRepository;
 
 public interface PasswordResetTokenRepository
-        extends JpaRepository<PasswordResetToken, Long> {
+        extends BaseRepository<PasswordResetToken, Long> {
 
     // ===== Tìm token =====
     Optional<PasswordResetToken> findByToken(String token);

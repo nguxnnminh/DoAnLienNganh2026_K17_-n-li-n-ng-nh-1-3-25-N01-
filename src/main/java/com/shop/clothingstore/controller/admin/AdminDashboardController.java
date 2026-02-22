@@ -14,10 +14,8 @@ import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.repository.OrderRepository;
 import com.shop.clothingstore.repository.UserRepository;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 @Controller
-public class AdminDashboardController {
+public class AdminDashboardController extends AdminBaseController {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -31,10 +29,13 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/admin")
-    public String dashboard(Model model, HttpServletRequest request) {
+    public String dashboard(Model model) {
+
+        // ================= TITLE =================
+        model.addAttribute("title", "Dashboard");
+
 
         // ================= KPI =================
-
         long totalOrders = orderRepository.count();
 
         long pendingOrders =
@@ -50,7 +51,6 @@ public class AdminDashboardController {
 
 
         // ================= REVENUE CHART =================
-
         List<Object[]> revenueRaw =
                 orderRepository.getRevenueByDate(OrderStatus.COMPLETED);
 
@@ -59,14 +59,13 @@ public class AdminDashboardController {
 
         for (Object[] row : revenueRaw) {
 
-            if (row[0] == null || row[1] == null) continue;
+            if (row == null || row[0] == null || row[1] == null) continue;
 
-            // 👉 MySQL trả java.sql.Date
             java.sql.Date sqlDate = (java.sql.Date) row[0];
             LocalDate localDate = sqlDate.toLocalDate();
 
-            // 👉 MySQL 5.5 SUM trả Double
             Number revenueNumber = (Number) row[1];
+
             BigDecimal revenue =
                     BigDecimal.valueOf(revenueNumber.doubleValue());
 
@@ -76,31 +75,20 @@ public class AdminDashboardController {
 
 
         // ================= LATEST ORDERS =================
-
         List<Order> latestOrders =
                 orderRepository.findTop5ByOrderByCreatedAtDesc();
 
 
         // ================= MODEL =================
-
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("pendingOrders", pendingOrders);
         model.addAttribute("completedOrders", completedOrders);
-
         model.addAttribute("totalRevenue",
                 totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
-
         model.addAttribute("totalUsers", totalUsers);
-
         model.addAttribute("latestOrders", latestOrders);
-
         model.addAttribute("revenueLabels", revenueLabels);
         model.addAttribute("revenueData", revenueData);
-
-
-        // ================= UI SUPPORT =================
-        model.addAttribute("currentUri", request.getRequestURI());
-        model.addAttribute("title", "Dashboard");
 
         return "admin/dashboard";
     }

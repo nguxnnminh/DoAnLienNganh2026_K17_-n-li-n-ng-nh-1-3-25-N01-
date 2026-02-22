@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout(~{::content}, 'Đăng ký')}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Đăng ký')}">
 
 <div th:fragment="content" class="max-w-md mx-auto py-24">
 
@@ -16,14 +15,10 @@
     </div>
 
     <!-- FORM -->
-    <form method="post"
-          th:action="@{/register}"
-          class="space-y-6"
-          id="registerForm">
+    <form method="post" th:action="@{/register}" class="space-y-6" id="registerForm">
 
         <!-- ERROR BACKEND -->
-        <div th:if="${error}"
-             class="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
+        <div th:if="${error}" class="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
             <span th:text="${error}"></span>
         </div>
 
@@ -33,10 +28,7 @@
                 Email
             </label>
 
-            <input type="email"
-                   name="email"
-                   required
-                   class="w-full border border-zinc-300 dark:border-zinc-700
+            <input type="email" name="email" required class="w-full border border-zinc-300 dark:border-zinc-700
                           bg-white dark:bg-zinc-900
                           rounded-xl px-4 py-3
                           focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white
@@ -49,11 +41,7 @@
                 Mật khẩu
             </label>
 
-            <input type="password"
-                   name="password"
-                   id="password"
-                   required
-                   class="w-full border border-zinc-300 dark:border-zinc-700
+            <input type="password" name="password" id="password" required class="w-full border border-zinc-300 dark:border-zinc-700
                           bg-white dark:bg-zinc-900
                           rounded-xl px-4 py-3
                           focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white
@@ -66,26 +54,20 @@
                 Xác nhận mật khẩu
             </label>
 
-            <input type="password"
-                   id="confirmPassword"
-                   required
-                   class="w-full border border-zinc-300 dark:border-zinc-700
+            <input type="password" name="confirmPassword" id="confirmPassword" required class="w-full border border-zinc-300 dark:border-zinc-700
                           bg-white dark:bg-zinc-900
                           rounded-xl px-4 py-3
                           focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white
                           transition">
 
             <!-- ERROR TEXT -->
-            <p id="passwordError"
-               class="text-red-500 text-sm mt-2 hidden">
+            <p id="passwordError" class="text-red-500 text-sm mt-2 hidden">
                 Mật khẩu không khớp
             </p>
         </div>
 
         <!-- SUBMIT -->
-        <button type="submit"
-                id="submitBtn"
-                class="w-full bg-black text-white py-3 rounded-xl
+        <button type="submit" id="submitBtn" class="w-full bg-black text-white py-3 rounded-xl
                        hover:bg-zinc-800 transition
                        font-medium tracking-wide">
             Tạo tài khoản
@@ -96,8 +78,7 @@
     <!-- LOGIN LINK -->
     <div class="text-center text-sm text-zinc-500 mt-8">
         Đã có tài khoản?
-        <a th:href="@{/login}"
-           class="text-black dark:text-white font-medium hover:underline ml-1">
+        <a th:href="@{/login}" class="text-black dark:text-white font-medium hover:underline ml-1">
             Đăng nhập
         </a>
     </div>
@@ -129,7 +110,7 @@
     password.addEventListener("input", validatePassword);
     confirmPassword.addEventListener("input", validatePassword);
 
-    form.addEventListener("submit", function(e) {
+    form.addEventListener("submit", function (e) {
         if (!validatePassword()) {
             e.preventDefault();
         }

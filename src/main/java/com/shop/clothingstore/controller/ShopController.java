@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.shop.clothingstore.dto.ProductFilterDTO;
+import com.shop.clothingstore.dto.VariantDTO;
 import com.shop.clothingstore.entity.Category;
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.SubCategory;
@@ -32,8 +33,8 @@ public class ShopController {
     private final SubCategoryRepository subCategoryRepository;
 
     public ShopController(ProductRepository productRepository,
-                          CategoryRepository categoryRepository,
-                          SubCategoryRepository subCategoryRepository) {
+            CategoryRepository categoryRepository,
+            SubCategoryRepository subCategoryRepository) {
 
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
@@ -50,14 +51,14 @@ public class ShopController {
         Pageable bottomPage = PageRequest.of(0, 1);
         Pageable accPage = PageRequest.of(0, 1);
 
-        Page<Product> topProducts =
-                productRepository.findBestSellerByCategorySlug("top", topPage);
+        Page<Product> topProducts
+                = productRepository.findBestSellerByCategorySlug("top", topPage);
 
-        Page<Product> bottomProducts =
-                productRepository.findBestSellerByCategorySlug("bottom", bottomPage);
+        Page<Product> bottomProducts
+                = productRepository.findBestSellerByCategorySlug("bottom", bottomPage);
 
-        Page<Product> accessoriesProducts =
-                productRepository.findBestSellerByCategorySlug("accessories", accPage);
+        Page<Product> accessoriesProducts
+                = productRepository.findBestSellerByCategorySlug("accessories", accPage);
 
         model.addAttribute("topProducts", topProducts.getContent());
         model.addAttribute("bottomProducts", bottomProducts.getContent());
@@ -65,7 +66,6 @@ public class ShopController {
 
         return "shop/home";
     }
-
 
     // =====================================================
     // HELPER SORT METHOD
@@ -105,7 +105,6 @@ public class ShopController {
     // =====================================================
     @GetMapping("/products")
     public String products(
-
             @RequestParam(value = "minPrice", required = false) Double minPrice,
             @RequestParam(value = "maxPrice", required = false) Double maxPrice,
             @RequestParam(value = "keyword", required = false) String keyword,
@@ -138,7 +137,6 @@ public class ShopController {
     // =====================================================
     @GetMapping("/products/{categorySlug}")
     public String productsByCategory(
-
             @PathVariable String categorySlug,
             @RequestParam(value = "minPrice", required = false) Double minPrice,
             @RequestParam(value = "maxPrice", required = false) Double maxPrice,
@@ -179,7 +177,6 @@ public class ShopController {
     // =====================================================
     @GetMapping("/products/{categorySlug}/{subSlug}")
     public String productsBySubCategory(
-
             @PathVariable String categorySlug,
             @PathVariable String subSlug,
             @RequestParam(value = "minPrice", required = false) Double minPrice,
@@ -256,9 +253,18 @@ public class ShopController {
         model.addAttribute("sizes", sizes);
         model.addAttribute("colors", colors);
 
-        // ⭐ FRONTEND JS dùng
-        model.addAttribute("variantsJson", product.getProductVariants());
+        var variantDTOs = product.getProductVariants()
+                .stream()
+                .map(v -> new VariantDTO(
+                v.getId(),
+                v.getSize(),
+                v.getColor(),
+                v.getPrice(),
+                v.getStock()
+        ))
+                .toList();
 
+        model.addAttribute("variantsJson", variantDTOs);
         return "shop/product-detail";
     }
 

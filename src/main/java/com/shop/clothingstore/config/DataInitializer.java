@@ -41,7 +41,6 @@ public class DataInitializer {
             /* ======================
              * CATEGORY
              * ====================== */
-
             Category top = categoryRepo.findBySlug("top").orElseGet(() -> {
                 Category c = new Category();
                 c.setName("Top");
@@ -62,20 +61,28 @@ public class DataInitializer {
                 c.setSlug("accessories");
                 return categoryRepo.save(c);
             });
-
             /* ======================
-             * SUB CATEGORY
-             * ====================== */
+ * SUB CATEGORY
+ * ====================== */
 
+// TOP
             SubCategory tee = createSubCategory(subCategoryRepo, "Tee", "tee", top);
             SubCategory hoodie = createSubCategory(subCategoryRepo, "Hoodie", "hoodie", top);
+            SubCategory shirt = createSubCategory(subCategoryRepo, "Shirt", "shirt", top);
+
+// BOTTOM
             SubCategory pants = createSubCategory(subCategoryRepo, "Pants", "pants", bottom);
+            SubCategory shorts = createSubCategory(subCategoryRepo, "Shorts", "shorts", bottom);
+            SubCategory jeans = createSubCategory(subCategoryRepo, "Jeans", "jeans", bottom);
+
+// ACCESSORIES
             SubCategory bag = createSubCategory(subCategoryRepo, "Bag", "bag", accessories);
+            SubCategory shoes = createSubCategory(subCategoryRepo, "Shoes", "shoes", accessories);
+            SubCategory cap = createSubCategory(subCategoryRepo, "Cap", "cap", accessories);
 
             /* ======================
              * PRODUCT
              * ====================== */
-
             Product essentialTee = createProductIfNotExists(
                     productRepo,
                     "Essential Tee",
@@ -107,7 +114,6 @@ public class DataInitializer {
             /* ======================
              * VARIANTS
              * ====================== */
-
             if (variantRepo.findByProduct(essentialTee).isEmpty()) {
 
                 ProductVariant v1 = new ProductVariant();
@@ -145,7 +151,6 @@ public class DataInitializer {
             /* ======================
              * IMAGES
              * ====================== */
-
             if (imageRepo.findByProduct(essentialTee).isEmpty()) {
 
                 ProductImage img1 = new ProductImage();
@@ -164,7 +169,6 @@ public class DataInitializer {
             /* ======================
              * USERS
              * ====================== */
-
             if (userRepo.findByEmail("user@test.com").isEmpty()) {
 
                 User u = new User();
@@ -195,7 +199,6 @@ public class DataInitializer {
     /* ======================
      * HELPER METHODS
      * ====================== */
-
     private SubCategory createSubCategory(
             SubCategoryRepository repo,
             String name,

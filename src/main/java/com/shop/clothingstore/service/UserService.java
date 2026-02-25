@@ -40,7 +40,6 @@ public class UserService {
 
         // Nếu cần thêm active/inactive, thêm trường active vào User entity
         // user.setActive(updatedUser.getActive());
-
         return userRepository.save(user);
     }
 
@@ -55,5 +54,9 @@ public class UserService {
         }
 
         userRepository.delete(user);
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }

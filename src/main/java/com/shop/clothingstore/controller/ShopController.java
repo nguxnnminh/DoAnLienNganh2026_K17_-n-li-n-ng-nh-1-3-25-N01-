@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.repository.CategoryRepository;
 import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.SubCategoryRepository;
+import com.shop.clothingstore.service.ReviewService;
 import com.shop.clothingstore.specification.ProductSpecification;
 
 @Controller
@@ -31,14 +33,18 @@ public class ShopController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SubCategoryRepository subCategoryRepository;
+    private final ReviewService reviewService;
 
     public ShopController(ProductRepository productRepository,
             CategoryRepository categoryRepository,
-            SubCategoryRepository subCategoryRepository) {
+            SubCategoryRepository subCategoryRepository,
+            ReviewService reviewService) {
 
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.subCategoryRepository = subCategoryRepository;
+        this.reviewService = reviewService;
+
     }
 
     // =====================================================
@@ -230,7 +236,8 @@ public class ShopController {
             @PathVariable String categorySlug,
             @PathVariable String subSlug,
             @PathVariable Long id,
-            Model model) {
+            Model model,
+            Authentication authentication) {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -249,9 +256,17 @@ public class ShopController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
+        // ===== REVIEW DATA =====
+        double averageRating = reviewService.getAverageRating(id);
+        long reviewCount = reviewService.getReviewCount(id);
+
         model.addAttribute("product", product);
         model.addAttribute("sizes", sizes);
         model.addAttribute("colors", colors);
+        model.addAttribute("averageRating", averageRating);
+        model.addAttribute("reviewCount", reviewCount);
+        model.addAttribute("reviews",
+                reviewService.getReviewsByProduct(id));
 
         var variantDTOs = product.getProductVariants()
                 .stream()
@@ -265,7 +280,7 @@ public class ShopController {
                 .toList();
 
         model.addAttribute("variantsJson", variantDTOs);
+
         return "shop/product-detail";
     }
-
 }

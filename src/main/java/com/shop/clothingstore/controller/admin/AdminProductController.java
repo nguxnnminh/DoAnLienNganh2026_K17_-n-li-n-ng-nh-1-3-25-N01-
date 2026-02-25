@@ -59,7 +59,6 @@ public class AdminProductController extends AdminBaseController {
         return "admin/products/index";
     }
 
-
     // ===============================
     // SHOW CREATE FORM
     // ===============================
@@ -76,7 +75,6 @@ public class AdminProductController extends AdminBaseController {
 
         return "admin/products/create";
     }
-
 
     // ===============================
     // CREATE PRODUCT
@@ -113,7 +111,6 @@ public class AdminProductController extends AdminBaseController {
         return "redirect:/admin/products";
     }
 
-
     // ===============================
     // DELETE PRODUCT
     // ===============================
@@ -135,7 +132,6 @@ public class AdminProductController extends AdminBaseController {
 
         return "redirect:/admin/products";
     }
-
 
     // ===============================
     // SHOW EDIT FORM
@@ -193,7 +189,6 @@ public class AdminProductController extends AdminBaseController {
         }
     }
 
-
     // ===============================
     // UPDATE PRODUCT
     // ===============================
@@ -202,8 +197,7 @@ public class AdminProductController extends AdminBaseController {
             @PathVariable Long id,
             @Valid @ModelAttribute("productDTO") ProductUpdateDTO dto,
             BindingResult result,
-            @RequestParam(value = "imagesToDelete", required = false)
-            List<Long> imagesToDelete,
+            @RequestParam(value = "imagesToDelete", required = false) List<Long> imagesToDelete,
             RedirectAttributes redirectAttributes) {
 
         dto.setId(id);

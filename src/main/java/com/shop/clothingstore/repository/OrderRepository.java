@@ -17,16 +17,13 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
     // =====================================================
     // USER QUERIES
     // =====================================================
-
     List<Order> findByActor(User actor);
 
     List<Order> findByActorOrderByCreatedAtDesc(User actor);
 
-
     // =====================================================
     // ADMIN QUERIES
     // =====================================================
-
     List<Order> findAllByOrderByCreatedAtDesc();
 
     List<Order> findByStatus(OrderStatus status);
@@ -35,11 +32,9 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
 
     long countByStatus(OrderStatus status);
 
-
     // =====================================================
     // DASHBOARD KPI
     // =====================================================
-
     @Query("""
         SELECT COALESCE(SUM(o.total), 0)
         FROM Order o
@@ -47,14 +42,11 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
     """)
     BigDecimal getTotalRevenueByStatus(@Param("status") OrderStatus status);
 
-
     List<Order> findTop5ByOrderByCreatedAtDesc();
-
 
     // =====================================================
     // DASHBOARD CHART
     // =====================================================
-
     @Query("""
         SELECT DATE(o.createdAt), SUM(o.total)
         FROM Order o
@@ -63,7 +55,6 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
         ORDER BY DATE(o.createdAt)
     """)
     List<Object[]> getRevenueByDate(@Param("status") OrderStatus status);
-
 
     @Query("""
         SELECT DATE(o.createdAt), SUM(o.total)
@@ -76,5 +67,22 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
     List<Object[]> getRevenueSince(
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate
+    );
+
+    @Query("""
+    SELECT COUNT(o) > 0
+    FROM Order o
+    JOIN o.items i
+    WHERE o.actor.id = :userId
+      AND o.status = :status
+      AND i.variantId IN (
+            SELECT v.id FROM ProductVariant v
+            WHERE v.product.id = :productId
+      )
+""")
+    boolean existsCompletedOrderWithProduct(
+            @Param("userId") Long userId,
+            @Param("status") OrderStatus status,
+            @Param("productId") Long productId
     );
 }

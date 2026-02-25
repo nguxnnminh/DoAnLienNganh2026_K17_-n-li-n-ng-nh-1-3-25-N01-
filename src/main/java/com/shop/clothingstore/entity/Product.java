@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.shop.clothingstore.entity.base.BaseEntity;
-import com.shop.clothingstore.entity.base.SellableItem;     // Thêm import này
 import com.shop.clothingstore.entity.base.ItemVariant;     // Thêm import này
+import com.shop.clothingstore.entity.base.SellableItem;     // Thêm import này
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -50,6 +50,9 @@ public class Product extends BaseEntity implements SellableItem {
             orphanRemoval = true,
             fetch = FetchType.LAZY)
     private List<ProductImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     // Các method tính toán hiện tại – thêm @Override để khớp interface
     @Override
@@ -116,5 +119,9 @@ public class Product extends BaseEntity implements SellableItem {
     public void addImage(ProductImage image) {
         image.setProduct(this);
         images.add(image);
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
     }
 }

@@ -3,13 +3,13 @@ package com.shop.clothingstore.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.shop.clothingstore.entity.Review;
+import com.shop.clothingstore.repository.base.BaseRepository;
 
-public interface ReviewRepository extends JpaRepository<Review, Long> {
+public interface ReviewRepository extends BaseRepository<Review, Long> {
 
     // =========================================
     // CHECK ĐÃ REVIEW ORDER ITEM CHƯA

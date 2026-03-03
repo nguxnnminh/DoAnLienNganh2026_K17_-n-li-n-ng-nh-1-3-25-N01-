@@ -13,25 +13,25 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.entity.User;
-import com.shop.clothingstore.repository.OrderRepository;
-import com.shop.clothingstore.repository.ReviewRepository;
-import com.shop.clothingstore.repository.UserRepository;
+import com.shop.clothingstore.service.OrderService;
+import com.shop.clothingstore.service.ReviewService;
+import com.shop.clothingstore.service.UserService;
 
 @Controller
 public class OrderController {
 
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final ReviewRepository reviewRepository;
+    private final OrderService orderService;
+    private final UserService userService;
+    private final ReviewService reviewService;
 
     public OrderController(
-            OrderRepository orderRepository,
-            UserRepository userRepository,
-            ReviewRepository reviewRepository
+            OrderService orderService,
+            UserService userService,
+            ReviewService reviewService
     ) {
-        this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-        this.reviewRepository = reviewRepository;
+        this.orderService = orderService;
+        this.userService = userService;
+        this.reviewService = reviewService;
     }
 
     // ===============================
@@ -47,13 +47,11 @@ public class OrderController {
             return "redirect:/login";
         }
 
-        User user = userRepository
+        User user = userService
                 .findByEmail(principal.getName())
                 .orElseThrow();
 
-        // 🔥 SỬA Ở ĐÂY
-        List<Order> orders = orderRepository
-                .findByActorOrderByCreatedAtDesc(user);
+        List<Order> orders = orderService.findOrdersByUser(user);
 
         model.addAttribute("orders", orders);
 
@@ -74,13 +72,11 @@ public class OrderController {
             return "redirect:/login";
         }
 
-        User user = userRepository
+        User user = userService
                 .findByEmail(principal.getName())
                 .orElseThrow();
 
-        Order order = orderRepository
-                .findById(id)
-                .orElseThrow();
+        Order order = orderService.findById(id);
 
         // 🔐 Chỉ xem đơn của mình
         if (order.getActor() == null
@@ -95,7 +91,7 @@ public class OrderController {
         Set<Long> reviewedItemIds = order.getItems()
                 .stream()
                 .filter(item
-                        -> reviewRepository.findByOrderItemId(item.getId()).isPresent()
+                        -> reviewService.hasReviewByOrderItem(item.getId())
                 )
                 .map(item -> item.getId())
                 .collect(Collectors.toSet());

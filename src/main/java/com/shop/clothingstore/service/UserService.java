@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.shop.clothingstore.entity.Role;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.UserRepository;
 
@@ -58,5 +59,32 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    // =====================================================
+    // CHECK EMAIL EXISTS
+    // =====================================================
+    public boolean existsByEmail(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
+
+    // =====================================================
+    // REGISTER USER
+    // =====================================================
+    @Transactional
+    public User registerUser(String email, String encodedPassword, Role role) {
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(encodedPassword);
+        user.setRole(role);
+        return userRepository.save(user);
+    }
+
+    // =====================================================
+    // SAVE USER
+    // =====================================================
+    @Transactional
+    public User save(User user) {
+        return userRepository.save(user);
     }
 }

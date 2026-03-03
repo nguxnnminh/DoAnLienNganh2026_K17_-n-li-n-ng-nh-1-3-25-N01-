@@ -14,27 +14,25 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.shop.clothingstore.entity.PasswordResetToken;
 import com.shop.clothingstore.entity.Role;
 import com.shop.clothingstore.entity.User;
-import com.shop.clothingstore.repository.PasswordResetTokenRepository;
-import com.shop.clothingstore.repository.UserRepository;
 import com.shop.clothingstore.service.EmailService;
 import com.shop.clothingstore.service.PasswordResetService;
+import com.shop.clothingstore.service.UserService;
 
 @Controller
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final PasswordResetTokenRepository tokenRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetService passwordResetService;
     private final EmailService emailService;
 
-    public AuthController(UserRepository userRepository,
-            PasswordResetTokenRepository tokenRepository,
+    public AuthController(
+            UserService userService,
             PasswordEncoder passwordEncoder,
             PasswordResetService passwordResetService,
             EmailService emailService) {
-        this.userRepository = userRepository;
-        this.tokenRepository = tokenRepository;
+
+        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetService = passwordResetService;
         this.emailService = emailService;
@@ -61,7 +59,7 @@ public class AuthController {
     ) {
 
         // ===== check email tồn tại =====
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (userService.existsByEmail(email)) {
             redirectAttributes.addFlashAttribute("error", "Email đã tồn tại");
             return "redirect:/register";
         }
@@ -79,12 +77,11 @@ public class AuthController {
         }
 
         // ===== create user =====
-        User user = new User();
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRole(Role.USER);
-
-        userRepository.save(user);
+        userService.registerUser(
+                email,
+                passwordEncoder.encode(password),
+                Role.USER
+        );
 
         // ===== SUCCESS TOAST =====
         redirectAttributes.addFlashAttribute("success",
@@ -105,7 +102,7 @@ public class AuthController {
             RedirectAttributes redirectAttributes
     ) {
 
-        Optional<User> userOpt = userRepository.findByEmail(email);
+        Optional<User> userOpt = userService.findByEmail(email);
 
         redirectAttributes.addFlashAttribute(
                 "success",
@@ -136,7 +133,8 @@ public class AuthController {
             RedirectAttributes redirectAttributes
     ) {
 
-        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+        Optional<PasswordResetToken> tokenOpt
+                = passwordResetService.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Link không hợp lệ");
@@ -164,7 +162,8 @@ public class AuthController {
             RedirectAttributes redirectAttributes
     ) {
 
-        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+        Optional<PasswordResetToken> tokenOpt
+                = passwordResetService.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Link không hợp lệ");
@@ -191,8 +190,8 @@ public class AuthController {
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(password));
 
-        userRepository.save(user);
-        tokenRepository.delete(resetToken);
+        userService.save(user);
+        passwordResetService.deleteToken(resetToken);
 
         redirectAttributes.addFlashAttribute("success", "Đặt lại mật khẩu thành công");
 

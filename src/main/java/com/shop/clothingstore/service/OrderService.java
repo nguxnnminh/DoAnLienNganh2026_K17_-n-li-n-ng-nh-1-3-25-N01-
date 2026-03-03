@@ -8,6 +8,7 @@ import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderItem;
 import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.entity.ProductVariant;
+import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.OrderRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 
@@ -49,13 +50,13 @@ public class OrderService {
             for (OrderItem item : order.getItems()) {
                 ProductVariant variant = variantRepository.findById(item.getVariantId())
                         .orElseThrow(() -> new RuntimeException(
-                                "Variant không tồn tại: ID = " + item.getVariantId()));
+                        "Variant không tồn tại: ID = " + item.getVariantId()));
 
                 if (variant.getStock() < item.getQuantity()) {
                     throw new IllegalStateException(
-                            "Không đủ tồn kho cho sản phẩm: " + item.getProductName() +
-                            " (" + item.getSize() + " - " + item.getColor() + ")" +
-                            ". Tồn kho hiện tại: " + variant.getStock() + ", cần: " + item.getQuantity());
+                            "Không đủ tồn kho cho sản phẩm: " + item.getProductName()
+                            + " (" + item.getSize() + " - " + item.getColor() + ")"
+                            + ". Tồn kho hiện tại: " + variant.getStock() + ", cần: " + item.getQuantity());
                 }
 
                 // Vì checkout đã trừ stock rồi, ở đây chỉ kiểm tra, không trừ lại
@@ -70,7 +71,7 @@ public class OrderService {
             for (OrderItem item : order.getItems()) {
                 ProductVariant variant = variantRepository.findById(item.getVariantId())
                         .orElseThrow(() -> new RuntimeException(
-                                "Variant không tồn tại: ID = " + item.getVariantId()));
+                        "Variant không tồn tại: ID = " + item.getVariantId()));
 
                 variant.setStock(variant.getStock() + item.getQuantity());
                 variantRepository.save(variant);
@@ -80,5 +81,20 @@ public class OrderService {
         // Cập nhật trạng thái đơn hàng
         order.setStatus(newStatus);
         return orderRepository.save(order);
+    }
+    // =====================================================
+    // FIND ORDERS BY USER
+    // =====================================================
+
+    public List<Order> findOrdersByUser(User user) {
+        return orderRepository.findByActorOrderByCreatedAtDesc(user);
+    }
+
+    // =====================================================
+    // FIND ORDER BY ID (WRAP)
+    // =====================================================
+    public Order findById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow();
     }
 }

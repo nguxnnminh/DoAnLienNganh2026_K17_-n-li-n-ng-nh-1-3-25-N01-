@@ -23,8 +23,8 @@ public class PasswordResetService {
     @Transactional
     public PasswordResetToken createTokenForUser(User user) {
 
-        Optional<PasswordResetToken> existingToken =
-                tokenRepository.findByUser(user);
+        Optional<PasswordResetToken> existingToken
+                = tokenRepository.findByUser(user);
 
         PasswordResetToken token;
 
@@ -39,5 +39,20 @@ public class PasswordResetService {
         token.setExpiryDate(LocalDateTime.now().plusMinutes(30));
 
         return tokenRepository.save(token);
+    }
+
+    // =====================================================
+    // FIND TOKEN
+    // =====================================================
+    public Optional<PasswordResetToken> findByToken(String token) {
+        return tokenRepository.findByToken(token);
+    }
+
+    // =====================================================
+    // DELETE TOKEN
+    // =====================================================
+    @Transactional
+    public void deleteToken(PasswordResetToken token) {
+        tokenRepository.delete(token);
     }
 }

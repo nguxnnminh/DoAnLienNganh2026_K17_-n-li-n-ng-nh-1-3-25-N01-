@@ -22,25 +22,24 @@ import com.shop.clothingstore.entity.Category;
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.repository.CategoryRepository;
-import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.SubCategoryRepository;
+import com.shop.clothingstore.service.ProductService;
 import com.shop.clothingstore.service.ReviewService;
-import com.shop.clothingstore.specification.ProductSpecification;
 
 @Controller
 public class ShopController {
 
-    private final ProductRepository productRepository;
+    private final ProductService productService;
     private final CategoryRepository categoryRepository;
     private final SubCategoryRepository subCategoryRepository;
     private final ReviewService reviewService;
 
-    public ShopController(ProductRepository productRepository,
+    public ShopController(ProductService productService,
             CategoryRepository categoryRepository,
             SubCategoryRepository subCategoryRepository,
             ReviewService reviewService) {
 
-        this.productRepository = productRepository;
+        this.productService = productService;
         this.categoryRepository = categoryRepository;
         this.subCategoryRepository = subCategoryRepository;
         this.reviewService = reviewService;
@@ -58,13 +57,13 @@ public class ShopController {
         Pageable accPage = PageRequest.of(0, 1);
 
         Page<Product> topProducts
-                = productRepository.findBestSellerByCategorySlug("top", topPage);
+                = productService.findBestSellerByCategorySlug("top", topPage);
 
         Page<Product> bottomProducts
-                = productRepository.findBestSellerByCategorySlug("bottom", bottomPage);
+                = productService.findBestSellerByCategorySlug("bottom", bottomPage);
 
         Page<Product> accessoriesProducts
-                = productRepository.findBestSellerByCategorySlug("accessories", accPage);
+                = productService.findBestSellerByCategorySlug("accessories", accPage);
 
         model.addAttribute("topProducts", topProducts.getContent());
         model.addAttribute("bottomProducts", bottomProducts.getContent());
@@ -125,10 +124,7 @@ public class ShopController {
 
         Pageable pageable = buildPageable(page, sort);
 
-        Page<Product> products = productRepository.findAll(
-                ProductSpecification.filter(filter),
-                pageable
-        );
+        Page<Product> products = productService.findWithFilter(filter, pageable);
 
         model.addAttribute("products", products);
         model.addAttribute("filter", filter);
@@ -162,10 +158,7 @@ public class ShopController {
 
         Pageable pageable = buildPageable(page, sort);
 
-        Page<Product> products = productRepository.findAll(
-                ProductSpecification.filter(filter),
-                pageable
-        );
+        Page<Product> products = productService.findWithFilter(filter, pageable);
 
         model.addAttribute("products", products);
         model.addAttribute("filter", filter);
@@ -211,10 +204,7 @@ public class ShopController {
 
         Pageable pageable = buildPageable(page, sort);
 
-        Page<Product> products = productRepository.findAll(
-                ProductSpecification.filter(filter),
-                pageable
-        );
+        Page<Product> products = productService.findWithFilter(filter, pageable);
 
         model.addAttribute("products", products);
         model.addAttribute("filter", filter);
@@ -239,8 +229,7 @@ public class ShopController {
             Model model,
             Authentication authentication) {
 
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Product product = productService.findById(id);
 
         // ===== UNIQUE SIZE =====
         Set<String> sizes = product.getProductVariants()

@@ -112,4 +112,8 @@ public class ReviewService {
     public List<Review> getReviewsByProduct(Long productId) {
         return reviewRepository.findAllByProductIdOrderByCreatedAtDesc(productId);
     }
+
+    public boolean hasReviewByOrderItem(Long orderItemId) {
+        return reviewRepository.findByOrderItemId(orderItemId).isPresent();
+    }
 }

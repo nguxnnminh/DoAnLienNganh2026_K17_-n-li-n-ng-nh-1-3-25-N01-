@@ -9,10 +9,13 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.shop.clothingstore.dto.ProductCreateDTO;
+import com.shop.clothingstore.dto.ProductFilterDTO;
 import com.shop.clothingstore.dto.ProductUpdateDTO;
 import com.shop.clothingstore.dto.VariantDTO;
 import com.shop.clothingstore.entity.Product;
@@ -21,6 +24,7 @@ import com.shop.clothingstore.entity.ProductVariant;
 import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.SubCategoryRepository;
+import com.shop.clothingstore.specification.ProductSpecification;
 
 import jakarta.transaction.Transactional;
 
@@ -34,7 +38,7 @@ public class ProductService {
     private String uploadDir;
 
     public ProductService(ProductRepository productRepository,
-                          SubCategoryRepository subCategoryRepository) {
+            SubCategoryRepository subCategoryRepository) {
         this.productRepository = productRepository;
         this.subCategoryRepository = subCategoryRepository;
     }
@@ -122,15 +126,14 @@ public class ProductService {
                 variant.setStock(v.getStock());
                 variant.setSold(0);
 
-
                 product.addVariant(variant);
             }
         }
 
         // ================= DELETE IMAGE =================
         if (dto.getImagesToDelete() != null) {
-            product.getImages().removeIf(img ->
-                    dto.getImagesToDelete().contains(img.getId()));
+            product.getImages().removeIf(img
+                    -> dto.getImagesToDelete().contains(img.getId()));
         }
 
         // ================= ADD NEW IMAGE =================
@@ -162,10 +165,12 @@ public class ProductService {
     // SAVE IMAGE
     // =====================================================
     private void saveImages(Product product,
-                            List<MultipartFile> files,
-                            Integer primaryIndex) throws IOException {
+            List<MultipartFile> files,
+            Integer primaryIndex) throws IOException {
 
-        if (files == null || files.isEmpty()) return;
+        if (files == null || files.isEmpty()) {
+            return;
+        }
 
         Path uploadPath = Paths.get(uploadDir);
 
@@ -176,7 +181,9 @@ public class ProductService {
         for (int i = 0; i < files.size(); i++) {
 
             MultipartFile file = files.get(i);
-            if (file.isEmpty()) continue;
+            if (file.isEmpty()) {
+                continue;
+            }
 
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path filePath = uploadPath.resolve(fileName);
@@ -217,5 +224,30 @@ public class ProductService {
         slug = slug.replaceAll("\\s+", "-");
 
         return slug;
+    }
+    // =====================================================
+// FIND BEST SELLER BY CATEGORY SLUG
+// =====================================================
+
+    public Page<Product> findBestSellerByCategorySlug(String slug, Pageable pageable) {
+        return productRepository.findBestSellerByCategorySlug(slug, pageable);
+    }
+
+// =====================================================
+// FILTER WITH SPECIFICATION
+// =====================================================
+    public Page<Product> findWithFilter(ProductFilterDTO filter, Pageable pageable) {
+        return productRepository.findAll(
+                ProductSpecification.filter(filter),
+                pageable
+        );
+    }
+
+// =====================================================
+// FIND BY ID
+// =====================================================
+    public Product findById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
     }
 }

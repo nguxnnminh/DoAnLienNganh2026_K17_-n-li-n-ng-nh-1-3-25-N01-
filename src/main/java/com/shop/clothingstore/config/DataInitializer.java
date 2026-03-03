@@ -62,108 +62,111 @@ public class DataInitializer {
                 return categoryRepo.save(c);
             });
             /* ======================
- * SUB CATEGORY
- * ====================== */
+            * SUB CATEGORY
+            * ====================== */
 
-// TOP
+            // TOP
             SubCategory tee = createSubCategory(subCategoryRepo, "Tee", "tee", top);
             SubCategory hoodie = createSubCategory(subCategoryRepo, "Hoodie", "hoodie", top);
             SubCategory shirt = createSubCategory(subCategoryRepo, "Shirt", "shirt", top);
 
-// BOTTOM
+            // BOTTOM
             SubCategory pants = createSubCategory(subCategoryRepo, "Pants", "pants", bottom);
             SubCategory shorts = createSubCategory(subCategoryRepo, "Shorts", "shorts", bottom);
             SubCategory jeans = createSubCategory(subCategoryRepo, "Jeans", "jeans", bottom);
 
-// ACCESSORIES
+            // ACCESSORIES
             SubCategory bag = createSubCategory(subCategoryRepo, "Bag", "bag", accessories);
             SubCategory shoes = createSubCategory(subCategoryRepo, "Shoes", "shoes", accessories);
             SubCategory cap = createSubCategory(subCategoryRepo, "Cap", "cap", accessories);
 
             /* ======================
-             * PRODUCT
-             * ====================== */
-            Product essentialTee = createProductIfNotExists(
-                    productRepo,
-                    "Essential Tee",
-                    "Áo thun cotton basic",
-                    tee
-            );
+            * PRODUCT
+            * ====================== */
+            // ================== TEE (4 products) ==================
+            Product essentialTee = createProductIfNotExists(productRepo,
+                    "Essential Tee", "Áo thun cotton basic", tee);
 
-            Product fearHoodie = createProductIfNotExists(
-                    productRepo,
-                    "Fear Hoodie",
-                    "Hoodie oversize streetwear",
-                    hoodie
-            );
+            Product graphicTee = createProductIfNotExists(productRepo,
+                    "Graphic Tee", "Áo thun in họa tiết", tee);
 
-            Product cargoPants = createProductIfNotExists(
-                    productRepo,
-                    "Cargo Pants",
-                    "Quần cargo phong cách street",
-                    pants
-            );
+            Product oversizedTee = createProductIfNotExists(productRepo,
+                    "Oversized Tee", "Áo thun form rộng", tee);
 
-            Product leatherBag = createProductIfNotExists(
-                    productRepo,
-                    "Leather Bag",
-                    "Túi da tối giản",
-                    bag
-            );
+            Product vintageTee = createProductIfNotExists(productRepo,
+                    "Vintage Tee", "Áo thun phong cách retro", tee);
 
-            /* ======================
-             * VARIANTS
-             * ====================== */
-            if (variantRepo.findByProduct(essentialTee).isEmpty()) {
+            // ================== HOODIE (1 product) ==================
+            Product fearHoodie = createProductIfNotExists(productRepo,
+                    "Fear Hoodie", "Hoodie oversize streetwear", hoodie);
 
-                ProductVariant v1 = new ProductVariant();
-                v1.setProduct(essentialTee);
-                v1.setColor("Black");
-                v1.setSize("M");
-                v1.setPrice(250000);
-                v1.setStock(10);
-                v1.setSold(0);
+            // ================== SHIRT (0 product) ==================
+            // ❗ cố tình không thêm sản phẩm cho shirt
+            // ================== PANTS (3 products) ==================
+            Product cargoPants = createProductIfNotExists(productRepo,
+                    "Cargo Pants", "Quần cargo phong cách street", pants);
 
-                ProductVariant v2 = new ProductVariant();
-                v2.setProduct(essentialTee);
-                v2.setColor("White");
-                v2.setSize("L");
-                v2.setPrice(260000);
-                v2.setStock(3);
-                v2.setSold(0);
+            Product joggerPants = createProductIfNotExists(productRepo,
+                    "Jogger Pants", "Quần jogger thể thao", pants);
 
-                variantRepo.saveAll(List.of(v1, v2));
-            }
+            Product widePants = createProductIfNotExists(productRepo,
+                    "Wide Pants", "Quần ống rộng hiện đại", pants);
 
-            if (variantRepo.findByProduct(fearHoodie).isEmpty()) {
+            // ================== SHORTS (1 product) ==================
+            Product summerShorts = createProductIfNotExists(productRepo,
+                    "Summer Shorts", "Quần short mùa hè", shorts);
 
-                ProductVariant v1 = new ProductVariant();
-                v1.setProduct(fearHoodie);
-                v1.setColor("Black");
-                v1.setSize("M");
-                v1.setPrice(550000);
-                v1.setStock(5);
-                v1.setSold(0);
+            // ================== JEANS (0 product) ==================
+            // ❗ cố tình không thêm sản phẩm cho jeans
+            // ================== BAG (1 product) ==================
+            Product leatherBag = createProductIfNotExists(productRepo,
+                    "Leather Bag", "Túi da tối giản", bag);
 
-                variantRepo.save(v1);
-            }
+            // ================== SHOES (2 products) ==================
+            Product sneaker = createProductIfNotExists(productRepo,
+                    "Street Sneaker", "Giày sneaker street style", shoes);
+
+            Product boot = createProductIfNotExists(productRepo,
+                    "Combat Boot", "Boot phong cách quân đội", shoes);
+
+            // ================== CAP (0 product) ==================
+            // ❗ cố tình không thêm sản phẩm cho cap
 
             /* ======================
-             * IMAGES
-             * ====================== */
-            if (imageRepo.findByProduct(essentialTee).isEmpty()) {
+            * AUTO CREATE VARIANTS
+            * ====================== */
+            List<Product> allProducts = productRepo.findAll();
 
-                ProductImage img1 = new ProductImage();
-                img1.setProduct(essentialTee);
-                img1.setImageUrl("/images/tee-black.jpg");
-                img1.setPrimaryImage(true);
+            for (Product product : allProducts) {
 
-                ProductImage img2 = new ProductImage();
-                img2.setProduct(essentialTee);
-                img2.setImageUrl("/images/tee-white.jpg");
-                img2.setPrimaryImage(false);
+                if (variantRepo.findByProduct(product).isEmpty()) {
 
-                imageRepo.saveAll(List.of(img1, img2));
+                    ProductVariant v = new ProductVariant();
+                    v.setProduct(product);
+                    v.setColor("Black");
+                    v.setSize("M");
+                    v.setPrice(300000);
+                    v.setStock(10);
+                    v.setSold(0);
+
+                    variantRepo.save(v);
+                }
+            }
+
+            /* ======================
+            * AUTO CREATE IMAGES
+            * ====================== */
+            for (Product product : productRepo.findAll()) {
+
+                if (imageRepo.findByProduct(product).isEmpty()) {
+
+                    ProductImage img = new ProductImage();
+                    img.setProduct(product);
+                    img.setImageUrl("/images/sample.jpg");
+                    img.setPrimaryImage(true);
+
+                    imageRepo.save(img);
+                }
             }
 
             /* ======================

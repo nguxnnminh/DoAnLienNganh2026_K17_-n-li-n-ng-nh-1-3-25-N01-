@@ -17,9 +17,9 @@ public class SubCategoryServiceImpl
 
     private final SubCategoryRepository subCategoryRepository;
 
-    public SubCategoryServiceImpl(SubCategoryRepository subCategoryRepository) {
-        super(subCategoryRepository); // truyền lên GenericServiceImpl
-        this.subCategoryRepository = subCategoryRepository;
+    public SubCategoryServiceImpl(SubCategoryRepository repo) {
+        super(repo);
+        this.subCategoryRepository = repo;
     }
 
     // ============================
@@ -27,16 +27,21 @@ public class SubCategoryServiceImpl
     // ============================
     @Override
     public List<SubCategory> getAllSubCategories() {
-        return subCategoryRepository.findAll();
+        return findAll();
     }
 
     @Override
     public Optional<SubCategory> getSubCategoryById(Long id) {
-        return subCategoryRepository.findById(id);
+        return findById(id);
     }
 
     @Override
     public List<SubCategory> getByCategoryId(Long categoryId) {
         return subCategoryRepository.findByCategoryId(categoryId);
+    }
+
+    @Override
+    public Optional<SubCategory> getBySlug(String slug) {
+        return subCategoryRepository.findBySlug(slug);
     }
 }

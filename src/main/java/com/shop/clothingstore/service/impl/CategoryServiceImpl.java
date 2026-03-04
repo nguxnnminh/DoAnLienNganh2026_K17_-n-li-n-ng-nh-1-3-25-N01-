@@ -18,7 +18,7 @@ public class CategoryServiceImpl
     private final CategoryRepository categoryRepository;
 
     public CategoryServiceImpl(CategoryRepository categoryRepository) {
-        super(categoryRepository); // truyền lên GenericServiceImpl
+        super(categoryRepository);
         this.categoryRepository = categoryRepository;
     }
 
@@ -27,11 +27,16 @@ public class CategoryServiceImpl
     // ============================
     @Override
     public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+        return findAll();
     }
 
     @Override
     public Optional<Category> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
+        return findById(id);
+    }
+
+    @Override
+    public Optional<Category> getCategoryBySlug(String slug) {
+        return categoryRepository.findBySlug(slug);
     }
 }

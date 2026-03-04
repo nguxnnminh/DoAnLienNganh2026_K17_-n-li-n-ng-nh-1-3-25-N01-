@@ -11,38 +11,26 @@ import com.shop.clothingstore.repository.base.BaseRepository;
 
 public interface ReviewRepository extends BaseRepository<Review, Long> {
 
-    // =========================================
-    // CHECK ĐÃ REVIEW ORDER ITEM CHƯA
-    // =========================================
-    Optional<Review> findByOrderItemId(Long orderItemId);
+    Optional<Review> findByOrderItem_Id(Long orderItemId);
 
-    // =========================================
-    // AVERAGE RATING
-    // =========================================
     @Query("""
         SELECT AVG(r.rating)
         FROM Review r
-        WHERE r.orderItem.variantId = :itemId
+        WHERE r.itemId = :itemId
     """)
     Double getAverageRatingByItemId(@Param("itemId") Long itemId);
 
-    // =========================================
-    // COUNT REVIEW
-    // =========================================
     @Query("""
         SELECT COUNT(r)
         FROM Review r
-        WHERE r.orderItem.variantId = :itemId
+        WHERE r.itemId = :itemId
     """)
     long countByItemId(@Param("itemId") Long itemId);
 
-    // =========================================
-    // GET REVIEWS
-    // =========================================
     @Query("""
         SELECT r
         FROM Review r
-        WHERE r.orderItem.variantId = :itemId
+        WHERE r.itemId = :itemId
         ORDER BY r.createdAt DESC
     """)
     List<Review> findAllByItemIdOrderByCreatedAtDesc(@Param("itemId") Long itemId);

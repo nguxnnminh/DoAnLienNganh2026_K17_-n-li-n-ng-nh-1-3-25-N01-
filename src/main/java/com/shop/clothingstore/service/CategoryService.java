@@ -11,4 +11,5 @@ public interface CategoryService {
 
     Optional<Category> getCategoryById(Long id);
 
+    Optional<Category> getCategoryBySlug(String slug);
 }

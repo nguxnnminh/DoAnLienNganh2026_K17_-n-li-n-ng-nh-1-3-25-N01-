@@ -166,7 +166,7 @@ public class AdminProductController extends AdminBaseController {
                     vd.setId(v.getId());
                     vd.setSize(v.getSize());
                     vd.setColor(v.getColor());
-                    vd.setPrice(v.getPrice());
+                    vd.setPrice(v.getPrice().longValue());
                     vd.setStock(v.getStock());
 
                     variants.add(vd);

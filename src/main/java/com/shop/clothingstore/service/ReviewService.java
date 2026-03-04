@@ -47,7 +47,7 @@ public class ReviewService {
         }
 
         // CHECK REVIEW EXIST
-        if (reviewRepository.findByOrderItemId(orderItemId).isPresent()) {
+        if (reviewRepository.findByOrderItem_Id(orderItemId).isPresent()) {
             throw new IllegalStateException("Item này đã được đánh giá.");
         }
 
@@ -113,7 +113,7 @@ public class ReviewService {
     public boolean hasReviewByOrderItem(Long orderItemId) {
 
         return reviewRepository
-                .findByOrderItemId(orderItemId)
+                .findByOrderItem_Id(orderItemId)
                 .isPresent();
     }
 }

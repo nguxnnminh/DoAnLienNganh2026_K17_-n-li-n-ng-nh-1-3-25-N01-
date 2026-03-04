@@ -12,4 +12,6 @@ public interface SubCategoryService {
     Optional<SubCategory> getSubCategoryById(Long id);
 
     List<SubCategory> getByCategoryId(Long categoryId);
+
+    Optional<SubCategory> getBySlug(String slug);
 }

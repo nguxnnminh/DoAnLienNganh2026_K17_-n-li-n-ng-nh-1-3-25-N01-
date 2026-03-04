@@ -145,7 +145,7 @@ public class DataInitializer {
                     v.setProduct(product);
                     v.setColor("Black");
                     v.setSize("M");
-                    v.setPrice(300000);
+                    v.setPrice(Long.valueOf(120000));
                     v.setStock(10);
                     v.setSold(0);
 

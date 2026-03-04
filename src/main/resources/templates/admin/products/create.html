@@ -71,9 +71,8 @@
                 Mô tả
             </label>
             <textarea name="description" rows="4" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-                       bg-white dark:bg-zinc-900
-                       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
-            </textarea>
+bg-white dark:bg-zinc-900
+focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition"></textarea>
         </div>
 
 
@@ -94,8 +93,8 @@
                     <input type="text" name="variants[0].color" placeholder="Màu"
                         class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
-                    <input type="number" name="variants[0].price" step="0.01" placeholder="Giá"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                    <input type="text" name="variants[0].price" placeholder="Giá" inputmode="numeric"
+                        class="price-input px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
                     <input type="number" name="variants[0].stock" placeholder="Tồn kho"
                         class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
@@ -205,11 +204,11 @@
                         placeholder="Màu"
                         class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
-                    <input type="number"
+                    <input type="text"
                         name="variants[${variantIndex}].price"
-                        step="0.01"
                         placeholder="Giá"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        inputmode="numeric"
+                        class="price-input px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
                     <input type="number"
                         name="variants[${variantIndex}].stock"
@@ -237,6 +236,52 @@
                 e.target.closest('.variant-row').remove();
             }
         });
+
+        // FORMAT PRICE INPUT
+        function formatPriceInput(input) {
+
+            let value = input.value.replace(/\D/g, '')
+
+            if (value === '') {
+                input.value = ''
+                return
+            }
+
+            input.value = Number(value).toLocaleString('vi-VN')
+
+        }
+
+        document.addEventListener("input", function (e) {
+
+            if (e.target.classList.contains("price-input")) {
+                formatPriceInput(e.target)
+            }
+
+        })
+
+        // REMOVE DOT BEFORE SUBMIT
+        document.querySelector("form").addEventListener("submit", function () {
+
+            document.querySelectorAll(".price-input").forEach(i => {
+                i.value = i.value.replace(/[^\d]/g, "")
+            })
+
+        })
+
+        // FORMAT WHEN PAGE LOAD
+        window.addEventListener("load", function () {
+
+            document.querySelectorAll('.price-input').forEach(input => {
+
+                if (!input.value) return
+
+                let value = input.value.replace(/[^\d]/g, '')
+
+                input.value = Number(value).toLocaleString('vi-VN')
+
+            })
+
+        })
     </script>
 
 </div>

@@ -1,5 +1,6 @@
 package com.shop.clothingstore.entity;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,9 +30,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Product extends BaseEntity implements SellableItem {
 
-    @EqualsAndHashCode.Include
-    private Long id;
-
     @Column(nullable = false)
     private String name;
 
@@ -52,8 +50,9 @@ public class Product extends BaseEntity implements SellableItem {
             mappedBy = "product",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-            fetch = FetchType.LAZY)
-    private Set<ProductVariant> productVariants = new HashSet<>();
+            fetch = FetchType.LAZY
+    )
+    private List<ProductVariant> productVariants = new ArrayList<>();
 
     // ================= IMAGES =================
     @OneToMany(

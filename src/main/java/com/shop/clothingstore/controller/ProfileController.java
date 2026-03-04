@@ -12,18 +12,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.shop.clothingstore.entity.User;
-import com.shop.clothingstore.repository.UserRepository;
+import com.shop.clothingstore.service.UserService;
 
 @Controller
 @RequestMapping("/profile")
 public class ProfileController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-    public ProfileController(UserRepository userRepository,
+    public ProfileController(UserService userService,
             PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -40,7 +40,7 @@ public class ProfileController {
             return "redirect:/login";
         }
 
-        User user = userRepository
+        User user = userService
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow();
 
@@ -61,7 +61,7 @@ public class ProfileController {
             @RequestParam String address,
             RedirectAttributes redirectAttributes) {
 
-        User user = userRepository
+        User user = userService
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow();
 
@@ -69,7 +69,7 @@ public class ProfileController {
         user.setPhone(phone);
         user.setAddress(address);
 
-        userRepository.save(user);
+        userService.save(user);
 
         redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin thành công");
 
@@ -88,7 +88,7 @@ public class ProfileController {
             @RequestParam String confirmPassword,
             RedirectAttributes redirectAttributes) {
 
-        User user = userRepository
+        User user = userService
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow();
 
@@ -111,7 +111,7 @@ public class ProfileController {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
+        userService.save(user);
 
         redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công");
 

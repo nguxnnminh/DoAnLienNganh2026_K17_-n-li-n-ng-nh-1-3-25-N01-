@@ -23,9 +23,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class ProductVariant extends BaseEntity implements ItemVariant {
 
-    @EqualsAndHashCode.Include
-    private Long id;
-
     @Column(nullable = false)
     private String size;
 
@@ -33,7 +30,7 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
     private String color;
 
     @Column(nullable = false)
-    private double price;
+    private Long price;
 
     @Column(nullable = false)
     private Integer stock;
@@ -53,7 +50,7 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
 
     @Override
     public Double getPrice() {
-        return price;
+        return price != null ? price.doubleValue() : 0.0;
     }
 
     @Override

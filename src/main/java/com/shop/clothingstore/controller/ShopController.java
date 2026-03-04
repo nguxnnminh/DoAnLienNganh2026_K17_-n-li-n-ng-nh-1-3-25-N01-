@@ -21,29 +21,28 @@ import com.shop.clothingstore.dto.VariantDTO;
 import com.shop.clothingstore.entity.Category;
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.SubCategory;
-import com.shop.clothingstore.repository.CategoryRepository;
-import com.shop.clothingstore.repository.SubCategoryRepository;
+import com.shop.clothingstore.service.CategoryService;
 import com.shop.clothingstore.service.ProductService;
 import com.shop.clothingstore.service.ReviewService;
+import com.shop.clothingstore.service.SubCategoryService;
 
 @Controller
 public class ShopController {
 
     private final ProductService productService;
-    private final CategoryRepository categoryRepository;
-    private final SubCategoryRepository subCategoryRepository;
+    private final CategoryService categoryService;
+    private final SubCategoryService subCategoryService;
     private final ReviewService reviewService;
 
     public ShopController(ProductService productService,
-            CategoryRepository categoryRepository,
-            SubCategoryRepository subCategoryRepository,
+            CategoryService categoryService,
+            SubCategoryService subCategoryService,
             ReviewService reviewService) {
 
         this.productService = productService;
-        this.categoryRepository = categoryRepository;
-        this.subCategoryRepository = subCategoryRepository;
+        this.categoryService = categoryService;
+        this.subCategoryService = subCategoryService;
         this.reviewService = reviewService;
-
     }
 
     // =====================================================
@@ -129,7 +128,7 @@ public class ShopController {
         model.addAttribute("products", products);
         model.addAttribute("filter", filter);
         model.addAttribute("sort", sort);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.getAllCategories());
 
         return "shop/products";
     }
@@ -147,7 +146,7 @@ public class ShopController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             Model model) {
 
-        Category category = categoryRepository.findBySlug(categorySlug)
+        Category category = categoryService.getCategoryBySlug(categorySlug)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         ProductFilterDTO filter = new ProductFilterDTO();
@@ -163,10 +162,10 @@ public class ShopController {
         model.addAttribute("products", products);
         model.addAttribute("filter", filter);
         model.addAttribute("sort", sort);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("currentCategory", category);
         model.addAttribute("subCategories",
-                subCategoryRepository.findByCategoryId(category.getId()));
+                subCategoryService.getByCategoryId(category.getId()));
 
         return "shop/products";
     }
@@ -185,10 +184,10 @@ public class ShopController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             Model model) {
 
-        Category category = categoryRepository.findBySlug(categorySlug)
+        Category category = categoryService.getCategoryBySlug(categorySlug)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        SubCategory subCategory = subCategoryRepository.findBySlug(subSlug)
+        SubCategory subCategory = subCategoryService.getBySlug(subSlug)
                 .orElseThrow(() -> new RuntimeException("SubCategory not found"));
 
         if (!subCategory.getCategory().getId().equals(category.getId())) {
@@ -209,11 +208,11 @@ public class ShopController {
         model.addAttribute("products", products);
         model.addAttribute("filter", filter);
         model.addAttribute("sort", sort);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("currentCategory", category);
         model.addAttribute("currentSubCategory", subCategory);
         model.addAttribute("subCategories",
-                subCategoryRepository.findByCategoryId(category.getId()));
+                subCategoryService.getByCategoryId(category.getId()));
 
         return "shop/products";
     }
@@ -232,7 +231,6 @@ public class ShopController {
         Product product = productService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // ===== UNIQUE IDENTIFIER (GENERALIZED VARIANT ATTRIBUTES) =====
         Set<String> sizes = product.getProductVariants()
                 .stream()
                 .map(v -> v.getSize())
@@ -245,7 +243,6 @@ public class ShopController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // ===== REVIEW DATA (GENERIC ITEM) =====
         double averageRating = reviewService.getAverageRating(id);
         long reviewCount = reviewService.getReviewCount(id);
 
@@ -254,8 +251,7 @@ public class ShopController {
         model.addAttribute("colors", colors);
         model.addAttribute("averageRating", averageRating);
         model.addAttribute("reviewCount", reviewCount);
-        model.addAttribute("reviews",
-                reviewService.getReviewsByItem(id));   // 🔥 đổi ở đây
+        model.addAttribute("reviews", reviewService.getReviewsByItem(id));
 
         var variantDTOs = product.getProductVariants()
                 .stream()
@@ -263,7 +259,7 @@ public class ShopController {
                 v.getId(),
                 v.getSize(),
                 v.getColor(),
-                v.getPrice(),
+                v.getPrice().longValue(),
                 v.getStock()
         ))
                 .toList();

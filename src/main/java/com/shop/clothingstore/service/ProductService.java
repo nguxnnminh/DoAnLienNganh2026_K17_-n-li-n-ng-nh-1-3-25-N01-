@@ -142,7 +142,6 @@ public class ProductService extends GenericServiceBase<Product, Long> {
 
             saveImages(product, dto.getNewImages(), dto.getPrimaryImageIndex());
         }
-
         return save(product);
     }
 
@@ -159,10 +158,8 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             existing.put(v.getId(), v);
         }
 
-        product.getProductVariants().removeIf(v
-                -> variantDTOs == null
-                || variantDTOs.stream().noneMatch(dto -> v.getId().equals(dto.getId()))
-        );
+        // clear toàn bộ variant cũ
+        product.getProductVariants().clear();
 
         if (variantDTOs == null) {
             return;
@@ -178,25 +175,22 @@ public class ProductService extends GenericServiceBase<Product, Long> {
 
             if (dto.getId() != null && existing.containsKey(dto.getId())) {
 
+                // update variant cũ
                 variant = existing.get(dto.getId());
-
-                variant.setSize(dto.getSize());
-                variant.setColor(dto.getColor());
-                variant.setPrice(dto.getPrice());
-                variant.setStock(dto.getStock());
 
             } else {
 
+                // tạo variant mới
                 variant = new ProductVariant();
-
-                variant.setSize(dto.getSize());
-                variant.setColor(dto.getColor());
-                variant.setPrice(dto.getPrice());
-                variant.setStock(dto.getStock());
                 variant.setSold(0);
-
-                product.addVariant(variant);
             }
+
+            variant.setSize(dto.getSize());
+            variant.setColor(dto.getColor());
+            variant.setPrice(dto.getPrice());
+            variant.setStock(dto.getStock());
+
+            product.addVariant(variant);
         }
     }
 

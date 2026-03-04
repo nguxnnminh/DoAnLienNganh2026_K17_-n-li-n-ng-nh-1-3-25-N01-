@@ -11,7 +11,8 @@
     </div>
 
     <form th:action="@{/admin/products/{id}(id=${productId})}" th:object="${productDTO}" method="post"
-        enctype="multipart/form-data">
+        enctype="multipart/form-data" class="glass rounded-2xl border border-zinc-200 dark:border-zinc-800
+           p-6 sm:p-8 space-y-8">
 
         <!-- CATEGORY -->
         <div>
@@ -19,7 +20,9 @@
                 Danh mục chính <span class="text-red-500">*</span>
             </label>
 
-            <select name="subCategoryId" class="form-select" required>
+            <select id="categorySelect" name="subCategoryId" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
+           bg-white dark:bg-zinc-900
+           focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition" required>
 
                 <option value="">-- Chọn danh mục con --</option>
 
@@ -36,7 +39,9 @@
                 Danh mục phụ <span class="text-red-500">*</span>
             </label>
 
-            <select th:field="*{subCategoryId}" id="subCategorySelect" class="w-full px-4 py-3 border rounded-xl">
+            <select th:field="*{subCategoryId}" id="subCategorySelect" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
+           bg-white dark:bg-zinc-900
+           focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
 
                 <option value="">Chọn danh mục chính trước</option>
 
@@ -49,8 +54,9 @@
                 Tên sản phẩm <span class="text-red-500">*</span>
             </label>
 
-            <input type="text" th:field="*{name}"
-                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500">
+            <input type="text" th:field="*{name}" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
+       bg-white dark:bg-zinc-900
+       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
 
         </div>
 
@@ -60,8 +66,10 @@
                 Mô tả
             </label>
 
-            <textarea th:field="*{description}" rows="4"
-                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+            <textarea th:field="*{description}" rows="4" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
+       bg-white dark:bg-zinc-900
+       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+</textarea>
         </div>
 
         <!-- VARIANTS -->
@@ -80,16 +88,18 @@
                     <input type="hidden" th:field="*{variants[__${i.index}__].id}">
 
                     <input type="text" th:field="*{variants[__${i.index}__].size}" placeholder="Size"
-                        class="px-4 py-3 rounded-xl border">
+                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
                     <input type="text" th:field="*{variants[__${i.index}__].color}" placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border">
+                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
-                    <input type="text" th:field="*{variants[__${i.index}__].price}"
-                        class="price-input px-4 py-3 rounded-xl border" placeholder="Giá">
+                    <input type="text" th:name="|variants[${i.index}].price|"
+                        th:value="${#numbers.formatDecimal(v.price,0,'POINT',0,'COMMA')}"
+                        class="price-input px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700"
+                        placeholder="Giá">
 
                     <input type="number" th:field="*{variants[__${i.index}__].stock}" placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border">
+                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
 
                     <button type="button"
                         class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600 hover:bg-red-100">
@@ -99,7 +109,7 @@
                 </div>
             </div>
 
-            <button type="button" id="add-variant" class="text-blue-600 mt-3">
+            <button type="button" id="add-variant" class="mt-4 text-sm font-medium text-indigo-600 hover:underline">
                 + Thêm biến thể
             </button>
 
@@ -138,7 +148,8 @@
                 Thêm ảnh mới
             </label>
 
-            <input type="file" name="newImages" multiple class="w-full px-4 py-3 border rounded-xl">
+            <input type="file" name="newImages" multiple class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
+       bg-white dark:bg-zinc-900">
 
         </div>
 
@@ -167,77 +178,74 @@
         </div>
 
     </form>
+    <script th:inline="javascript">
 
-</div>
+        const categorySelect = document.getElementById('categorySelect')
+        const subCategorySelect = document.getElementById('subCategorySelect')
+        const selectedCategoryId = /*[[${selectedCategoryId}]]*/ null
+        const selectedSubId = /*[[${productDTO.subCategoryId}]]*/ null
+        let variantIndex = /*[[${productDTO.variants != null ? productDTO.variants.size() : 0}]]*/ 0
 
-<script th:inline="javascript">
+        async function loadSubCategories(categoryId) {
 
-    const categorySelect = document.getElementById('categorySelect')
-    const subCategorySelect = document.getElementById('subCategorySelect')
-    const selectedCategoryId = /*[[${selectedCategoryId}]]*/ null
-    const selectedSubId = /*[[${productDTO.subCategoryId}]]*/ null
-    let variantIndex = /*[[${productDTO.variants != null ? productDTO.variants.size() : 0}]]*/ 0
-
-    async function loadSubCategories(categoryId) {
-
-        if (!categoryId) {
-            subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>'
-            subCategorySelect.disabled = true
-            return
-        }
-
-        subCategorySelect.disabled = true
-        subCategorySelect.innerHTML = '<option disabled selected>Đang tải...</option>'
-
-        try {
-
-            const response = await fetch(`/api/subcategories/by-category/${categoryId}`)
-            const subs = await response.json()
-
-            subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
-
-            subs.forEach(sub => {
-
-                const option = document.createElement('option')
-                option.value = sub.id
-                option.textContent = sub.name
-
-                subCategorySelect.appendChild(option)
-
-            })
-
-            if (selectedSubId) {
-                subCategorySelect.value = selectedSubId
+            if (!categoryId) {
+                subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>'
+                subCategorySelect.disabled = true
+                return
             }
 
-            subCategorySelect.disabled = false
+            subCategorySelect.disabled = true
+            subCategorySelect.innerHTML = '<option disabled selected>Đang tải...</option>'
 
-        } catch (e) {
+            try {
 
-            subCategorySelect.innerHTML = '<option>Lỗi tải danh mục phụ</option>'
+                const response = await fetch(`/api/subcategories/by-category/${categoryId}`)
+                const subs = await response.json()
+
+                subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
+
+                subs.forEach(sub => {
+
+                    const option = document.createElement('option')
+                    option.value = sub.id
+                    option.textContent = sub.name
+
+                    subCategorySelect.appendChild(option)
+
+                })
+
+                if (selectedSubId) {
+                    subCategorySelect.value = selectedSubId
+                }
+
+                subCategorySelect.disabled = false
+
+            } catch (e) {
+
+                subCategorySelect.innerHTML = '<option>Lỗi tải danh mục phụ</option>'
+
+            }
+        }
+
+        categorySelect.addEventListener('change', function () {
+            loadSubCategories(this.value)
+        })
+
+        window.onload = function () {
+
+            const categoryId = categorySelect.value
+
+            if (categoryId && categoryId !== "") {
+                loadSubCategories(categoryId)
+            }
 
         }
-    }
 
-    categorySelect.addEventListener('change', function () {
-        loadSubCategories(this.value)
-    })
+        document.getElementById('add-variant').addEventListener('click', function () {
 
-    window.onload = function () {
+            const container = document.getElementById('variants-container')
 
-        const categoryId = categorySelect.value
-
-        if (categoryId && categoryId !== "") {
-            loadSubCategories(categoryId)
-        }
-
-    }
-
-    document.getElementById('add-variant').addEventListener('click', function () {
-
-        const container = document.getElementById('variants-container')
-
-        const html = `
+            const html = `
 
 <div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
@@ -271,74 +279,72 @@ Xóa
 </div>
 `
 
-        container.insertAdjacentHTML('beforeend', html)
+            container.insertAdjacentHTML('beforeend', html)
 
-        variantIndex++
+            variantIndex++
 
-    })
-
-    document.addEventListener('click', function (e) {
-
-        if (e.target.classList.contains('remove-variant')) {
-
-            const row = e.target.closest('.variant-row')
-
-            row.style.display = 'none'
-
-            const inputs = row.querySelectorAll('input')
-
-            inputs.forEach(input => input.disabled = true)
-
-        }
-
-    })
-
-    function formatVND(value) {
-
-        value = value.replace(/[^\d]/g, '')
-
-        if (value === '') return ''
-
-        return Number(value).toLocaleString('vi-VN')
-
-    }
-
-    document.addEventListener('input', function (e) {
-
-        if (e.target.classList.contains('price-input')) {
-
-            let val = e.target.value.replace(/\./g, '')
-
-            if (!isNaN(val)) {
-                e.target.value = formatVND(val)
-            }
-
-        }
-
-    })
-
-    document.querySelector('form').addEventListener('submit', function () {
-
-        document.querySelectorAll('.price-input').forEach(i => {
-            i.value = i.value.replace(/[^\d]/g, '')
         })
 
-    })
+        document.addEventListener('click', function (e) {
 
-    window.addEventListener("load", function () {
+            if (e.target.classList.contains('remove-variant')) {
 
-        document.querySelectorAll('.price-input').forEach(input => {
+                const row = e.target.closest('.variant-row')
 
-            if (!input.value) return
+                row.style.display = 'none'
 
-            let value = input.value.replace(/[^\d]/g, '')
+                const inputs = row.querySelectorAll('input')
+
+                inputs.forEach(input => input.disabled = true)
+
+            }
+
+        })
+
+        function formatPriceInput(input) {
+
+            let value = input.value.replace(/\D/g, '')
+
+            if (value === '') {
+                input.value = ''
+                return
+            }
 
             input.value = Number(value).toLocaleString('vi-VN')
 
+        }
+
+        document.addEventListener("input", function (e) {
+
+            if (e.target.classList.contains("price-input")) {
+                formatPriceInput(e.target)
+            }
+
         })
 
-    })
+        document.querySelector('form').addEventListener('submit', function () {
 
-</script>
+            document.querySelectorAll('.price-input').forEach(i => {
+                i.value = i.value.replace(/[^\d]/g, '')
+            })
+
+        })
+
+        window.addEventListener("load", function () {
+
+            document.querySelectorAll('.price-input').forEach(input => {
+
+                if (!input.value) return
+
+                let value = input.value.replace(/[^\d]/g, '')
+
+                input.value = Number(value).toLocaleString('vi-VN')
+
+            })
+
+        })
+
+    </script>
+</div>
 
 </html>

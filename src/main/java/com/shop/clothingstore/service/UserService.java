@@ -1,6 +1,5 @@
 package com.shop.clothingstore.service;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -8,55 +7,59 @@ import org.springframework.stereotype.Service;
 import com.shop.clothingstore.entity.Role;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.UserRepository;
+import com.shop.clothingstore.service.base.GenericServiceBase;
 
 import jakarta.transaction.Transactional;
 
 @Service
-public class UserService {
+public class UserService
+        extends GenericServiceBase<User, Long> {
 
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
+
+        super(userRepository);   // 🔥 QUAN TRỌNG
+
         this.userRepository = userRepository;
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
-    }
-
+    // =====================================================
+    // UPDATE USER
+    // =====================================================
     @Transactional
     public User updateUser(Long id, User updatedUser) {
-        User user = userRepository.findById(id)
+
+        User user = findById(id) // 🔥 dùng generic
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        // Chỉ cập nhật các trường cho phép
         user.setFullName(updatedUser.getFullName());
         user.setPhone(updatedUser.getPhone());
         user.setAddress(updatedUser.getAddress());
         user.setRole(updatedUser.getRole());
 
-        // Nếu cần thêm active/inactive, thêm trường active vào User entity
-        // user.setActive(updatedUser.getActive());
-        return userRepository.save(user);
+        return save(user);   // 🔥 dùng generic
     }
 
+    // =====================================================
+    // DELETE USER (CUSTOM LOGIC)
+    // =====================================================
     @Transactional
     public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
+
+        User user = findById(id)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        // Không cho xóa admin hoặc chính mình (tùy chọn)
-        if (user.getRole().equals("ADMIN")) {
+        if (user.getRole() == Role.ADMIN) {
             throw new IllegalStateException("Không thể xóa tài khoản admin");
         }
 
-        userRepository.delete(user);
+        delete(id);   // 🔥 dùng generic
     }
 
+    // =====================================================
+    // FIND BY EMAIL
+    // =====================================================
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -72,19 +75,15 @@ public class UserService {
     // REGISTER USER
     // =====================================================
     @Transactional
-    public User registerUser(String email, String encodedPassword, Role role) {
+    public User registerUser(String email,
+            String encodedPassword,
+            Role role) {
+
         User user = new User();
         user.setEmail(email);
         user.setPassword(encodedPassword);
         user.setRole(role);
-        return userRepository.save(user);
-    }
 
-    // =====================================================
-    // SAVE USER
-    // =====================================================
-    @Transactional
-    public User save(User user) {
-        return userRepository.save(user);
+        return save(user);   // 🔥 dùng generic
     }
 }

@@ -11,11 +11,11 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "orders")
-public class Order extends AbstractTransaction<OrderStatus> {
+public class Order extends AbstractTransaction<OrderStatus, User> {
 
     @OneToMany(mappedBy = "order",
-               cascade = CascadeType.ALL,
-               orphanRemoval = true)
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<OrderItem> items;
 
     private Double total;
@@ -25,7 +25,6 @@ public class Order extends AbstractTransaction<OrderStatus> {
     private String address;
 
     // ===== GETTER SETTER =====
-
     public List<OrderItem> getItems() {
         return items;
     }

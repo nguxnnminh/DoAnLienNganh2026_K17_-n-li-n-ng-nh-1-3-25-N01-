@@ -17,7 +17,7 @@ import jakarta.validation.constraints.NotBlank;
 @Table(
         name = "reviews",
         uniqueConstraints = @UniqueConstraint(
-                columnNames = {"order_item_id"} // ✅ mỗi order item chỉ review 1 lần
+                columnNames = {"order_item_id"}
         )
 )
 public class Review extends BaseEntity {
@@ -32,21 +32,20 @@ public class Review extends BaseEntity {
     private String comment;
 
     // ==============================
-    // USER
+    // ACTOR (USER)
     // ==============================
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "actor_id", nullable = false)
+    private User actor;
 
     // ==============================
-    // PRODUCT (để tính average rating)
+    // ITEM ID (GENERIC)
     // ==============================
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @Column(name = "item_id", nullable = false)
+    private Long itemId;
 
     // ==============================
-    // ORDER ITEM (QUAN TRỌNG NHẤT)
+    // ORDER ITEM (CORE RELATION)
     // ==============================
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", nullable = false)
@@ -71,20 +70,20 @@ public class Review extends BaseEntity {
         this.comment = comment;
     }
 
-    public User getUser() {
-        return user;
+    public User getActor() {
+        return actor;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setActor(User actor) {
+        this.actor = actor;
     }
 
-    public Product getProduct() {
-        return product;
+    public Long getItemId() {
+        return itemId;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
+    public void setItemId(Long itemId) {
+        this.itemId = itemId;
     }
 
     public OrderItem getOrderItem() {

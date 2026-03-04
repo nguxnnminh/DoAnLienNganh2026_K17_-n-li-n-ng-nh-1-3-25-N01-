@@ -2,7 +2,7 @@ package com.shop.clothingstore.dto;
 
 import java.math.BigDecimal;
 
-public class CartItem {
+public class CartItemDTO {
 
     private Long variantId;
     private String productName;

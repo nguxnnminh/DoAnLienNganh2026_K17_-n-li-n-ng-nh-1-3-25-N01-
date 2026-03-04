@@ -72,34 +72,41 @@ public class OrderController {
             return "redirect:/login";
         }
 
-        User user = userService
-                .findByEmail(principal.getName())
-                .orElseThrow();
+        try {
 
-        Order order = orderService.findById(id);
+            User user = userService
+                    .findByEmail(principal.getName())
+                    .orElseThrow();
 
-        // 🔐 Chỉ xem đơn của mình
-        if (order.getActor() == null
-                || !order.getActor().getId().equals(user.getId())) {
+            Order order = orderService.findById(id) // 🔥 sửa ở đây
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+
+            // 🔐 Chỉ xem đơn của mình
+            if (order.getActor() == null
+                    || !order.getActor().getId().equals(user.getId())) {
+                return "redirect:/my-orders";
+            }
+
+            boolean isCompleted
+                    = order.getStatus() == OrderStatus.COMPLETED;
+
+            Set<Long> reviewedItemIds = order.getItems()
+                    .stream()
+                    .filter(item
+                            -> reviewService.hasReviewByOrderItem(item.getId())
+                    )
+                    .map(item -> item.getId())
+                    .collect(Collectors.toSet());
+
+            model.addAttribute("order", order);
+            model.addAttribute("isCompleted", isCompleted);
+            model.addAttribute("reviewedItemIds", reviewedItemIds);
+
+            return "shop/order-detail";
+
+        } catch (Exception e) {
+
             return "redirect:/my-orders";
         }
-
-        // ✅ Check COMPLETED
-        boolean isCompleted = order.getStatus() == OrderStatus.COMPLETED;
-
-        // ✅ Lấy danh sách orderItem đã review
-        Set<Long> reviewedItemIds = order.getItems()
-                .stream()
-                .filter(item
-                        -> reviewService.hasReviewByOrderItem(item.getId())
-                )
-                .map(item -> item.getId())
-                .collect(Collectors.toSet());
-
-        model.addAttribute("order", order);
-        model.addAttribute("isCompleted", isCompleted);
-        model.addAttribute("reviewedItemIds", reviewedItemIds);
-
-        return "shop/order-detail";
     }
 }

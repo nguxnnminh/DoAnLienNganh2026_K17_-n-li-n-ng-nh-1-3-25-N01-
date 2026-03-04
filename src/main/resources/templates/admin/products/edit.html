@@ -3,7 +3,6 @@
 
 <div th:fragment="content">
 
-    <!-- PAGE TITLE -->
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-semibold">Chỉnh sửa sản phẩm</h1>
         <a th:href="@{/admin/products}" class="text-sm text-zinc-500 hover:underline">
@@ -11,20 +10,23 @@
         </a>
     </div>
 
-    <form th:action="@{/admin/products/{id}(id=${productDTO.id})}" th:object="${productDTO}" method="post"
-        enctype="multipart/form-data" class="space-y-8 bg-white border border-zinc-200 rounded-2xl p-8">
+    <form th:action="@{/admin/products/{id}(id=${productId})}" th:object="${productDTO}" method="post"
+        enctype="multipart/form-data">
 
         <!-- CATEGORY -->
         <div>
             <label class="block text-sm text-zinc-500 mb-2">
                 Danh mục chính <span class="text-red-500">*</span>
             </label>
-            <select id="categorySelect" name="categoryId"
-                class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Chọn danh mục</option>
-                <option th:each="cat : ${categories}" th:value="${cat.id}" th:selected="${cat.id == selectedCategoryId}"
-                    th:text="${cat.name}">
+
+            <select name="subCategoryId" class="form-select" required>
+
+                <option value="">-- Chọn danh mục con --</option>
+
+                <option th:each="sc : ${subCategories}" th:value="${sc.id}" th:text="${sc.name}"
+                    th:selected="${productDTO.subCategoryId == sc.id}">
                 </option>
+
             </select>
         </div>
 
@@ -33,9 +35,11 @@
             <label class="block text-sm text-zinc-500 mb-2">
                 Danh mục phụ <span class="text-red-500">*</span>
             </label>
-            <select th:field="*{subCategoryId}" id="subCategorySelect"
-                class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
+
+            <select th:field="*{subCategoryId}" id="subCategorySelect" class="w-full px-4 py-3 border rounded-xl">
+
                 <option value="">Chọn danh mục chính trước</option>
+
             </select>
         </div>
 
@@ -44,8 +48,10 @@
             <label class="block text-sm text-zinc-500 mb-2">
                 Tên sản phẩm <span class="text-red-500">*</span>
             </label>
+
             <input type="text" th:field="*{name}"
-                class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500">
+
         </div>
 
         <!-- DESCRIPTION -->
@@ -53,189 +59,286 @@
             <label class="block text-sm text-zinc-500 mb-2">
                 Mô tả
             </label>
+
             <textarea th:field="*{description}" rows="4"
-                class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
 
         <!-- VARIANTS -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-3">
                 Biến thể
             </label>
+
             <div id="variants-container" class="space-y-4">
+
                 <div th:each="v, i : *{variants}"
                     class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+
+                    <!-- IMPORTANT: variant id -->
+                    <input type="hidden" th:field="*{variants[__${i.index}__].id}">
+
                     <input type="text" th:field="*{variants[__${i.index}__].size}" placeholder="Size"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border">
 
                     <input type="text" th:field="*{variants[__${i.index}__].color}" placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border">
 
-                    <input type="number" th:field="*{variants[__${i.index}__].price}" step="0.01" placeholder="Giá"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                    <input type="text" th:field="*{variants[__${i.index}__].price}"
+                        class="price-input px-4 py-3 rounded-xl border" placeholder="Giá">
 
                     <input type="number" th:field="*{variants[__${i.index}__].stock}" placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border">
 
-                    <button type="button" class="remove-variant px-4 py-3 rounded-xl text-sm font-medium
-               bg-red-50 text-red-600
-               hover:bg-red-100
-               dark:bg-red-900/30 dark:text-red-300
-               transition">
+                    <button type="button"
+                        class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600 hover:bg-red-100">
                         Xóa
                     </button>
+
                 </div>
             </div>
 
             <button type="button" id="add-variant" class="text-blue-600 mt-3">
                 + Thêm biến thể
             </button>
+
         </div>
 
         <!-- EXISTING IMAGES -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-3">
                 Ảnh hiện có
             </label>
+
             <div class="grid grid-cols-4 gap-4">
+
                 <div th:each="img : ${existingImages}" class="relative group">
+
                     <img th:src="${img.imageUrl}" class="w-full h-32 object-cover rounded-xl border">
+
                     <label
                         class="absolute top-2 right-2 bg-white px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100">
+
                         <input type="checkbox" name="imagesToDelete" th:value="${img.id}">
+
                         Xóa
+
                     </label>
+
                 </div>
             </div>
         </div>
 
         <!-- NEW IMAGES -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-2">
                 Thêm ảnh mới
             </label>
+
             <input type="file" name="newImages" multiple class="w-full px-4 py-3 border rounded-xl">
+
         </div>
 
         <!-- ACTIVE -->
         <div class="flex items-center gap-3">
+
             <input type="checkbox" th:field="*{active}" class="w-5 h-5">
+
             <label class="text-sm text-zinc-500">
                 Hiển thị sản phẩm
             </label>
+
         </div>
 
         <!-- SUBMIT -->
         <div class="flex justify-end gap-4 pt-6 border-t">
+
             <a th:href="@{/admin/products}" class="px-6 py-3 border rounded-xl">
                 Hủy
             </a>
+
             <button type="submit" class="bg-black text-white px-8 py-3 rounded-xl hover:bg-zinc-800">
                 Cập nhật sản phẩm
             </button>
+
         </div>
 
     </form>
 
-    <!-- JavaScript -->
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        const categorySelect = document.getElementById('categorySelect');
-        const subCategorySelect = document.getElementById('subCategorySelect');
+</div>
 
-        const selectedSubId = /*[[${productDTO.subCategoryId}]]*/ null;
-        let variantIndex = /*[[${productDTO.variants.size()}]]*/ 0;
+<script th:inline="javascript">
 
-        async function loadSubCategories(categoryId) {
-            if (!categoryId) {
-                subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>';
-                subCategorySelect.disabled = true;
-                return;
-            }
+    const categorySelect = document.getElementById('categorySelect')
+    const subCategorySelect = document.getElementById('subCategorySelect')
+    const selectedCategoryId = /*[[${selectedCategoryId}]]*/ null
+    const selectedSubId = /*[[${productDTO.subCategoryId}]]*/ null
+    let variantIndex = /*[[${productDTO.variants != null ? productDTO.variants.size() : 0}]]*/ 0
 
-            subCategorySelect.disabled = true;
-            subCategorySelect.innerHTML = '<option value="">Đang tải...</option>';
+    async function loadSubCategories(categoryId) {
 
-            try {
-                const response = await fetch(`/api/subcategories/by-category/${categoryId}`);
-                const subs = await response.json();
-
-                subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>';
-                subs.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub.id;
-                    option.textContent = sub.name;
-                    if (sub.id == selectedSubId) {
-                        option.selected = true;
-                    }
-                    subCategorySelect.appendChild(option);
-                });
-                subCategorySelect.disabled = false;
-            } catch (error) {
-                subCategorySelect.innerHTML = '<option value="">Lỗi tải danh mục phụ</option>';
-            }
+        if (!categoryId) {
+            subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>'
+            subCategorySelect.disabled = true
+            return
         }
 
-        categorySelect.addEventListener('change', function () {
-            loadSubCategories(this.value);
-        });
+        subCategorySelect.disabled = true
+        subCategorySelect.innerHTML = '<option disabled selected>Đang tải...</option>'
 
-        // Load ngay khi mở trang edit
-        window.onload = function () {
-            if (categorySelect.value) {
-                loadSubCategories(categorySelect.value);
+        try {
+
+            const response = await fetch(`/api/subcategories/by-category/${categoryId}`)
+            const subs = await response.json()
+
+            subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
+
+            subs.forEach(sub => {
+
+                const option = document.createElement('option')
+                option.value = sub.id
+                option.textContent = sub.name
+
+                subCategorySelect.appendChild(option)
+
+            })
+
+            if (selectedSubId) {
+                subCategorySelect.value = selectedSubId
             }
-        };
 
-        // Thêm/xóa variant
-        document.getElementById('add-variant').addEventListener('click', function () {
-            const container = document.getElementById('variants-container');
-            const html = `
-                <div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            subCategorySelect.disabled = false
 
-                    <input type="text"
-                        name="variants[${variantIndex}].size"
-                        placeholder="Size"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+        } catch (e) {
 
-                    <input type="text"
-                        name="variants[${variantIndex}].color"
-                        placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+            subCategorySelect.innerHTML = '<option>Lỗi tải danh mục phụ</option>'
 
-                    <input type="number"
-                        name="variants[${variantIndex}].price"
-                        step="0.01"
-                        placeholder="Giá"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+        }
+    }
 
-                    <input type="number"
-                        name="variants[${variantIndex}].stock"
-                        placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+    categorySelect.addEventListener('change', function () {
+        loadSubCategories(this.value)
+    })
 
-                    <button type="button"
-                        class="remove-variant px-4 py-3 rounded-xl text-sm font-medium
-                            bg-red-50 text-red-600
-                            hover:bg-red-100
-                            dark:bg-red-900/30 dark:text-red-300
-                            transition">
-                        Xóa
-                    </button>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', html);
-            variantIndex++;
-        });
+    window.onload = function () {
 
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('remove-variant')) {
-                e.target.closest('.variant-row').remove();
-            }
-        });
-        /*]]>*/
-    </script>
+        const categoryId = categorySelect.value
+
+        if (categoryId && categoryId !== "") {
+            loadSubCategories(categoryId)
+        }
+
+    }
+
+    document.getElementById('add-variant').addEventListener('click', function () {
+
+        const container = document.getElementById('variants-container')
+
+        const html = `
+
+<div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+
+<input type="hidden" name="variants[${variantIndex}].id" value="">
+
+<input type="text"
+name="variants[${variantIndex}].size"
+placeholder="Size"
+class="px-4 py-3 rounded-xl border">
+
+<input type="text"
+name="variants[${variantIndex}].color"
+placeholder="Màu"
+class="px-4 py-3 rounded-xl border">
+
+<input type="text"
+name="variants[${variantIndex}].price"
+class="price-input px-4 py-3 rounded-xl border"
+placeholder="Giá">
+
+<input type="number"
+name="variants[${variantIndex}].stock"
+placeholder="Tồn kho"
+class="px-4 py-3 rounded-xl border">
+
+<button type="button"
+class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600 hover:bg-red-100">
+Xóa
+</button>
 
 </div>
+`
+
+        container.insertAdjacentHTML('beforeend', html)
+
+        variantIndex++
+
+    })
+
+    document.addEventListener('click', function (e) {
+
+        if (e.target.classList.contains('remove-variant')) {
+
+            const row = e.target.closest('.variant-row')
+
+            row.style.display = 'none'
+
+            const inputs = row.querySelectorAll('input')
+
+            inputs.forEach(input => input.disabled = true)
+
+        }
+
+    })
+
+    function formatVND(value) {
+
+        value = value.replace(/[^\d]/g, '')
+
+        if (value === '') return ''
+
+        return Number(value).toLocaleString('vi-VN')
+
+    }
+
+    document.addEventListener('input', function (e) {
+
+        if (e.target.classList.contains('price-input')) {
+
+            let val = e.target.value.replace(/\./g, '')
+
+            if (!isNaN(val)) {
+                e.target.value = formatVND(val)
+            }
+
+        }
+
+    })
+
+    document.querySelector('form').addEventListener('submit', function () {
+
+        document.querySelectorAll('.price-input').forEach(i => {
+            i.value = i.value.replace(/[^\d]/g, '')
+        })
+
+    })
+
+    window.addEventListener("load", function () {
+
+        document.querySelectorAll('.price-input').forEach(input => {
+
+            if (!input.value) return
+
+            let value = input.value.replace(/[^\d]/g, '')
+
+            input.value = Number(value).toLocaleString('vi-VN')
+
+        })
+
+    })
+
+</script>
 
 </html>

@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.shop.clothingstore.entity.User;
-import com.shop.clothingstore.repository.UserRepository;
 import com.shop.clothingstore.service.CartService;
 import com.shop.clothingstore.service.CheckoutService;
+import com.shop.clothingstore.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -20,36 +20,28 @@ public class CheckoutController {
 
     private final CheckoutService checkoutService;
     private final CartService cartService;
-    private final UserRepository userRepository;
+    private final UserService userService; // ✅ dùng service thay repository
 
     public CheckoutController(
             CheckoutService checkoutService,
             CartService cartService,
-            UserRepository userRepository
+            UserService userService
     ) {
         this.checkoutService = checkoutService;
         this.cartService = cartService;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     // ===============================
-    // GET CHECKOUT PAGE (AUTOFILL + CART)
+    // GET CHECKOUT PAGE
     // ===============================
     @GetMapping("/checkout")
-    public String checkoutPage(
-            Model model,
-            Principal principal
-    ) {
+    public String checkoutPage(Model model, Principal principal) {
 
-        // ===== CART DATA =====
-        model.addAttribute("cartItems", cartService.getCart());
-        model.addAttribute("total", cartService.getTotal());
+        loadCartData(model);
 
-        // ===== AUTOFILL USER =====
-        if (principal != null) {
-            User user = userRepository
-                    .findByEmail(principal.getName())
-                    .orElse(null);
+        User user = getCurrentUser(principal);
+        if (user != null) {
             model.addAttribute("user", user);
         }
 
@@ -57,7 +49,7 @@ public class CheckoutController {
     }
 
     // ===============================
-    // POST CHECKOUT (STOCK + ORDER)
+    // POST CHECKOUT
     // ===============================
     @PostMapping("/checkout")
     public String processCheckout(
@@ -69,14 +61,10 @@ public class CheckoutController {
             Model model
     ) {
 
-        User user = null;
-        if (principal != null) {
-            user = userRepository
-                    .findByEmail(principal.getName())
-                    .orElse(null);
-        }
+        User user = getCurrentUser(principal);
 
         try {
+
             var order = checkoutService.checkout(
                     customerName,
                     phone,
@@ -90,19 +78,29 @@ public class CheckoutController {
 
         } catch (IllegalStateException e) {
 
-            // ===== ERROR =====
             model.addAttribute("error", e.getMessage());
+            loadCartData(model);
 
-            // ===== CART DATA (BẮT BUỘC LOAD LẠI) =====
-            model.addAttribute("cartItems", cartService.getCart());
-            model.addAttribute("total", cartService.getTotal());
-
-            // ===== AUTOFILL USER =====
             if (user != null) {
                 model.addAttribute("user", user);
             }
 
             return "shop/checkout";
         }
+    }
+
+    // ===============================
+    // PRIVATE HELPER METHODS
+    // ===============================
+    private void loadCartData(Model model) {
+        model.addAttribute("cartItems", cartService.getCart());
+        model.addAttribute("total", cartService.getTotal());
+    }
+
+    private User getCurrentUser(Principal principal) {
+        if (principal == null) {
+            return null;
+        }
+        return userService.findByEmail(principal.getName()).orElse(null);
     }
 }

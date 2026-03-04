@@ -31,11 +31,10 @@ public class AdminUserController extends AdminBaseController {
 
         model.addAttribute("title", "Quản lý khách hàng");
 
-        model.addAttribute("users", userService.getAllUsers());
+        model.addAttribute("users", userService.findAll()); // 🔥 dùng generic
 
         return "admin/users/index";
     }
-
 
     // ===============================
     // SHOW EDIT FORM
@@ -46,23 +45,26 @@ public class AdminUserController extends AdminBaseController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        User user = userService.getUserById(id).orElse(null);
+        try {
 
-        if (user == null) {
+            User user = userService.findById(id) // 🔥 dùng generic
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            model.addAttribute("title", "Chỉnh sửa khách hàng");
+            model.addAttribute("user", user);
+            model.addAttribute("roles", Role.values());
+
+            return "admin/users/edit";
+
+        } catch (Exception e) {
+
             redirectAttributes.addFlashAttribute(
                     "error",
                     "Không tìm thấy người dùng.");
+
             return "redirect:/admin/users";
         }
-
-        model.addAttribute("title", "Chỉnh sửa khách hàng");
-
-        model.addAttribute("user", user);
-        model.addAttribute("roles", Role.values());
-
-        return "admin/users/edit";
     }
-
 
     // ===============================
     // UPDATE USER
@@ -91,7 +93,6 @@ public class AdminUserController extends AdminBaseController {
         return "redirect:/admin/users";
     }
 
-
     // ===============================
     // DELETE USER
     // ===============================
@@ -102,7 +103,7 @@ public class AdminUserController extends AdminBaseController {
 
         try {
 
-            userService.deleteUser(id);
+            userService.deleteUser(id);  // vẫn dùng custom logic
 
             redirectAttributes.addFlashAttribute(
                     "success",

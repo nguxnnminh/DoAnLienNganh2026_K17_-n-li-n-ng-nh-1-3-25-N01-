@@ -53,7 +53,7 @@ public class AdminProductController extends AdminBaseController {
 
         model.addAttribute("title", "Quản lý sản phẩm");
 
-        List<Product> products = productService.getAllProducts();
+        List<Product> products = productService.findAll();
         model.addAttribute("products", products);
 
         return "admin/products/index";
@@ -120,7 +120,7 @@ public class AdminProductController extends AdminBaseController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            productService.deleteProduct(id);
+            productService.delete(id);
             redirectAttributes.addFlashAttribute(
                     "success",
                     "Xóa sản phẩm thành công!");
@@ -158,17 +158,20 @@ public class AdminProductController extends AdminBaseController {
                 dto.setActive(product.isActive());
 
                 List<VariantDTO> variants = new ArrayList<>();
+
                 for (ProductVariant v : product.getProductVariants()) {
+
                     VariantDTO vd = new VariantDTO();
+
+                    vd.setId(v.getId());
                     vd.setSize(v.getSize());
                     vd.setColor(v.getColor());
                     vd.setPrice(v.getPrice());
                     vd.setStock(v.getStock());
+
                     variants.add(vd);
                 }
-
                 dto.setVariants(variants);
-
                 model.addAttribute("productDTO", dto);
             }
 
@@ -201,8 +204,8 @@ public class AdminProductController extends AdminBaseController {
             RedirectAttributes redirectAttributes) {
 
         dto.setId(id);
-        dto.setImagesToDelete(imagesToDelete);
-
+        dto.setImagesToDelete(imagesToDelete != null ? imagesToDelete : new ArrayList<>());
+        System.out.println("SUB CATEGORY = " + dto.getSubCategoryId());
         if (result.hasErrors()) {
 
             redirectAttributes.addFlashAttribute(

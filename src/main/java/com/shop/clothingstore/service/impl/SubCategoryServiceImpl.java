@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.repository.SubCategoryRepository;
 import com.shop.clothingstore.service.SubCategoryService;
-import com.shop.clothingstore.service.base.GenericServiceImpl;
+import com.shop.clothingstore.service.base.GenericServiceBase;
 
 @Service
 public class SubCategoryServiceImpl
-        extends GenericServiceImpl<SubCategory, Long>
+        extends GenericServiceBase<SubCategory, Long>
         implements SubCategoryService {
 
     private final SubCategoryRepository subCategoryRepository;
@@ -25,7 +25,6 @@ public class SubCategoryServiceImpl
     // ============================
     // GIỮ NGUYÊN LOGIC CŨ
     // ============================
-
     @Override
     public List<SubCategory> getAllSubCategories() {
         return subCategoryRepository.findAll();

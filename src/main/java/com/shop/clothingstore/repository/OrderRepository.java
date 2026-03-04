@@ -33,19 +33,19 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
     long countByStatus(OrderStatus status);
 
     // =====================================================
-    // DASHBOARD KPI
+    // DASHBOARD KPI (GENERIC TOTAL AMOUNT)
     // =====================================================
     @Query("""
         SELECT COALESCE(SUM(o.total), 0)
         FROM Order o
         WHERE o.status = :status
     """)
-    BigDecimal getTotalRevenueByStatus(@Param("status") OrderStatus status);
+    BigDecimal getTotalAmountByStatus(@Param("status") OrderStatus status);
 
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
     // =====================================================
-    // DASHBOARD CHART
+    // DASHBOARD CHART (GENERIC AGGREGATION)
     // =====================================================
     @Query("""
         SELECT DATE(o.createdAt), SUM(o.total)
@@ -54,35 +54,35 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
         GROUP BY DATE(o.createdAt)
         ORDER BY DATE(o.createdAt)
     """)
-    List<Object[]> getRevenueByDate(@Param("status") OrderStatus status);
+    List<Object[]> getTotalAmountByDate(@Param("status") OrderStatus status);
 
     @Query("""
         SELECT DATE(o.createdAt), SUM(o.total)
         FROM Order o
         WHERE o.status = :status
-        AND o.createdAt >= :startDate
+          AND o.createdAt >= :startDate
         GROUP BY DATE(o.createdAt)
         ORDER BY DATE(o.createdAt)
     """)
-    List<Object[]> getRevenueSince(
+    List<Object[]> getTotalAmountSince(
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate
     );
 
+    // =====================================================
+    // GENERIC TRANSACTION CHECK (NO PRODUCT COUPLING)
+    // =====================================================
     @Query("""
-    SELECT COUNT(o) > 0
-    FROM Order o
-    JOIN o.items i
-    WHERE o.actor.id = :userId
-      AND o.status = :status
-      AND i.variantId IN (
-            SELECT v.id FROM ProductVariant v
-            WHERE v.product.id = :productId
-      )
-""")
-    boolean existsCompletedOrderWithProduct(
-            @Param("userId") Long userId,
+        SELECT COUNT(o) > 0
+        FROM Order o
+        JOIN o.items i
+        WHERE o.actor.id = :actorId
+          AND o.status = :status
+          AND i.variantId = :variantId
+    """)
+    boolean existsCompletedTransactionWithVariant(
+            @Param("actorId") Long actorId,
             @Param("status") OrderStatus status,
-            @Param("productId") Long productId
+            @Param("variantId") Long variantId
     );
 }

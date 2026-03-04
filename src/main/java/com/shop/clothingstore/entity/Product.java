@@ -1,11 +1,12 @@
 package com.shop.clothingstore.entity;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.shop.clothingstore.entity.base.BaseEntity;
-import com.shop.clothingstore.entity.base.ItemVariant;     // Thêm import này
-import com.shop.clothingstore.entity.base.SellableItem;     // Thêm import này
+import com.shop.clothingstore.entity.base.ItemVariant;
+import com.shop.clothingstore.entity.base.SellableItem;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,14 +16,21 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "products")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@ToString(exclude = {"productVariants", "images"})
+@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Product extends BaseEntity implements SellableItem {
+
+    @EqualsAndHashCode.Include
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -39,22 +47,23 @@ public class Product extends BaseEntity implements SellableItem {
 
     private boolean active = true;
 
-    @OneToMany(mappedBy = "product",
+    // ================= VARIANTS =================
+    @OneToMany(
+            mappedBy = "product",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
-    private List<ProductVariant> productVariants = new ArrayList<>();
+    private Set<ProductVariant> productVariants = new HashSet<>();
 
-    @OneToMany(mappedBy = "product",
+    // ================= IMAGES =================
+    @OneToMany(
+            mappedBy = "product",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
-    private List<ProductImage> images = new ArrayList<>();
+    private Set<ProductImage> images = new HashSet<>();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> reviews = new ArrayList<>();
-
-    // Các method tính toán hiện tại – thêm @Override để khớp interface
+    // ================= INTERFACE IMPLEMENT =================
     @Override
     public Double getMinPrice() {
         return productVariants.stream()
@@ -77,40 +86,17 @@ public class Product extends BaseEntity implements SellableItem {
                 .sum();
     }
 
-    // Các method getter cơ bản từ interface – thêm @Override
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getSlug() {
-        return slug;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
-    public boolean isActive() {
-        return active;
-    }
-
-    // Quan hệ variants – trả về List<? extends ItemVariant>
     @Override
     public List<? extends ItemVariant> getVariants() {
-        return productVariants;  // ProductVariant implements ItemVariant nên an toàn
+        return productVariants.stream().toList();
     }
 
-    // Quan hệ images – khớp interface
     @Override
     public List<ProductImage> getImages() {
-        return images;
+        return images.stream().toList();
     }
 
-    // Các method tiện ích hiện tại – giữ nguyên, không cần override vì không thuộc interface
+    // ================= HELPER METHODS =================
     public void addVariant(ProductVariant variant) {
         variant.setProduct(this);
         productVariants.add(variant);
@@ -119,9 +105,5 @@ public class Product extends BaseEntity implements SellableItem {
     public void addImage(ProductImage image) {
         image.setProduct(this);
         images.add(image);
-    }
-
-    public List<Review> getReviews() {
-        return reviews;
     }
 }

@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,12 +27,13 @@ import com.shop.clothingstore.entity.ProductVariant;
 import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.SubCategoryRepository;
+import com.shop.clothingstore.service.base.GenericServiceBase;
 import com.shop.clothingstore.specification.ProductSpecification;
 
 import jakarta.transaction.Transactional;
 
 @Service
-public class ProductService {
+public class ProductService extends GenericServiceBase<Product, Long> {
 
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
@@ -39,24 +43,26 @@ public class ProductService {
 
     public ProductService(ProductRepository productRepository,
             SubCategoryRepository subCategoryRepository) {
+
+        super(productRepository);
         this.productRepository = productRepository;
         this.subCategoryRepository = subCategoryRepository;
     }
 
-    // =====================================================
-    // GET ALL
-    // =====================================================
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-
-    // =====================================================
-    // CREATE PRODUCT
-    // =====================================================
+    /*
+     * =====================================================
+     * CREATE PRODUCT
+     * =====================================================
+     */
     @Transactional
     public Product createProduct(ProductCreateDTO dto) throws IOException {
 
-        SubCategory subCategory = subCategoryRepository.findById(dto.getSubCategoryId())
+        if (dto.getSubCategoryId() == null) {
+            throw new RuntimeException("SubCategoryId không được null");
+        }
+
+        SubCategory subCategory = subCategoryRepository
+                .findById(dto.getSubCategoryId())
                 .orElseThrow(() -> new RuntimeException("SubCategory không tồn tại"));
 
         Product product = new Product();
@@ -64,60 +70,15 @@ public class ProductService {
         product.setDescription(dto.getDescription());
         product.setSubCategory(subCategory);
         product.setActive(dto.getActive() != null ? dto.getActive() : true);
-
-        // ⭐ Generate slug
         product.setSlug(generateUniqueSlug(dto.getName()));
 
-        // ================= VARIANTS =================
         if (dto.getVariants() != null) {
+
             for (VariantDTO v : dto.getVariants()) {
 
-                ProductVariant variant = new ProductVariant();
-                variant.setSize(v.getSize());
-                variant.setColor(v.getColor());
-                variant.setPrice(v.getPrice());
-                variant.setStock(v.getStock());
-                variant.setSold(0); // ⭐ mặc định
-
-                product.addVariant(variant);
-            }
-        }
-
-        Product saved = productRepository.save(product);
-
-        // ================= IMAGES =================
-        saveImages(saved, dto.getImages(), dto.getPrimaryImageIndex());
-
-        return saved;
-    }
-
-    // =====================================================
-    // UPDATE PRODUCT
-    // =====================================================
-    @Transactional
-    public Product updateProduct(Long id, ProductUpdateDTO dto) throws IOException {
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product không tồn tại"));
-
-        SubCategory subCategory = subCategoryRepository.findById(dto.getSubCategoryId())
-                .orElseThrow(() -> new RuntimeException("SubCategory không tồn tại"));
-
-        // ⭐ Nếu đổi tên -> update slug
-        if (!product.getName().equals(dto.getName())) {
-            product.setSlug(generateUniqueSlug(dto.getName()));
-        }
-
-        product.setName(dto.getName());
-        product.setDescription(dto.getDescription());
-        product.setSubCategory(subCategory);
-        product.setActive(dto.getActive());
-
-        // ================= VARIANTS =================
-        product.getProductVariants().clear();
-
-        if (dto.getVariants() != null) {
-            for (VariantDTO v : dto.getVariants()) {
+                if (v.getSize() == null || v.getSize().isBlank()) {
+                    continue;
+                }
 
                 ProductVariant variant = new ProductVariant();
                 variant.setSize(v.getSize());
@@ -130,40 +91,141 @@ public class ProductService {
             }
         }
 
-        // ================= DELETE IMAGE =================
-        if (dto.getImagesToDelete() != null) {
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            saveImages(product, dto.getImages(), dto.getPrimaryImageIndex());
+        }
+
+        return save(product);
+    }
+
+    /*
+     * =====================================================
+     * UPDATE PRODUCT
+     * =====================================================
+     */
+    @Transactional
+    public Product updateProduct(Long id, ProductUpdateDTO dto) throws IOException {
+
+        Product product = productRepository.findProductForEdit(id)
+                .orElseThrow(() -> new RuntimeException("Product không tồn tại"));
+
+        if (dto.getSubCategoryId() == null) {
+            throw new RuntimeException("SubCategoryId không được null");
+        }
+
+        SubCategory subCategory = subCategoryRepository
+                .findById(dto.getSubCategoryId())
+                .orElseThrow(() -> new RuntimeException("SubCategory không tồn tại"));
+
+        String newSlug = toSlug(dto.getName());
+
+        if (!product.getSlug().equals(newSlug)) {
+            product.setSlug(generateUniqueSlug(dto.getName()));
+        }
+
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setSubCategory(subCategory);
+        product.setActive(dto.getActive());
+
+        updateVariants(product, dto.getVariants());
+
+        if (dto.getImagesToDelete() != null && !dto.getImagesToDelete().isEmpty()) {
+
             product.getImages().removeIf(img
                     -> dto.getImagesToDelete().contains(img.getId()));
         }
 
-        // ================= ADD NEW IMAGE =================
         if (dto.getNewImages() != null && !dto.getNewImages().isEmpty()) {
+
+            product.getImages().forEach(img -> img.setPrimaryImage(false));
+
             saveImages(product, dto.getNewImages(), dto.getPrimaryImageIndex());
         }
 
-        return productRepository.save(product);
+        return save(product);
     }
 
-    // =====================================================
-    // DELETE
-    // =====================================================
+    /*
+     * =====================================================
+     * UPDATE VARIANTS
+     * =====================================================
+     */
+    private void updateVariants(Product product, List<VariantDTO> variantDTOs) {
+
+        Map<Long, ProductVariant> existing = new HashMap<>();
+
+        for (ProductVariant v : product.getProductVariants()) {
+            existing.put(v.getId(), v);
+        }
+
+        product.getProductVariants().removeIf(v
+                -> variantDTOs == null
+                || variantDTOs.stream().noneMatch(dto -> v.getId().equals(dto.getId()))
+        );
+
+        if (variantDTOs == null) {
+            return;
+        }
+
+        for (VariantDTO dto : variantDTOs) {
+
+            if (dto.getSize() == null || dto.getSize().isBlank()) {
+                continue;
+            }
+
+            ProductVariant variant;
+
+            if (dto.getId() != null && existing.containsKey(dto.getId())) {
+
+                variant = existing.get(dto.getId());
+
+                variant.setSize(dto.getSize());
+                variant.setColor(dto.getColor());
+                variant.setPrice(dto.getPrice());
+                variant.setStock(dto.getStock());
+
+            } else {
+
+                variant = new ProductVariant();
+
+                variant.setSize(dto.getSize());
+                variant.setColor(dto.getColor());
+                variant.setPrice(dto.getPrice());
+                variant.setStock(dto.getStock());
+                variant.setSold(0);
+
+                product.addVariant(variant);
+            }
+        }
+    }
+
+    /*
+     * =====================================================
+     * DELETE PRODUCT
+     * =====================================================
+     */
     @Transactional
     public void deleteProduct(Long id) {
-
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product không tồn tại"));
-
-        productRepository.delete(product);
+        delete(id);
     }
 
+    /*
+     * =====================================================
+     * GET PRODUCT FOR EDIT
+     * =====================================================
+     */
     public Product getProductForEdit(Long id) {
-        return productRepository.findById(id)
+
+        return productRepository.findProductForEdit(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
     }
 
-    // =====================================================
-    // SAVE IMAGE
-    // =====================================================
+    /*
+     * =====================================================
+     * SAVE IMAGES
+     * =====================================================
+     */
     private void saveImages(Product product,
             List<MultipartFile> files,
             Integer primaryIndex) throws IOException {
@@ -181,6 +243,7 @@ public class ProductService {
         for (int i = 0; i < files.size(); i++) {
 
             MultipartFile file = files.get(i);
+
             if (file.isEmpty()) {
                 continue;
             }
@@ -188,19 +251,25 @@ public class ProductService {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path filePath = uploadPath.resolve(fileName);
 
-            Files.copy(file.getInputStream(), filePath);
+            Files.copy(
+                    file.getInputStream(),
+                    filePath,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
 
             ProductImage image = new ProductImage();
-            image.setImageUrl("/images/products/" + fileName);
+            image.setImageUrl("/uploads/images/products/" + fileName);
             image.setPrimaryImage(primaryIndex != null && i == primaryIndex);
 
             product.addImage(image);
         }
     }
 
-    // =====================================================
-    // SLUG GENERATOR ⭐⭐⭐
-    // =====================================================
+    /*
+     * =====================================================
+     * SLUG GENERATOR
+     * =====================================================
+     */
     private String generateUniqueSlug(String name) {
 
         String baseSlug = toSlug(name);
@@ -208,6 +277,7 @@ public class ProductService {
         int i = 1;
 
         while (productRepository.findBySlug(slug).isPresent()) {
+
             slug = baseSlug + "-" + i++;
         }
 
@@ -217,6 +287,7 @@ public class ProductService {
     private String toSlug(String input) {
 
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+
         String slug = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
 
         slug = slug.toLowerCase();
@@ -225,29 +296,22 @@ public class ProductService {
 
         return slug;
     }
-    // =====================================================
-// FIND BEST SELLER BY CATEGORY SLUG
-// =====================================================
 
-    public Page<Product> findBestSellerByCategorySlug(String slug, Pageable pageable) {
-        return productRepository.findBestSellerByCategorySlug(slug, pageable);
+    /*
+     * =====================================================
+     * QUERY METHODS
+     * =====================================================
+     */
+    public Page<Product> findTopByCategorySlug(String slug, Pageable pageable) {
+
+        return productRepository.findTopByCategorySlug(slug, pageable);
     }
 
-// =====================================================
-// FILTER WITH SPECIFICATION
-// =====================================================
     public Page<Product> findWithFilter(ProductFilterDTO filter, Pageable pageable) {
+
         return productRepository.findAll(
                 ProductSpecification.filter(filter),
                 pageable
         );
-    }
-
-// =====================================================
-// FIND BY ID
-// =====================================================
-    public Product findById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
     }
 }

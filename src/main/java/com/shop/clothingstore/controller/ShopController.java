@@ -57,13 +57,13 @@ public class ShopController {
         Pageable accPage = PageRequest.of(0, 1);
 
         Page<Product> topProducts
-                = productService.findBestSellerByCategorySlug("top", topPage);
+                = productService.findTopByCategorySlug("top", topPage);
 
         Page<Product> bottomProducts
-                = productService.findBestSellerByCategorySlug("bottom", bottomPage);
+                = productService.findTopByCategorySlug("bottom", bottomPage);
 
         Page<Product> accessoriesProducts
-                = productService.findBestSellerByCategorySlug("accessories", accPage);
+                = productService.findTopByCategorySlug("accessories", accPage);
 
         model.addAttribute("topProducts", topProducts.getContent());
         model.addAttribute("bottomProducts", bottomProducts.getContent());
@@ -229,23 +229,23 @@ public class ShopController {
             Model model,
             Authentication authentication) {
 
-        Product product = productService.findById(id);
+        Product product = productService.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // ===== UNIQUE SIZE =====
+        // ===== UNIQUE IDENTIFIER (GENERALIZED VARIANT ATTRIBUTES) =====
         Set<String> sizes = product.getProductVariants()
                 .stream()
                 .map(v -> v.getSize())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // ===== UNIQUE COLOR =====
         Set<String> colors = product.getProductVariants()
                 .stream()
                 .map(v -> v.getColor())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // ===== REVIEW DATA =====
+        // ===== REVIEW DATA (GENERIC ITEM) =====
         double averageRating = reviewService.getAverageRating(id);
         long reviewCount = reviewService.getReviewCount(id);
 
@@ -255,7 +255,7 @@ public class ShopController {
         model.addAttribute("averageRating", averageRating);
         model.addAttribute("reviewCount", reviewCount);
         model.addAttribute("reviews",
-                reviewService.getReviewsByProduct(id));
+                reviewService.getReviewsByItem(id));   // 🔥 đổi ở đây
 
         var variantDTOs = product.getProductVariants()
                 .stream()

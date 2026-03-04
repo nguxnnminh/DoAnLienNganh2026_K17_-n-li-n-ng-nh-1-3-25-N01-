@@ -39,10 +39,10 @@
                     <!-- CUSTOMER -->
                     <td class="px-6 py-5 truncate">
                         <div class="font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
-                            th:text="${o.customerName ?: (o.user != null ? o.user.fullName : 'Khách vãng lai')}">
+                            th:text="${o.customerName ?: (o.actor != null ? o.actor.fullName : 'Khách vãng lai')}">
                         </div>
                         <div class="text-xs text-zinc-500 mt-1 truncate"
-                            th:text="${o.user != null ? o.user.email : 'Guest'}">
+                            th:text="${o.actor != null ? o.actor.email : 'Guest'}">
                         </div>
                     </td>
 
@@ -133,9 +133,9 @@
             <!-- Customer -->
             <div class="mb-3">
                 <div class="font-semibold"
-                    th:text="${o.customerName ?: (o.user != null ? o.user.fullName : 'Khách vãng lai')}">
+                    th:text="${o.customerName ?: (o.actor != null ? o.actor.fullName : 'Khách vãng lai')}">
                 </div>
-                <div class="text-xs text-zinc-500" th:text="${o.user != null ? o.user.email : 'Guest'}">
+                <div class="text-xs text-zinc-500" th:text="${o.actor != null ? o.actor.email : 'Guest'}">
                 </div>
             </div>
 

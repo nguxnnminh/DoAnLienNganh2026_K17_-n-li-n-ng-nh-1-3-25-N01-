@@ -7,12 +7,12 @@ import com.shop.clothingstore.entity.base.BaseEntity;
 import com.shop.clothingstore.repository.base.BaseRepository;
 import com.shop.clothingstore.service.GenericService;
 
-public abstract class GenericServiceImpl<T extends BaseEntity, ID>
+public abstract class GenericServiceBase<T extends BaseEntity, ID>
         implements GenericService<T, ID> {
 
     protected final BaseRepository<T, ID> repository;
 
-    protected GenericServiceImpl(BaseRepository<T, ID> repository) {
+    protected GenericServiceBase(BaseRepository<T, ID> repository) {
         this.repository = repository;
     }
 

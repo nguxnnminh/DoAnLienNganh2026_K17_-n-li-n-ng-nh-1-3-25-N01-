@@ -2,8 +2,6 @@ package com.shop.clothingstore.entity.base;
 
 import java.time.LocalDateTime;
 
-import com.shop.clothingstore.entity.User;
-
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
@@ -12,11 +10,14 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 
 @MappedSuperclass
-public abstract class AbstractTransaction<S extends Enum<S>> extends BaseEntity {
+public abstract class AbstractTransaction<
+        S extends Enum<S>, // Status type
+        U extends BaseEntity // Actor type (User, Student, Instructor,...)
+        > extends BaseEntity {
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    protected User actor;
+    @JoinColumn(name = "actor_id")
+    protected U actor;
 
     @Enumerated(EnumType.STRING)
     protected S status;
@@ -28,11 +29,12 @@ public abstract class AbstractTransaction<S extends Enum<S>> extends BaseEntity 
         this.transactionDate = LocalDateTime.now();
     }
 
-    public User getActor() {
+    // ===== Getter & Setter =====
+    public U getActor() {
         return actor;
     }
 
-    public void setActor(User actor) {
+    public void setActor(U actor) {
         this.actor = actor;
     }
 
@@ -46,16 +48,5 @@ public abstract class AbstractTransaction<S extends Enum<S>> extends BaseEntity 
 
     public LocalDateTime getTransactionDate() {
         return transactionDate;
-    }
-
-    // 👇 QUAN TRỌNG
-    @jakarta.persistence.Transient
-    public User getUser() {
-        return actor;
-    }
-
-    @jakarta.persistence.Transient
-    public void setUser(User user) {
-        this.actor = user;
     }
 }

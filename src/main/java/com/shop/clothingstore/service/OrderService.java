@@ -11,90 +11,106 @@ import com.shop.clothingstore.entity.ProductVariant;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.OrderRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
+import com.shop.clothingstore.service.base.GenericServiceBase;
 
 import jakarta.transaction.Transactional;
 
 @Service
-public class OrderService {
+public class OrderService
+        extends GenericServiceBase<Order, Long> {
 
     private final OrderRepository orderRepository;
     private final ProductVariantRepository variantRepository;
 
-    public OrderService(OrderRepository orderRepository, ProductVariantRepository variantRepository) {
+    public OrderService(OrderRepository orderRepository,
+            ProductVariantRepository variantRepository) {
+
+        super(orderRepository);   // 🔥 QUAN TRỌNG
+
         this.orderRepository = orderRepository;
         this.variantRepository = variantRepository;
     }
 
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
-    }
-
+    // =====================================================
+    // GET ALL ORDERS (CUSTOM SORT)
+    // =====================================================
     public List<Order> getAllOrders() {
         return orderRepository.findAllByOrderByCreatedAtDesc();
     }
 
+    // =====================================================
+    // UPDATE ORDER STATUS
+    // =====================================================
     @Transactional
     public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
-        Order order = getOrderById(orderId);
+
+        Order order = findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
         OrderStatus oldStatus = order.getStatus();
 
-        // Không thay đổi trạng thái nếu giống nhau
         if (oldStatus == newStatus) {
             return order;
         }
 
-        // Kiểm tra lại tồn kho khi chuyển từ PENDING sang PROCESSING
-        // (phòng trường hợp stock thay đổi sau khi checkout)
-        if (newStatus == OrderStatus.PROCESSING && oldStatus == OrderStatus.PENDING) {
+        // ===== CHECK STOCK BEFORE PROCESSING =====
+        if (newStatus == OrderStatus.PROCESSING
+                && oldStatus == OrderStatus.PENDING) {
+
             for (OrderItem item : order.getItems()) {
+
                 ProductVariant variant = variantRepository.findById(item.getVariantId())
                         .orElseThrow(() -> new RuntimeException(
                         "Variant không tồn tại: ID = " + item.getVariantId()));
 
                 if (variant.getStock() < item.getQuantity()) {
                     throw new IllegalStateException(
-                            "Không đủ tồn kho cho sản phẩm: " + item.getProductName()
-                            + " (" + item.getSize() + " - " + item.getColor() + ")"
-                            + ". Tồn kho hiện tại: " + variant.getStock() + ", cần: " + item.getQuantity());
+                            "Không đủ tồn kho cho sản phẩm: "
+                            + item.getProductName()
+                            + " (" + item.getSize()
+                            + " - " + item.getColor()
+                            + ")"
+                            + ". Tồn kho hiện tại: "
+                            + variant.getStock()
+                            + ", cần: "
+                            + item.getQuantity());
                 }
-
-                // Vì checkout đã trừ stock rồi, ở đây chỉ kiểm tra, không trừ lại
-                // Nếu bạn muốn trừ lại ở bước PROCESSING, uncomment dòng dưới
-                // variant.setStock(variant.getStock() - item.getQuantity());
-                // variantRepository.save(variant);
             }
         }
 
-        // Hoàn tồn kho khi hủy đơn (chuyển sang CANCELLED)
-        if (newStatus == OrderStatus.CANCELLED && oldStatus != OrderStatus.CANCELLED) {
+        // ===== RESTORE STOCK WHEN CANCELLED =====
+        if (newStatus == OrderStatus.CANCELLED
+                && oldStatus != OrderStatus.CANCELLED) {
+
             for (OrderItem item : order.getItems()) {
+
                 ProductVariant variant = variantRepository.findById(item.getVariantId())
                         .orElseThrow(() -> new RuntimeException(
                         "Variant không tồn tại: ID = " + item.getVariantId()));
 
-                variant.setStock(variant.getStock() + item.getQuantity());
+                variant.setStock(
+                        variant.getStock() + item.getQuantity()
+                );
+
+                variant.setSold(
+                        variant.getSold() - item.getQuantity()
+                );
+
+                variantRepository.save(variant);
+
                 variantRepository.save(variant);
             }
         }
 
-        // Cập nhật trạng thái đơn hàng
         order.setStatus(newStatus);
-        return orderRepository.save(order);
+
+        return save(order);   // 🔥 dùng GenericServiceBase
     }
+
     // =====================================================
     // FIND ORDERS BY USER
     // =====================================================
-
     public List<Order> findOrdersByUser(User user) {
         return orderRepository.findByActorOrderByCreatedAtDesc(user);
-    }
-
-    // =====================================================
-    // FIND ORDER BY ID (WRAP)
-    // =====================================================
-    public Order findById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow();
     }
 }

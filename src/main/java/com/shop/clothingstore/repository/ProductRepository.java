@@ -14,53 +14,93 @@ import com.shop.clothingstore.repository.base.BaseRepository;
 public interface ProductRepository extends BaseRepository<Product, Long> {
 
     /*
-     * =========================
+     * =====================================================
      * PRODUCT DETAIL BY ID
-     * =========================
+     * Load đầy đủ dữ liệu tránh N+1 query
+     * =====================================================
      */
-
     @Override
     @EntityGraph(attributePaths = {
-            "productVariants",
-            "subCategory",
-            "subCategory.category"
+        "productVariants",
+        "images",
+        "subCategory",
+        "subCategory.category"
     })
     Optional<Product> findById(Long id);
 
 
     /*
-     * =========================
+     * =====================================================
      * PRODUCT DETAIL BY SLUG
-     * =========================
+     * Dùng cho trang product detail ngoài shop
+     * =====================================================
      */
-
     @EntityGraph(attributePaths = {
-            "productVariants",
-            "subCategory",
-            "subCategory.category"
+        "productVariants",
+        "images",
+        "subCategory",
+        "subCategory.category"
     })
     Optional<Product> findBySlug(String slug);
 
 
     /*
-     * =========================
+     * =====================================================
      * SIMPLE SEARCH
-     * =========================
+     * =====================================================
      */
-
     Optional<Product> findByName(String name);
 
+
+    /*
+     * =====================================================
+     * TOP PRODUCTS BY CATEGORY
+     * Sắp xếp theo variant bán nhiều nhất
+     * =====================================================
+     */
     @Query("""
-        SELECT DISTINCT p
+        SELECT p
         FROM Product p
         JOIN p.subCategory sc
         JOIN sc.category c
-        JOIN p.productVariants pv
         WHERE c.slug = :slug
-        ORDER BY pv.sold DESC
-        """)
-    Page<Product> findBestSellerByCategorySlug(
+        ORDER BY (
+            SELECT MAX(v.sold)
+            FROM ProductVariant v
+            WHERE v.product = p
+        ) DESC
+    """)
+    Page<Product> findTopByCategorySlug(
             @Param("slug") String slug,
             Pageable pageable
     );
+
+
+    /*
+     * =====================================================
+     * PRODUCT FOR EDIT (ADMIN)
+     * Load variants + images để edit
+     * =====================================================
+     */
+    @Query("""
+    SELECT DISTINCT p
+    FROM Product p
+    LEFT JOIN FETCH p.productVariants
+    WHERE p.id = :id
+""")
+    Optional<Product> findProductForEdit(@Param("id") Long id);
+
+
+    /*
+     * =====================================================
+     * ADMIN LIST WITH RELATIONS
+     * Tránh N+1 khi hiển thị danh sách sản phẩm
+     * =====================================================
+     */
+    @EntityGraph(attributePaths = {
+        "subCategory",
+        "subCategory.category"
+    })
+    Page<Product> findAll(Pageable pageable);
+
 }

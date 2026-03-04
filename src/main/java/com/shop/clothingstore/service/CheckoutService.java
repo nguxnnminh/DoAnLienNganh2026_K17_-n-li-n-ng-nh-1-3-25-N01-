@@ -8,7 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.shop.clothingstore.dto.CartItem;
+import com.shop.clothingstore.dto.CartItemDTO;
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderItem;
 import com.shop.clothingstore.entity.OrderStatus;
@@ -46,13 +46,13 @@ public class CheckoutService {
     ) {
 
         // 1️⃣ LẤY CART (KHÔNG TRUYỀN SESSION)
-        List<CartItem> cart = cartService.getCart();
+        List<CartItemDTO> cart = cartService.getCart();
         if (cart.isEmpty()) {
             throw new IllegalStateException("Cart is empty");
         }
 
         // 2️⃣ CHECK STOCK
-        for (CartItem c : cart) {
+        for (CartItemDTO c : cart) {
             ProductVariant variant = variantRepository
                     .findById(c.getVariantId())
                     .orElseThrow(() -> new IllegalStateException("Variant not found"));
@@ -76,14 +76,14 @@ public class CheckoutService {
             user.setFullName(customerName);
             user.setPhone(phone);
             user.setAddress(address);
-            order.setUser(user);
+            order.setActor(user);
         }
 
         // 4️⃣ TẠO ORDER ITEMS + TRỪ STOCK
         List<OrderItem> items = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
 
-        for (CartItem c : cart) {
+        for (CartItemDTO c : cart) {
 
             ProductVariant variant = variantRepository
                     .findById(c.getVariantId())
@@ -91,6 +91,7 @@ public class CheckoutService {
 
             // trừ tồn kho
             variant.setStock(variant.getStock() - c.getQuantity());
+            variant.setSold(variant.getSold() + c.getQuantity());
             variantRepository.save(variant);
 
             OrderItem item = new OrderItem();

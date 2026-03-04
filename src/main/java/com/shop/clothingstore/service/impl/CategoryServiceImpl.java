@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import com.shop.clothingstore.entity.Category;
 import com.shop.clothingstore.repository.CategoryRepository;
 import com.shop.clothingstore.service.CategoryService;
-import com.shop.clothingstore.service.base.GenericServiceImpl;
+import com.shop.clothingstore.service.base.GenericServiceBase;
 
 @Service
 public class CategoryServiceImpl
-        extends GenericServiceImpl<Category, Long>
+        extends GenericServiceBase<Category, Long>
         implements CategoryService {
 
     private final CategoryRepository categoryRepository;
@@ -25,7 +25,6 @@ public class CategoryServiceImpl
     // ============================
     // GIỮ NGUYÊN BEHAVIOR CŨ
     // ============================
-
     @Override
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();

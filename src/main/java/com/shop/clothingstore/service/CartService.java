@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.shop.clothingstore.dto.CartItem;
+import com.shop.clothingstore.dto.CartItemDTO;
 import com.shop.clothingstore.entity.ProductVariant;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 
@@ -21,7 +21,7 @@ public class CartService {
     private final HttpSession session;
 
     public CartService(ProductVariantRepository variantRepository,
-                       HttpSession session) {
+            HttpSession session) {
 
         this.variantRepository = variantRepository;
         this.session = session;
@@ -31,10 +31,10 @@ public class CartService {
     // GET CART
     // =====================================================
     @SuppressWarnings("unchecked")
-    public List<CartItem> getCart() {
+    public List<CartItemDTO> getCart() {
 
-        List<CartItem> cart =
-                (List<CartItem>) session.getAttribute(CART_SESSION_KEY);
+        List<CartItemDTO> cart
+                = (List<CartItemDTO>) session.getAttribute(CART_SESSION_KEY);
 
         if (cart == null) {
             cart = new ArrayList<>();
@@ -49,22 +49,28 @@ public class CartService {
     // =====================================================
     public void addToCart(Long variantId, int quantity) {
 
-        if (variantId == null || quantity < 1) return;
+        if (variantId == null || quantity < 1) {
+            return;
+        }
 
         ProductVariant variant = variantRepository
                 .findById(variantId)
                 .orElse(null);
 
-        if (variant == null) return;
+        if (variant == null) {
+            return;
+        }
 
         int stock = variant.getStock();
 
         // Hết hàng
-        if (stock <= 0) return;
+        if (stock <= 0) {
+            return;
+        }
 
-        List<CartItem> cart = getCart();
+        List<CartItemDTO> cart = getCart();
 
-        for (CartItem item : cart) {
+        for (CartItemDTO item : cart) {
 
             if (item.getVariantId().equals(variantId)) {
 
@@ -83,15 +89,19 @@ public class CartService {
         // Nếu là item mới
         int finalQty = Math.min(quantity, stock);
 
-        CartItem newItem = new CartItem();
+        CartItemDTO newItem = new CartItemDTO();
 
         newItem.setVariantId(variantId);
         newItem.setProductName(variant.getProduct().getName());
 
         newItem.setImageUrl(
                 variant.getProduct().getImages().isEmpty()
-                        ? ""
-                        : variant.getProduct().getImages().get(0).getImageUrl()
+                ? ""
+                : variant.getProduct().getImages()
+                        .stream()
+                        .findFirst()
+                        .map(img -> img.getImageUrl())
+                        .orElse("")
         );
 
         newItem.setSize(variant.getSize());
@@ -107,20 +117,24 @@ public class CartService {
     // =====================================================
     public void updateQuantity(Long variantId, int quantity) {
 
-        if (variantId == null || quantity < 1) return;
+        if (variantId == null || quantity < 1) {
+            return;
+        }
 
         ProductVariant variant = variantRepository
                 .findById(variantId)
                 .orElse(null);
 
-        if (variant == null) return;
+        if (variant == null) {
+            return;
+        }
 
         // Không cho vượt stock
         if (quantity > variant.getStock()) {
             quantity = variant.getStock();
         }
 
-        for (CartItem item : getCart()) {
+        for (CartItemDTO item : getCart()) {
 
             if (item.getVariantId().equals(variantId)) {
                 item.setQuantity(quantity);
@@ -134,8 +148,8 @@ public class CartService {
     // =====================================================
     public void remove(Long variantId) {
 
-        getCart().removeIf(item ->
-                item.getVariantId().equals(variantId)
+        getCart().removeIf(item
+                -> item.getVariantId().equals(variantId)
         );
     }
 
@@ -152,9 +166,9 @@ public class CartService {
     public BigDecimal getTotal() {
 
         return getCart().stream()
-                .map(item ->
-                        item.getPrice()
-                                .multiply(BigDecimal.valueOf(item.getQuantity()))
+                .map(item
+                        -> item.getPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity()))
                 )
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

@@ -19,16 +19,31 @@ public interface ReviewRepository extends BaseRepository<Review, Long> {
     // =========================================
     // AVERAGE RATING
     // =========================================
-    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.product.id = :productId")
-    Double getAverageRatingByProductId(@Param("productId") Long productId);
+    @Query("""
+        SELECT AVG(r.rating)
+        FROM Review r
+        WHERE r.orderItem.variantId = :itemId
+    """)
+    Double getAverageRatingByItemId(@Param("itemId") Long itemId);
 
     // =========================================
     // COUNT REVIEW
     // =========================================
-    long countByProductId(Long productId);
+    @Query("""
+        SELECT COUNT(r)
+        FROM Review r
+        WHERE r.orderItem.variantId = :itemId
+    """)
+    long countByItemId(@Param("itemId") Long itemId);
 
     // =========================================
-    // LIST REVIEW (mới nhất trước)
+    // GET REVIEWS
     // =========================================
-    List<Review> findAllByProductIdOrderByCreatedAtDesc(Long productId);
+    @Query("""
+        SELECT r
+        FROM Review r
+        WHERE r.orderItem.variantId = :itemId
+        ORDER BY r.createdAt DESC
+    """)
+    List<Review> findAllByItemIdOrderByCreatedAtDesc(@Param("itemId") Long itemId);
 }

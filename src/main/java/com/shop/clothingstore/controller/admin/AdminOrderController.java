@@ -39,7 +39,6 @@ public class AdminOrderController extends AdminBaseController {
         return "admin/orders/index";
     }
 
-
     // ===============================
     // ADMIN - ORDER DETAIL
     // ===============================
@@ -49,20 +48,27 @@ public class AdminOrderController extends AdminBaseController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        Order order = orderService.getOrderById(id);
+        try {
 
-        if (order == null) {
-            redirectAttributes.addFlashAttribute("error", "Không tìm thấy đơn hàng.");
+            Order order = orderService.findById(id) // 🔥 dùng generic
+                    .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
+            model.addAttribute("title", "Chi tiết đơn hàng #" + id);
+            model.addAttribute("order", order);
+            model.addAttribute("statuses", OrderStatus.values());
+
+            return "admin/orders/show";
+
+        } catch (Exception e) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "Không tìm thấy đơn hàng."
+            );
+
             return "redirect:/admin/orders";
         }
-
-        model.addAttribute("title", "Chi tiết đơn hàng #" + id);
-        model.addAttribute("order", order);
-        model.addAttribute("statuses", OrderStatus.values());
-
-        return "admin/orders/show";
     }
-
 
     // ===============================
     // ADMIN - UPDATE STATUS

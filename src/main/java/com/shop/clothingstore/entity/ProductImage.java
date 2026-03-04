@@ -1,6 +1,7 @@
 package com.shop.clothingstore.entity;
 
 import com.shop.clothingstore.entity.base.BaseEntity;
+import com.shop.clothingstore.entity.base.ItemImage;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,7 +15,7 @@ import lombok.EqualsAndHashCode;
 @Table(name = "product_images")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class ProductImage extends BaseEntity {
+public class ProductImage extends BaseEntity implements ItemImage {
 
     @Column(nullable = false)
     private String imageUrl;
@@ -24,4 +25,15 @@ public class ProductImage extends BaseEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    // ===== Implement ItemImage =====
+    @Override
+    public String getUrl() {
+        return imageUrl;
+    }
+
+    @Override
+    public boolean isPrimary() {
+        return primaryImage;
+    }
 }

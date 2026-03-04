@@ -2,22 +2,29 @@ package com.shop.clothingstore.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shop.clothingstore.entity.base.BaseEntity;
-import com.shop.clothingstore.entity.base.ItemVariant;     // Thêm import này
-import com.shop.clothingstore.entity.base.SellableItem;   // Thêm import này
+import com.shop.clothingstore.entity.base.ItemVariant;
+import com.shop.clothingstore.entity.base.SellableItem;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "product_variants")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@ToString(exclude = "product")
+@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class ProductVariant extends BaseEntity implements ItemVariant {
+
+    @EqualsAndHashCode.Include
+    private Long id;
 
     @Column(nullable = false)
     private String size;
@@ -39,10 +46,8 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
     @JsonIgnore
     private Product product;
 
-    // Các method override để khớp interface ItemVariant
     @Override
     public String getIdentifier() {
-        // Tổng quát hóa size + color thành một chuỗi duy nhất (có thể thay đổi format sau này)
         return (size != null ? size : "") + "-" + (color != null ? color : "");
     }
 
@@ -63,6 +68,6 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
 
     @Override
     public SellableItem getItem() {
-        return product;  // Product implements SellableItem
+        return product;
     }
 }

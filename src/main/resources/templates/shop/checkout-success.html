@@ -1,27 +1,26 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout(~{::content}, 'Đặt hàng thành công')}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Đặt hàng thành công')}">
 
-<div th:fragment="content">
+<div th:fragment="content" class="py-20 flex justify-center">
 
-    <div class="max-w-xl mx-auto text-center py-24 space-y-8">
+    <div class="w-full max-w-xl text-center space-y-8">
 
         <!-- ICON -->
-        <div class="mx-auto w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30
+        <div class="mx-auto w-16 h-16 rounded-full 
+                    bg-green-100 dark:bg-green-900/30
                     flex items-center justify-center">
-            <svg class="w-8 h-8 text-green-600"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 viewBox="0 0 24 24">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M5 13l4 4L19 7"/>
+
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
+
         </div>
+
 
         <!-- TITLE -->
         <div class="space-y-2">
+
             <h1 class="text-3xl font-semibold tracking-tight">
                 Đặt hàng thành công
             </h1>
@@ -29,39 +28,55 @@
             <p class="text-sm text-zinc-500">
                 Cảm ơn bạn đã mua sắm tại NOVA Fashion
             </p>
+
         </div>
 
+
         <!-- ORDER INFO -->
-        <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800
+        <div class="rounded-2xl 
+                    border border-zinc-200 dark:border-zinc-800
                     bg-white dark:bg-zinc-900
                     p-6 space-y-4 text-sm">
 
             <div class="flex justify-between">
-                <span class="text-zinc-500">Mã đơn hàng</span>
-                <span class="font-medium" th:text="${order.id}"></span>
+                <span class="text-zinc-500">
+                    Mã đơn hàng
+                </span>
+
+                <span class="font-medium" th:text="${order.id}">
+                </span>
             </div>
 
-            <div class="flex justify-between">
-                <span class="text-zinc-500">Tổng thanh toán</span>
-                <span class="font-semibold text-lg">
-                    <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span> ₫
+            <div class="flex justify-between items-center">
+
+                <span class="text-zinc-500">
+                    Tổng thanh toán
                 </span>
+
+                <span class="font-semibold text-lg">
+                    <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span>
+                    ₫
+                </span>
+
             </div>
 
         </div>
 
+
         <!-- BUTTON -->
-        <a th:href="@{/}"
-           class="inline-block
+        <a th:href="@{/products}" class="inline-block
                   bg-black dark:bg-white
                   text-white dark:text-black
                   px-12 py-3 rounded-xl
                   text-sm font-medium tracking-wide
                   hover:opacity-90 transition">
+
             Tiếp tục mua sắm
+
         </a>
 
     </div>
 
 </div>
+
 </html>

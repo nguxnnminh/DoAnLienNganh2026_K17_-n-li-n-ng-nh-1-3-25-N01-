@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi" class="scroll-smooth" th:fragment="layout(content, title)">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" class="scroll-smooth h-full" th:fragment="layout(content, title)">
 
 <head>
     <meta charset="UTF-8">
@@ -77,12 +77,16 @@
     </style>
 </head>
 
-<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
+<body class="min-h-screen flex flex-col
+    overflow-x-hidden
+    bg-zinc-50 dark:bg-zinc-950
+    text-zinc-900 dark:text-zinc-100
+    font-sans">
 
     <!-- ================= HEADER ================= -->
-    <header class="fixed top-0 left-0 right-0 z-50
-bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
-border-b border-zinc-200 dark:border-zinc-800">
+    <header class="fixed top-0 left-0 right-0 z-50 h-16
+        bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
+        border-b border-zinc-200 dark:border-zinc-800">
 
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
@@ -102,10 +106,11 @@ border-b border-zinc-200 dark:border-zinc-800">
                         Shop
                     </a>
 
-                    <div id="productDropdown" class="absolute left-0 top-full mt-4 w-64 glass-dropdown
-         rounded-2xl p-6 space-y-6
-         opacity-0 invisible translate-y-2
-         transition-all duration-300">
+                    <div id="productDropdown" class="absolute left-0 top-full mt-4 w-64 z-50
+                        glass-dropdown
+                        rounded-2xl p-6 space-y-6
+                        opacity-0 invisible translate-y-2
+                        transition-all duration-300">
 
                         <!-- Top -->
                         <div>
@@ -276,10 +281,11 @@ shadow-2xl translate-x-full transition duration-300 z-50">
     </aside>
 
     <!-- MAIN -->
-    <main class="pt-28 pb-16 max-w-7xl mx-auto px-6 relative">
-        <!-- ================= TOAST ================= -->
+    <main class="flex-1 pt-28 pb-16">
+        <div class="max-w-7xl mx-auto px-6 relative">
+            <!-- ================= TOAST ================= -->
 
-        <div th:if="${success}" id="toastSuccess" class="fixed top-6 right-6 z-[999]
+            <div th:if="${success}" id="toastSuccess" class="fixed top-6 right-6 z-[999]
                     bg-white dark:bg-zinc-900
                     border border-green-400
                     text-green-600 dark:text-green-400
@@ -287,12 +293,12 @@ shadow-2xl translate-x-full transition duration-300 z-50">
                     shadow-xl animate-slideIn
                     transition-all duration-300">
 
-            <div class="flex items-center gap-3">
-                <span th:text="${success}"></span>
+                <div class="flex items-center gap-3">
+                    <span th:text="${success}"></span>
+                </div>
             </div>
-        </div>
 
-        <div th:if="${error}" id="toastError" class="fixed top-6 right-6 z-[999]
+            <div th:if="${error}" id="toastError" class="fixed top-6 right-6 z-[999]
                     bg-white dark:bg-zinc-900
                     border border-red-400
                     text-red-600 dark:text-red-400
@@ -300,15 +306,16 @@ shadow-2xl translate-x-full transition duration-300 z-50">
                     shadow-xl animate-slideIn
                     transition-all duration-300">
 
-            <div class="flex items-center gap-3">
-                <span th:text="${error}"></span>
+                <div class="flex items-center gap-3">
+                    <span th:text="${error}"></span>
+                </div>
             </div>
+            <div th:replace="${content}"></div>
         </div>
-        <div th:replace="${content}"></div>
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-zinc-200 dark:border-zinc-800
+    <footer class="flex-shrink-0 border-t border-zinc-200 dark:border-zinc-800
 bg-white dark:bg-zinc-900 py-10 text-sm text-zinc-500">
 
         <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-10 px-6">

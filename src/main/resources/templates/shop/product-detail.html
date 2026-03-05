@@ -1,113 +1,193 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, ${product.name})}">
 
-<div th:fragment="content" class="grid md:grid-cols-2 gap-12">
+<div th:fragment="content" class="py-10 space-y-20">
 
-    <!-- ================= IMAGE ================= -->
-    <div class="space-y-4">
+    <!-- ================= PRODUCT ================= -->
+    <div class="grid lg:grid-cols-2 gap-12 items-start">
 
-        <img id="mainImage" class="w-full aspect-square object-cover rounded-2xl border" th:src="${product.images != null and !product.images.isEmpty()}
-                ? ${product.images[0].imageUrl}
-                : '/images/no-image.png'" />
+        <!-- ================= IMAGE ================= -->
+        <div class="space-y-4">
 
-        <div class="flex gap-3 overflow-x-auto">
-            <img th:each="img,iter : ${product.images}" th:src="${img.imageUrl}" th:data-src="${img.imageUrl}"
-                th:classappend="${iter.index == 0 ? 'active-thumb' : ''}"
-                class="thumb w-20 h-20 object-cover rounded-xl border cursor-pointer" />
-        </div>
-    </div>
+            <!-- MAIN IMAGE -->
+            <img id="mainImage"
+                class="w-full aspect-square object-cover rounded-2xl border border-zinc-200 dark:border-zinc-800"
+                th:src="${product.images != null and !product.images.isEmpty()
+                         ? product.images[0].imageUrl
+                         : '/images/no-image.png'}" />
 
-    <!-- ================= INFO ================= -->
-    <div class="space-y-6">
+            <!-- THUMBNAILS -->
+            <div class="flex gap-3 overflow-x-auto pb-2">
 
-        <h1 class="text-3xl font-semibold" th:text="${product.name}"></h1>
+                <img th:each="img,iter : ${product.images}" th:src="${img.imageUrl}" th:data-src="${img.imageUrl}"
+                    th:classappend="${iter.index == 0 ? 'active-thumb' : ''}" class="thumb w-20 h-20 object-cover rounded-xl border
+                            border-zinc-200 dark:border-zinc-800
+                            cursor-pointer hover:opacity-100" />
 
-        <p id="priceText" class="text-xl font-medium text-blue-600"></p>
-
-        <p class="text-gray-600" th:text="${product.description}"></p>
-
-        <!-- ================= VARIANTS ================= -->
-        <div class="space-y-5">
-
-            <!-- SIZE -->
-            <div>
-                <p class="text-sm font-medium mb-2">Size</p>
-                <div class="flex gap-2 flex-wrap">
-                    <button th:each="s : ${sizes}" type="button" th:data-size="${s}" th:text="${s}"
-                        class="variant-btn size-btn px-4 py-2 border rounded-md text-sm transition">
-                    </button>
-                </div>
-            </div>
-
-            <!-- COLOR -->
-            <div>
-                <p class="text-sm font-medium mb-2">Color</p>
-                <div class="flex gap-2 flex-wrap">
-                    <button th:each="c : ${colors}" type="button" th:data-color="${c}" th:text="${c}"
-                        class="variant-btn color-btn px-4 py-2 border rounded-md text-sm transition">
-                    </button>
-                </div>
             </div>
 
         </div>
 
-        <!-- ================= ADD TO CART ================= -->
-        <form method="post" th:action="@{/cart/add}">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-            <input type="hidden" id="variantIdInput" name="variantId" />
 
-            <div class="flex gap-4">
-                <input type="number" name="quantity" min="1" value="1"
-                    class="w-20 border rounded-lg px-3 py-2 text-center" />
+        <!-- ================= INFO ================= -->
+        <div class="space-y-6 lg:sticky lg:top-28 h-fit">
 
-                <button type="submit" id="addBtn" class="flex-1 bg-black text-white py-3 rounded-xl hover:bg-gray-800">
-                    Thêm vào giỏ
-                </button>
-            </div>
-        </form>
+            <!-- NAME -->
+            <h1 class="text-3xl font-semibold tracking-tight" th:text="${product.name}">
+            </h1>
 
-        <!-- ================= REVIEW ================= -->
 
-        <div class="mt-16 border-t pt-10">
+            <!-- PRICE -->
+            <p id="priceText" class="text-xl font-medium text-blue-600">
+                Vui lòng chọn size và màu
+            </p>
 
-            <h2 class="text-2xl font-semibold mb-4">Đánh giá sản phẩm</h2>
 
-            <!-- Average -->
-            <div class="flex items-center gap-3 mb-6">
-                <div class="flex text-2xl">
-                    <span th:each="i : ${#numbers.sequence(1,5)}"
-                        th:classappend="${averageRating >= i} ? 'text-yellow-400' : 'text-gray-300'">
-                        ★
-                    </span>
-                </div>
+            <!-- DESCRIPTION -->
+            <p class="text-zinc-600 dark:text-zinc-400" th:text="${product.description}">
+            </p>
 
-                <span class="text-gray-600">
-                    <strong th:text="${#numbers.formatDecimal(averageRating,1,1)}">4.5</strong>
-                    (<span th:text="${reviewCount}">12</span> đánh giá)
-                </span>
-            </div>
 
-            <!-- Review List -->
+
+            <!-- ================= VARIANTS ================= -->
             <div class="space-y-6">
 
-                <div th:each="review : ${reviews}" class="border-b pb-4">
+                <!-- SIZE -->
+                <div>
 
-                    <div class="flex justify-between">
-                        <strong th:text="${review.actor.fullName}">User</strong>
-                        <small th:text="${#temporals.format(review.createdAt,'dd/MM/yyyy')}"></small>
+                    <p class="text-sm font-medium mb-2">
+                        Size
+                    </p>
+
+                    <div class="flex gap-2 flex-wrap">
+
+                        <button th:each="s : ${sizes}" type="button" th:data-size="${s}" th:text="${s}" class="variant-btn size-btn
+                                       px-4 py-2 border rounded-md text-sm
+                                       border-zinc-300 dark:border-zinc-700
+                                       transition">
+                        </button>
+
                     </div>
-
-                    <div class="flex text-yellow-400 text-lg mt-1">
-                        <span th:each="i : ${#numbers.sequence(1,5)}"
-                            th:classappend="${review.rating >= i} ? 'text-yellow-400' : 'text-gray-300'">
-                            ★
-                        </span>
-                    </div>
-
-                    <p class="mt-2 text-gray-700" th:text="${review.comment}"></p>
 
                 </div>
+
+
+
+                <!-- COLOR -->
+                <div>
+
+                    <p class="text-sm font-medium mb-2">
+                        Màu
+                    </p>
+
+                    <div class="flex gap-2 flex-wrap">
+
+                        <button th:each="c : ${colors}" type="button" th:data-color="${c}" th:text="${c}" class="variant-btn color-btn
+                                       px-4 py-2 border rounded-md text-sm
+                                       border-zinc-300 dark:border-zinc-700
+                                       transition">
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ================= ADD TO CART ================= -->
+            <form method="post" th:action="@{/cart/add}" class="space-y-4">
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <input type="hidden" id="variantIdInput" name="variantId" />
+
+
+                <div class="flex gap-4">
+
+                    <input type="number" name="quantity" min="1" value="1" class="w-20 border border-zinc-300 dark:border-zinc-700
+                                  rounded-lg px-3 py-2 text-center
+                                  bg-white dark:bg-zinc-900" />
+
+                    <button type="submit" id="addBtn" class="flex-1 bg-black text-white
+                                   py-3 rounded-xl
+                                   hover:bg-zinc-800 transition">
+
+                        Thêm vào giỏ
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= REVIEWS ================= -->
+    <div class="border-t border-zinc-200 dark:border-zinc-800 pt-10">
+
+        <h2 class="text-2xl font-semibold mb-6">
+            Đánh giá sản phẩm
+        </h2>
+
+
+
+        <!-- AVERAGE -->
+        <div class="flex items-center gap-3 mb-8">
+
+            <div class="flex text-2xl">
+
+                <span th:each="i : ${#numbers.sequence(1,5)}"
+                    th:classappend="${averageRating >= i} ? 'text-yellow-400' : 'text-gray-300'">
+                    ★
+                </span>
+
+            </div>
+
+            <span class="text-zinc-600">
+
+                <strong th:text="${#numbers.formatDecimal(averageRating,1,1)}"></strong>
+
+                (<span th:text="${reviewCount}"></span> đánh giá)
+
+            </span>
+
+        </div>
+
+
+
+        <!-- REVIEW LIST -->
+        <div class="space-y-6">
+
+            <div th:each="review : ${reviews}" class="border-b border-zinc-200 dark:border-zinc-800 pb-4">
+
+                <div class="flex justify-between">
+
+                    <strong th:text="${review.actor.fullName}"></strong>
+
+                    <small th:text="${#temporals.format(review.createdAt,'dd/MM/yyyy')}"></small>
+
+                </div>
+
+
+                <div class="flex text-lg mt-1">
+
+                    <span th:each="i : ${#numbers.sequence(1,5)}"
+                        th:classappend="${review.rating >= i} ? 'text-yellow-400' : 'text-gray-300'">
+                        ★
+                    </span>
+
+                </div>
+
+
+                <p class="mt-2 text-zinc-700 dark:text-zinc-400" th:text="${review.comment}">
+                </p>
 
             </div>
 
@@ -115,7 +195,8 @@
 
     </div>
 
-    <!-- ================= STYLE ================= -->
+
+
     <style>
         .thumb {
             opacity: 0.6;
@@ -150,11 +231,8 @@
 
     <!-- ================= SCRIPT ================= -->
     <script th:inline="javascript">
-        document.addEventListener("DOMContentLoaded", function () {
 
-            /* =========================================================
-               VARIANT LOGIC
-            ========================================================== */
+        document.addEventListener("DOMContentLoaded", function () {
 
             const variants = /*[[${variantsJson}]]*/[];
 
@@ -171,51 +249,62 @@
             stockMsg.className = "text-sm font-medium";
             priceText.after(stockMsg);
 
+
             /* INIT */
-            if (addBtn) {
-                addBtn.disabled = true;
-                addBtn.classList.add("add-disabled");
-            }
+            addBtn.disabled = true;
+            addBtn.classList.add("add-disabled");
+
 
             /* IMAGE SWITCH */
             document.querySelectorAll(".thumb").forEach(el => {
                 el.addEventListener("click", () => {
                     document.getElementById("mainImage").src = el.dataset.src;
-                    document.querySelectorAll(".thumb").forEach(t => t.classList.remove("active-thumb"));
+
+                    document.querySelectorAll(".thumb").forEach(t => {
+                        t.classList.remove("active-thumb");
+                    });
+
                     el.classList.add("active-thumb");
                 });
             });
+
 
             function findVariant(size, color) {
                 return variants.find(v => v.size === size && v.color === color);
             }
 
+
             function disableAdd() {
-                if (!addBtn) return;
                 addBtn.disabled = true;
                 addBtn.classList.add("add-disabled");
             }
 
             function enableAdd() {
-                if (!addBtn) return;
                 addBtn.disabled = false;
                 addBtn.classList.remove("add-disabled");
             }
+
 
             function updateAvailability() {
 
                 document.querySelectorAll(".size-btn").forEach(btn => {
                     const size = btn.dataset.size;
                     const hasStock = variants.some(v => v.size === size && v.stock > 0);
+
                     btn.classList.toggle("out", !hasStock);
+                    btn.disabled = !hasStock;
                 });
 
                 document.querySelectorAll(".color-btn").forEach(btn => {
                     const color = btn.dataset.color;
                     const hasStock = variants.some(v => v.color === color && v.stock > 0);
+
                     btn.classList.toggle("out", !hasStock);
+                    btn.disabled = !hasStock;
                 });
+
             }
+
 
             function updateStockUI(v) {
 
@@ -241,12 +330,9 @@
                 }
 
                 enableAdd();
+
             }
 
-            function validateQuantity() {
-                if (!currentVariant) return;
-                updateStockUI(currentVariant);
-            }
 
             function updateVariant() {
 
@@ -269,37 +355,54 @@
                 }
 
                 updateStockUI(v);
+
             }
+
 
             document.querySelectorAll(".size-btn").forEach(btn => {
                 btn.addEventListener("click", () => {
                     document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+
                     btn.classList.add("active");
                     selectedSize = btn.dataset.size;
+
                     updateVariant();
                 });
             });
+
 
             document.querySelectorAll(".color-btn").forEach(btn => {
                 btn.addEventListener("click", () => {
                     document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
+
                     btn.classList.add("active");
                     selectedColor = btn.dataset.color;
+
                     updateVariant();
                 });
             });
 
-            if (qtyInput) {
-                qtyInput.addEventListener("input", validateQuantity);
-            }
+
+            qtyInput.addEventListener("input", () => {
+                if (!currentVariant) return;
+                updateStockUI(currentVariant);
+            });
+
 
             updateAvailability();
 
+
             if (variants.length && variants.every(v => v.stock === 0)) {
+
                 stockMsg.innerHTML = "Sản phẩm đã hết hàng";
                 stockMsg.className = "text-red-500 text-sm font-medium";
+
                 disableAdd();
-                document.querySelectorAll(".variant-btn").forEach(b => b.classList.add("out"));
+
+                document.querySelectorAll(".variant-btn").forEach(b => {
+                    b.classList.add("out");
+                });
+
             }
 
         });

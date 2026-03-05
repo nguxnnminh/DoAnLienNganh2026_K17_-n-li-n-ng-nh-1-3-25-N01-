@@ -21,6 +21,4 @@ public interface SellableItem {
     List<? extends ItemVariant> getVariants();
 
     List<? extends ItemImage> getImages();
-
-    // Không cần thêm gì nữa, vì các method này đã khớp với Product hiện tại
 }

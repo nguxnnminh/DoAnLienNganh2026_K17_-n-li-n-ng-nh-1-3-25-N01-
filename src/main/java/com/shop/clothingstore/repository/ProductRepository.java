@@ -59,17 +59,15 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
      * =====================================================
      */
     @Query("""
-        SELECT p
-        FROM Product p
-        JOIN p.subCategory sc
-        JOIN sc.category c
-        WHERE c.slug = :slug
-        ORDER BY (
-            SELECT MAX(v.sold)
-            FROM ProductVariant v
-            WHERE v.product = p
-        ) DESC
-    """)
+    SELECT p
+    FROM Product p
+    JOIN p.subCategory sc
+    JOIN sc.category c
+    LEFT JOIN p.productVariants v
+    WHERE c.slug = :slug
+    GROUP BY p
+    ORDER BY COALESCE(MAX(v.sold),0) DESC, p.id DESC
+""")
     Page<Product> findTopByCategorySlug(
             @Param("slug") String slug,
             Pageable pageable

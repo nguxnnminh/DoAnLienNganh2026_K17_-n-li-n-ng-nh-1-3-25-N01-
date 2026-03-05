@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout(~{::content}, 'Thanh toán')}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Thanh toán')}">
 
-<div th:fragment="content">
+<div th:fragment="content" class="py-10 space-y-12">
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
@@ -14,121 +13,167 @@
                 <h1 class="text-3xl font-semibold tracking-tight">
                     Thanh toán
                 </h1>
+
                 <p class="text-sm text-zinc-500 mt-2">
                     Vui lòng kiểm tra thông tin trước khi đặt hàng
                 </p>
             </div>
 
+
+            <!-- FORM -->
             <form th:action="@{/checkout}" method="post" class="space-y-6">
+
+                <!-- CSRF -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                 <!-- HỌ TÊN -->
                 <div class="space-y-2">
+
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Họ và tên
                     </label>
 
-                    <input type="text"
-                           name="customerName"
-                           th:value="${user != null ? user.fullName : ''}"
-                           required
-                           class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
+                    <input type="text" name="customerName" th:value="${user != null ? user.fullName : ''}" required
+                        class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
                                   bg-white dark:bg-zinc-900
                                   px-4 py-3 text-sm
                                   focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                 </div>
 
-                <!-- SĐT -->
+
+                <!-- PHONE -->
                 <div class="space-y-2">
+
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Số điện thoại
                     </label>
 
-                    <input type="text"
-                           name="phone"
-                           th:value="${user != null ? user.phone : ''}"
-                           required
-                           class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
+                    <input type="text" name="phone" th:value="${user != null ? user.phone : ''}" required class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
                                   bg-white dark:bg-zinc-900
                                   px-4 py-3 text-sm
                                   focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                 </div>
 
-                <!-- ĐỊA CHỈ -->
+
+                <!-- ADDRESS -->
                 <div class="space-y-2">
+
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Địa chỉ giao hàng
                     </label>
 
-                    <textarea name="address"
-                              rows="4"
-                              required
-                              class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
+                    <textarea name="address" rows="4" required class="w-full rounded-xl border border-zinc-300 dark:border-zinc-700
                                      bg-white dark:bg-zinc-900
                                      px-4 py-3 text-sm
                                      focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
-                              th:text="${user != null ? user.address : ''}">
+                        th:text="${user != null ? user.address : ''}">
                     </textarea>
+
                 </div>
+
 
                 <!-- ERROR -->
-                <div th:if="${error}"
-                     class="rounded-xl border border-red-500/40 bg-red-50 dark:bg-red-900/20
-                            text-red-600 dark:text-red-400 px-4 py-3 text-sm">
+                <div th:if="${error}" class="rounded-xl border border-red-500/40
+                            bg-red-50 dark:bg-red-900/20
+                            text-red-600 dark:text-red-400
+                            px-4 py-3 text-sm">
+
                     <span th:text="${error}"></span>
+
                 </div>
 
+
                 <!-- BUTTON -->
-                <button
-                    class="w-full sm:w-auto
-                           bg-black dark:bg-white
-                           text-white dark:text-black
-                           px-12 py-3 rounded-xl
-                           text-sm font-medium tracking-wide
-                           hover:opacity-90 transition">
+                <button class="w-full md:w-auto
+                               bg-black dark:bg-white
+                               text-white dark:text-black
+                               px-12 py-3 rounded-xl
+                               text-sm font-medium tracking-wide
+                               hover:opacity-90 transition">
+
                     ĐẶT HÀNG
+
                 </button>
 
             </form>
+
         </div>
+
+
 
         <!-- ================= ORDER SUMMARY ================= -->
         <div class="lg:col-span-5">
 
-            <div class="sticky top-32 rounded-2xl border border-zinc-200 dark:border-zinc-800
-                        bg-white dark:bg-zinc-900 p-6 space-y-6">
+            <div class="sticky top-32
+                        rounded-2xl border border-zinc-200 dark:border-zinc-800
+                        bg-white dark:bg-zinc-900
+                        p-8 space-y-6">
 
                 <h3 class="text-lg font-semibold">
                     Tóm tắt đơn hàng
                 </h3>
 
+
                 <div class="space-y-3 text-sm">
 
-                    <!-- TẠM TÍNH -->
+                    <!-- PRODUCT COUNT -->
                     <div class="flex justify-between">
-                        <span class="text-zinc-500">Tạm tính</span>
-                        <span class="font-medium">
-                            <span th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}"></span> ₫
+
+                        <span class="text-zinc-500">
+                            Số sản phẩm
                         </span>
+
+                        <span th:text="${cartItems.size()}"></span>
+
                     </div>
+
+
+                    <!-- SUBTOTAL -->
+                    <div class="flex justify-between">
+
+                        <span class="text-zinc-500">
+                            Tạm tính
+                        </span>
+
+                        <span class="font-medium">
+                            <span th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}"></span>
+                            ₫
+                        </span>
+
+                    </div>
+
 
                     <!-- SHIPPING -->
                     <div class="flex justify-between">
-                        <span class="text-zinc-500">Vận chuyển</span>
+
+                        <span class="text-zinc-500">
+                            Vận chuyển
+                        </span>
+
                         <span class="font-medium text-green-600">
                             Miễn phí
                         </span>
+
                     </div>
 
                 </div>
 
+
                 <hr class="border-zinc-200 dark:border-zinc-800">
+
 
                 <!-- TOTAL -->
                 <div class="flex justify-between items-center text-lg font-semibold">
-                    <span>Tổng cộng</span>
+
                     <span>
-                        <span th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}"></span> ₫
+                        Tổng cộng
                     </span>
+
+                    <span>
+                        <span th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}"></span>
+                        ₫
+                    </span>
+
                 </div>
 
             </div>
@@ -138,4 +183,5 @@
     </div>
 
 </div>
+
 </html>

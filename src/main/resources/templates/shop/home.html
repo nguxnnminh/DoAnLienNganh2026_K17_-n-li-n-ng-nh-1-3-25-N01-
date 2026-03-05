@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Trang chủ')}">
 
-<div th:fragment="content" class="space-y-28">
+<div th:fragment="content" class="space-y-24">
 
 
     <!-- ================= HERO ================= -->
-    <section class="relative w-screen h-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden">
+    <section class="relative w-screen h-[90vh]
+                    left-1/2 -translate-x-1/2
+                    overflow-hidden">
 
         <!-- BACKGROUND -->
-        <img src="/images/winter-collection.png" alt="NOVA Essentials"
-            class="absolute inset-0 w-full h-full object-cover object-center" />
+        <img src="/images/winter-collection.png" alt="NOVA Essentials" class="absolute inset-0 w-full h-full
+                    object-cover object-center" />
 
         <!-- OVERLAY -->
         <div class="absolute inset-0 bg-black/30"></div>
 
-        <!-- BUTTON -->
+
+        <!-- CTA -->
         <div class="absolute bottom-16 left-1/2 -translate-x-1/2 z-10">
 
-            <a th:href="@{/products}" class="px-12 py-3 border border-white text-sm tracking-[0.25em]
+            <a th:href="@{/products}" class="px-12 py-3 border border-white
+                      text-sm tracking-[0.25em]
                       text-white uppercase
                       transition duration-300
                       hover:bg-white hover:text-black">
@@ -31,9 +35,11 @@
     </section>
 
 
-    <!-- ================= FEATURED ================= -->
-    <section class="space-y-16">
 
+    <!-- ================= FEATURED ================= -->
+    <section class="space-y-16 py-10">
+
+        <!-- TITLE -->
         <div class="text-center space-y-2">
 
             <h2 class="text-3xl font-semibold tracking-tight">
@@ -47,40 +53,52 @@
         </div>
 
 
-        <!-- GRID -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
+        <!-- PRODUCT GRID -->
+        <div class="grid grid-cols-1
+                    sm:grid-cols-2
+                    md:grid-cols-3
+                    lg:grid-cols-4
+                    gap-x-8 gap-y-12">
 
-
-            <!-- ===== 2 sản phẩm TOP ===== -->
-            <div th:each="product : ${topProducts}" class="group">
+            <div th:each="product : ${homeProducts}" class="group transition duration-300 hover:-translate-y-1">
 
                 <a th:href="@{'/products/' + ${product.subCategory.category.slug} + '/' + ${product.subCategory.slug} + '/' + ${product.id}}"
                     class="block space-y-4">
 
-                    <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
 
-                        <img th:if="${product.images != null and !product.images.isEmpty()}"
-                            th:src="${product.images[0].imageUrl}"
-                            class="w-full h-full object-cover transition duration-700 group-hover:scale-105" />
+                    <!-- IMAGE -->
+                    <div class="relative aspect-[3/4]
+                                overflow-hidden rounded-2xl
+                                bg-zinc-100 dark:bg-zinc-800">
+
+                        <img th:src="${product.images != null and !product.images.isEmpty()
+                                     ? product.images[0].imageUrl
+                                     : '/images/no-image.png'}" class="w-full h-full object-cover
+                                    transition duration-700
+                                    group-hover:scale-105" />
 
                         <img th:if="${product.images != null and product.images.size() > 1}"
-                            th:src="${product.images[1].imageUrl}"
-                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
+                            th:src="${product.images[1].imageUrl}" class="absolute inset-0 w-full h-full object-cover
+                                    opacity-0 transition duration-500
+                                    group-hover:opacity-100" />
 
                     </div>
 
-                    <div class="space-y-1">
+
+                    <!-- INFO -->
+                    <div class="space-y-1"
+                        th:with="hasPrice=${product.productVariants != null and !product.productVariants.isEmpty()}">
 
                         <h3 class="text-sm font-medium uppercase tracking-wide" th:text="${product.name}">
                         </h3>
 
                         <p class="text-sm text-zinc-500">
 
-                            <span th:text="${product.productVariants != null and !product.productVariants.isEmpty()}
-    ? ${#numbers.formatDecimal(product.productVariants[0].price,0,'COMMA',0,'POINT')}
-    : 'Giá đang cập nhật
-'"></span>
-                            ₫
+                            <span th:text="${hasPrice
+                                ? #numbers.formatDecimal(product.productVariants[0].price,0,'POINT',0,'COMMA')
+                                : 'Giá đang cập nhật'}"></span>
+
+                            <span th:if="${hasPrice}">₫</span>
 
                         </p>
 
@@ -89,86 +107,6 @@
                 </a>
 
             </div>
-
-
-            <!-- ===== 1 sản phẩm BOTTOM ===== -->
-            <div th:each="product : ${bottomProducts}" class="group">
-
-                <a th:href="@{'/products/' + ${product.subCategory.category.slug} + '/' + ${product.subCategory.slug} + '/' + ${product.id}}"
-                    class="block space-y-4">
-
-                    <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-
-                        <img th:if="${product.images != null and !product.images.isEmpty()}"
-                            th:src="${product.images[0].imageUrl}"
-                            class="w-full h-full object-cover transition duration-700 group-hover:scale-105" />
-
-                        <img th:if="${product.images != null and product.images.size() > 1}"
-                            th:src="${product.images[1].imageUrl}"
-                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
-
-                    </div>
-
-                    <div class="space-y-1">
-
-                        <h3 class="text-sm font-medium uppercase tracking-wide" th:text="${product.name}">
-                        </h3>
-
-                        <p class="text-sm text-zinc-500">
-
-                            <span th:text="${product.productVariants != null and !product.productVariants.isEmpty()}
-    ? ${#numbers.formatDecimal(product.productVariants[0].price,0,'COMMA',0,'POINT')}
-    : 'Giá đang cập nhật
-'"></span>
-                            ₫
-
-                        </p>
-
-                    </div>
-
-                </a>
-
-            </div>
-
-
-            <!-- ===== 1 sản phẩm ACCESSORIES ===== -->
-            <div th:each="product : ${accessoriesProducts}" class="group">
-
-                <a th:href="@{'/products/' + ${product.subCategory.category.slug} + '/' + ${product.subCategory.slug} + '/' + ${product.id}}"
-                    class="block space-y-4">
-
-                    <div class="relative aspect-[3/4] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-
-                        <img th:if="${product.images != null and !product.images.isEmpty()}"
-                            th:src="${product.images[0].imageUrl}"
-                            class="w-full h-full object-cover transition duration-700 group-hover:scale-105" />
-
-                        <img th:if="${product.images != null and product.images.size() > 1}"
-                            th:src="${product.images[1].imageUrl}"
-                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
-
-                    </div>
-
-                    <div class="space-y-1">
-
-                        <h3 class="text-sm font-medium uppercase tracking-wide" th:text="${product.name}">
-                        </h3>
-
-                        <p class="text-sm text-zinc-500">
-
-                            <span th:text="${product.productVariants != null and !product.productVariants.isEmpty()}
-                                ? ${#numbers.formatDecimal(product.productVariants[0].price,0,'COMMA',0,'POINT')}
-                                : 'Giá đang cập nhật'"></span>
-                            ₫
-
-                        </p>
-
-                    </div>
-
-                </a>
-
-            </div>
-
 
         </div>
 

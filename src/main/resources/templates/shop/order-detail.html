@@ -1,26 +1,30 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Chi tiết đơn hàng')}">
 
-<div th:fragment="content" class="max-w-6xl mx-auto">
+<div th:fragment="content" class="py-10 space-y-10">
 
     <!-- BACK -->
-    <a th:href="@{/my-orders}"
-        class="text-sm underline underline-offset-4 hover:text-blue-600 transition inline-block mb-8">
+    <a th:href="@{/my-orders}" class="text-sm underline underline-offset-4
+              hover:text-blue-600 transition inline-block">
         ← Quay lại đơn hàng
     </a>
 
 
     <!-- TITLE -->
-    <div class="mb-10">
+    <div class="space-y-2">
+
         <h1 class="text-3xl font-semibold tracking-tight">
-            Đơn hàng #<span th:text="${order.id}"></span>
+            Đơn hàng #
+            <span th:text="${order.id}"></span>
         </h1>
 
-        <p class="text-zinc-500 text-sm mt-2">
+        <p class="text-zinc-500 text-sm">
             Đặt lúc:
             <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
         </p>
+
     </div>
+
 
 
     <div class="grid md:grid-cols-3 gap-10">
@@ -28,11 +32,14 @@
         <!-- ================= ITEMS ================= -->
         <div class="md:col-span-2 space-y-6">
 
-            <div th:each="item : ${order.items}"
-                class="flex justify-between items-start border-b border-zinc-200 dark:border-zinc-800 pb-6">
+            <div th:each="item : ${order.items}" class="flex flex-wrap md:flex-nowrap
+                        justify-between items-start
+                        gap-6
+                        border-b border-zinc-200 dark:border-zinc-800
+                        pb-6">
 
                 <!-- LEFT -->
-                <div class="space-y-2">
+                <div class="space-y-2 flex-1">
 
                     <p class="font-medium text-lg" th:text="${item.productName}">
                     </p>
@@ -50,28 +57,32 @@
                         <span th:text="${item.quantity}"></span>
                     </p>
 
-                    <!-- ================= REVIEW BUTTON ================= -->
+
+
+                    <!-- REVIEW BUTTON -->
                     <div class="mt-3">
 
-                        <!-- Nếu chưa COMPLETED -->
-                        <button th:if="${!isCompleted}" disabled
-                            class="px-4 py-2 text-sm rounded-lg bg-gray-300 text-gray-600 cursor-not-allowed">
+                        <!-- NOT COMPLETED -->
+                        <button th:if="${!isCompleted}" disabled class="px-4 py-2 text-sm rounded-lg
+                                       bg-gray-300 text-gray-600 cursor-not-allowed">
                             Đánh giá
                         </button>
 
-                        <!-- Nếu COMPLETED -->
+
+                        <!-- COMPLETED -->
                         <div th:if="${isCompleted}">
 
-                            <!-- Nếu đã review -->
-                            <span th:if="${reviewedItemIds.contains(item.id)}"
-                                class="px-4 py-2 text-sm rounded-lg bg-green-100 text-green-700">
+                            <!-- REVIEWED -->
+                            <span th:if="${reviewedItemIds.contains(item.id)}" class="px-4 py-2 text-sm rounded-lg
+                                         bg-green-100 text-green-700">
                                 Đã đánh giá
                             </span>
 
-                            <!-- Nếu chưa review -->
+                            <!-- NOT REVIEWED -->
                             <button th:if="${!reviewedItemIds.contains(item.id)}"
-                                th:attr="onclick='toggleReviewForm(' + ${item.id} + ')'"
-                                class="px-4 py-2 text-sm rounded-lg bg-black text-white hover:bg-zinc-800 transition">
+                                th:attr="onclick='toggleReviewForm(' + ${item.id} + ')'" class="px-4 py-2 text-sm rounded-lg
+                                           bg-black text-white
+                                           hover:bg-zinc-800 transition">
                                 Đánh giá
                             </button>
 
@@ -79,11 +90,15 @@
 
                     </div>
 
-                    <!-- ================= REVIEW FORM ================= -->
+
+
+                    <!-- REVIEW FORM -->
                     <form th:id="'review-form-' + ${item.id}" th:action="@{/reviews/{id}(id=${item.id})}" method="post"
                         class="hidden mt-4 space-y-4">
 
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+
 
                         <!-- STAR SELECT -->
                         <div class="flex gap-2 text-2xl cursor-pointer select-none starSelect"
@@ -96,13 +111,20 @@
                             <span data-value="3" class="star text-gray-300">★</span>
                             <span data-value="4" class="star text-gray-300">★</span>
                             <span data-value="5" class="star text-gray-300">★</span>
+
                         </div>
 
-                        <textarea name="comment" required placeholder="Nhập đánh giá của bạn..."
-                            class="w-full border rounded px-3 py-2 text-sm"></textarea>
 
-                        <button type="submit"
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+
+                        <textarea name="comment" required placeholder="Nhập đánh giá của bạn..." class="w-full border rounded px-3 py-2 text-sm
+                                         border-zinc-300 dark:border-zinc-700
+                                         bg-white dark:bg-zinc-900">
+                        </textarea>
+
+
+
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white
+                                       rounded-lg hover:bg-green-700 transition">
                             Gửi đánh giá
                         </button>
 
@@ -110,9 +132,14 @@
 
                 </div>
 
+
+
                 <!-- RIGHT -->
-                <div class="font-semibold text-lg">
-                    <span th:text="${#numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')}"></span> ₫
+                <div class="font-semibold text-lg whitespace-nowrap">
+
+                    <span th:text="${#numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')}"></span>
+                    ₫
+
                 </div>
 
             </div>
@@ -120,17 +147,22 @@
         </div>
 
 
+
         <!-- ================= SUMMARY ================= -->
-        <div class="border border-zinc-200 dark:border-zinc-800
-                    rounded-2xl p-6 bg-white dark:bg-zinc-900 h-fit">
+        <div class="sticky top-28 h-fit
+                    border border-zinc-200 dark:border-zinc-800
+                    rounded-2xl p-6
+                    bg-white dark:bg-zinc-900">
 
             <h3 class="font-semibold text-lg mb-6">
                 Tóm tắt đơn hàng
             </h3>
 
 
+
             <!-- STATUS -->
             <div class="mb-6">
+
                 <p class="text-sm text-zinc-500 mb-1">
                     Trạng thái
                 </p>
@@ -140,10 +172,11 @@
                       (${order.status.name() == 'CONFIRMED'} ? ' bg-blue-100 text-blue-700' :
                       (${order.status.name() == 'SHIPPING'} ? ' bg-purple-100 text-purple-700' :
                       (${order.status.name() == 'COMPLETED'} ? ' bg-green-100 text-green-700' :
-                      ' bg-red-100 text-red-700')))
-                      ">
+                      ' bg-red-100 text-red-700')))">
                 </span>
+
             </div>
+
 
 
             <!-- PRICE -->
@@ -152,7 +185,8 @@
                 <div class="flex justify-between">
                     <span>Tạm tính</span>
                     <span>
-                        <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span> ₫
+                        <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span>
+                        ₫
                     </span>
                 </div>
 
@@ -163,22 +197,32 @@
 
             </div>
 
+
+
             <hr class="my-6 border-zinc-200 dark:border-zinc-800">
 
+
+
             <div class="flex justify-between text-xl font-semibold tracking-tight">
+
                 <span>Tổng cộng</span>
+
                 <span>
-                    <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span> ₫
+                    <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span>
+                    ₫
                 </span>
+
             </div>
 
         </div>
 
     </div>
+
+
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 
-            /* Toggle form */
             window.toggleReviewForm = function (id) {
                 const form = document.getElementById('review-form-' + id);
                 if (form) {
@@ -186,7 +230,6 @@
                 }
             };
 
-            /* STAR RATING LOGIC */
             document.querySelectorAll(".starSelect").forEach(container => {
 
                 const stars = container.querySelectorAll(".star");
@@ -237,6 +280,7 @@
 
         });
     </script>
+
 </div>
 
 </html>

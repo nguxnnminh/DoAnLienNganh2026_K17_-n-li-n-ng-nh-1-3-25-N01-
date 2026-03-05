@@ -1,6 +1,8 @@
 package com.shop.clothingstore.controller;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,22 +53,21 @@ public class ShopController {
     @GetMapping("/")
     public String home(Model model) {
 
-        Pageable topPage = PageRequest.of(0, 2);
-        Pageable bottomPage = PageRequest.of(0, 1);
-        Pageable accPage = PageRequest.of(0, 1);
+        List<Product> homeProducts = new ArrayList<>();
 
-        Page<Product> topProducts
-                = productService.findTopByCategorySlug("top", topPage);
+        homeProducts.addAll(
+                productService.findTopByCategorySlug("top", PageRequest.of(0, 4)).getContent()
+        );
 
-        Page<Product> bottomProducts
-                = productService.findTopByCategorySlug("bottom", bottomPage);
+        homeProducts.addAll(
+                productService.findTopByCategorySlug("bottom", PageRequest.of(0, 2)).getContent()
+        );
 
-        Page<Product> accessoriesProducts
-                = productService.findTopByCategorySlug("accessories", accPage);
+        homeProducts.addAll(
+                productService.findTopByCategorySlug("accessories", PageRequest.of(0, 2)).getContent()
+        );
 
-        model.addAttribute("topProducts", topProducts.getContent());
-        model.addAttribute("bottomProducts", bottomProducts.getContent());
-        model.addAttribute("accessoriesProducts", accessoriesProducts.getContent());
+        model.addAttribute("homeProducts", homeProducts);
 
         return "shop/home";
     }

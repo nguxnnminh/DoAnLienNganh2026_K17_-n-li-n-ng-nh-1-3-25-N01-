@@ -1,7 +1,6 @@
 package com.shop.clothingstore.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +69,6 @@ public class CheckoutService {
         order.setPhone(phone);
         order.setAddress(address);
         order.setStatus(OrderStatus.PENDING);
-        order.setCreatedAt(LocalDateTime.now());
 
         if (user != null) {
             user.setFullName(customerName);
@@ -112,7 +110,7 @@ public class CheckoutService {
         }
 
         order.setItems(items);
-        order.setTotal(total.doubleValue()); // Order.total là double
+        order.setTotal(total.doubleValue());
 
         // 5️⃣ SAVE
         Order savedOrder = orderRepository.save(order);

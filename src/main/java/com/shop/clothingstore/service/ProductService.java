@@ -38,7 +38,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
 
-    @Value("${upload.dir:uploads/images/products}")
+    @Value("${upload.dir:images/products}")
     private String uploadDir;
 
     public ProductService(ProductRepository productRepository,
@@ -252,7 +252,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             );
 
             ProductImage image = new ProductImage();
-            image.setImageUrl("/uploads/images/products/" + fileName);
+            image.setImageUrl("/images/products/" + fileName);
             image.setPrimaryImage(primaryIndex != null && i == primaryIndex);
 
             product.addImage(image);

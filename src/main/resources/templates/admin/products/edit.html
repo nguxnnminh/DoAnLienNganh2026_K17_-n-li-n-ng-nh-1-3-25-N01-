@@ -5,72 +5,81 @@
 
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-2xl font-semibold">Chỉnh sửa sản phẩm</h1>
+
         <a th:href="@{/admin/products}" class="text-sm text-zinc-500 hover:underline">
             ← Quay lại danh sách
         </a>
     </div>
 
     <form th:action="@{/admin/products/{id}(id=${productId})}" th:object="${productDTO}" method="post"
-        enctype="multipart/form-data" class="glass rounded-2xl border border-zinc-200 dark:border-zinc-800
-           p-6 sm:p-8 space-y-8">
+        enctype="multipart/form-data"
+        class="glass rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 space-y-8">
 
         <!-- CATEGORY -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-2">
                 Danh mục chính <span class="text-red-500">*</span>
             </label>
 
-            <select id="categorySelect" name="subCategoryId" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-           bg-white dark:bg-zinc-900
-           focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition" required>
+            <select id="categorySelect" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
+        bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
 
-                <option value="">-- Chọn danh mục con --</option>
+                <option value="">-- Chọn danh mục chính --</option>
 
-                <option th:each="sc : ${subCategories}" th:value="${sc.id}" th:text="${sc.name}"
-                    th:selected="${productDTO.subCategoryId == sc.id}">
+                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                    th:selected="${selectedCategoryId == c.id}">
                 </option>
 
             </select>
+
         </div>
+
 
         <!-- SUB CATEGORY -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-2">
                 Danh mục phụ <span class="text-red-500">*</span>
             </label>
 
             <select th:field="*{subCategoryId}" id="subCategorySelect" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-           bg-white dark:bg-zinc-900
-           focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+        bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
 
                 <option value="">Chọn danh mục chính trước</option>
 
             </select>
+
         </div>
+
 
         <!-- NAME -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-2">
                 Tên sản phẩm <span class="text-red-500">*</span>
             </label>
 
             <input type="text" th:field="*{name}" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-       bg-white dark:bg-zinc-900
-       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+       bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
 
         </div>
 
+
         <!-- DESCRIPTION -->
         <div>
+
             <label class="block text-sm text-zinc-500 mb-2">
                 Mô tả
             </label>
 
             <textarea th:field="*{description}" rows="4" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-       bg-white dark:bg-zinc-900
-       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+          bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
 </textarea>
+
         </div>
+
+
 
         <!-- VARIANTS -->
         <div>
@@ -84,36 +93,39 @@
                 <div th:each="v, i : *{variants}"
                     class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
-                    <!-- IMPORTANT: variant id -->
                     <input type="hidden" th:field="*{variants[__${i.index}__].id}">
 
                     <input type="text" th:field="*{variants[__${i.index}__].size}" placeholder="Size"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border border-zinc-300">
 
                     <input type="text" th:field="*{variants[__${i.index}__].color}" placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border border-zinc-300">
 
-                    <input type="text" th:name="|variants[${i.index}].price|"
-                        th:value="${#numbers.formatDecimal(v.price,0,'POINT',0,'COMMA')}"
-                        class="price-input px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700"
-                        placeholder="Giá">
+                    <input type="text" th:field="*{variants[__${i.index}__].price}"
+                        class="price-input px-4 py-3 rounded-xl border border-zinc-300" placeholder="Giá">
 
                     <input type="number" th:field="*{variants[__${i.index}__].stock}" placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border border-zinc-300">
 
-                    <button type="button"
-                        class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600 hover:bg-red-100">
+                    <button type="button" class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600">
+
                         Xóa
+
                     </button>
 
                 </div>
+
             </div>
 
             <button type="button" id="add-variant" class="mt-4 text-sm font-medium text-indigo-600 hover:underline">
+
                 + Thêm biến thể
+
             </button>
 
         </div>
+
+
 
         <!-- EXISTING IMAGES -->
         <div>
@@ -138,8 +150,12 @@
                     </label>
 
                 </div>
+
             </div>
+
         </div>
+
+
 
         <!-- NEW IMAGES -->
         <div>
@@ -148,10 +164,11 @@
                 Thêm ảnh mới
             </label>
 
-            <input type="file" name="newImages" multiple class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-       bg-white dark:bg-zinc-900">
+            <input type="file" name="newImages" multiple class="w-full px-4 py-3 rounded-xl border border-zinc-300">
 
         </div>
+
+
 
         <!-- ACTIVE -->
         <div class="flex items-center gap-3">
@@ -164,6 +181,8 @@
 
         </div>
 
+
+
         <!-- SUBMIT -->
         <div class="flex justify-end gap-4 pt-6 border-t">
 
@@ -172,179 +191,204 @@
             </a>
 
             <button type="submit" class="bg-black text-white px-8 py-3 rounded-xl hover:bg-zinc-800">
+
                 Cập nhật sản phẩm
+
             </button>
 
         </div>
 
     </form>
+
+
+
     <script th:inline="javascript">
 
-        const categorySelect = document.getElementById('categorySelect')
-        const subCategorySelect = document.getElementById('subCategorySelect')
+        const categorySelect = document.getElementById("categorySelect")
+        const subCategorySelect = document.getElementById("subCategorySelect")
+
         const selectedCategoryId = /*[[${selectedCategoryId}]]*/ null
         const selectedSubId = /*[[${productDTO.subCategoryId}]]*/ null
+
         let variantIndex = /*[[${productDTO.variants != null ? productDTO.variants.size() : 0}]]*/ 0
+
+
 
         async function loadSubCategories(categoryId) {
 
             if (!categoryId) {
+
                 subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>'
                 subCategorySelect.disabled = true
                 return
-            }
-
-            subCategorySelect.disabled = true
-            subCategorySelect.innerHTML = '<option disabled selected>Đang tải...</option>'
-
-            try {
-
-                const response = await fetch(`/api/subcategories/by-category/${categoryId}`)
-                const subs = await response.json()
-
-                subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
-
-                subs.forEach(sub => {
-
-                    const option = document.createElement('option')
-                    option.value = sub.id
-                    option.textContent = sub.name
-
-                    subCategorySelect.appendChild(option)
-
-                })
-
-                if (selectedSubId) {
-                    subCategorySelect.value = selectedSubId
-                }
-
-                subCategorySelect.disabled = false
-
-            } catch (e) {
-
-                subCategorySelect.innerHTML = '<option>Lỗi tải danh mục phụ</option>'
 
             }
+
+            subCategorySelect.innerHTML = '<option>Đang tải...</option>'
+
+            const res = await fetch(`/api/subcategories/by-category/${categoryId}`)
+            const subs = await res.json()
+
+            subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
+
+            subs.forEach(sub => {
+
+                const opt = document.createElement("option")
+                opt.value = sub.id
+                opt.textContent = sub.name
+
+                subCategorySelect.appendChild(opt)
+
+            })
+
+            if (selectedSubId) {
+                subCategorySelect.value = selectedSubId
+            }
+
+            subCategorySelect.disabled = false
+
         }
 
-        categorySelect.addEventListener('change', function () {
+
+
+        categorySelect.addEventListener("change", function () {
+
             loadSubCategories(this.value)
+
         })
+
+
 
         window.onload = function () {
 
-            const categoryId = categorySelect.value
+            if (selectedCategoryId) {
 
-            if (categoryId && categoryId !== "") {
-                loadSubCategories(categoryId)
+                categorySelect.value = selectedCategoryId
+                loadSubCategories(selectedCategoryId)
+
             }
 
         }
 
-        document.getElementById('add-variant').addEventListener('click', function () {
 
-            const container = document.getElementById('variants-container')
+
+        /* ADD VARIANT */
+
+        document.getElementById("add-variant").addEventListener("click", function () {
+
+            const container = document.getElementById("variants-container")
 
             const html = `
 
 <div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
-<input type="hidden" name="variants[${variantIndex}].id" value="">
+<input type="hidden" name="variants[${variantIndex}].id">
 
-<input type="text"
-name="variants[${variantIndex}].size"
-placeholder="Size"
-class="px-4 py-3 rounded-xl border">
+<input type="text" name="variants[${variantIndex}].size" placeholder="Size" class="px-4 py-3 rounded-xl border">
 
-<input type="text"
-name="variants[${variantIndex}].color"
-placeholder="Màu"
-class="px-4 py-3 rounded-xl border">
+<input type="text" name="variants[${variantIndex}].color" placeholder="Màu" class="px-4 py-3 rounded-xl border">
 
-<input type="text"
-name="variants[${variantIndex}].price"
-class="price-input px-4 py-3 rounded-xl border"
-placeholder="Giá">
+<input type="text" name="variants[${variantIndex}].price" placeholder="Giá" class="price-input px-4 py-3 rounded-xl border">
 
-<input type="number"
-name="variants[${variantIndex}].stock"
-placeholder="Tồn kho"
-class="px-4 py-3 rounded-xl border">
+<input type="number" name="variants[${variantIndex}].stock" placeholder="Tồn kho" class="px-4 py-3 rounded-xl border">
 
-<button type="button"
-class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600 hover:bg-red-100">
-Xóa
-</button>
+<button type="button" class="remove-variant px-4 py-3 rounded-xl bg-red-50 text-red-600">Xóa</button>
 
 </div>
+
 `
 
-            container.insertAdjacentHTML('beforeend', html)
+            container.insertAdjacentHTML("beforeend", html)
 
             variantIndex++
 
         })
 
-        document.addEventListener('click', function (e) {
 
-            if (e.target.classList.contains('remove-variant')) {
 
-                const row = e.target.closest('.variant-row')
+        /* REMOVE VARIANT */
 
-                row.style.display = 'none'
+        document.addEventListener("click", function (e) {
 
-                const inputs = row.querySelectorAll('input')
+            if (e.target.classList.contains("remove-variant")) {
 
-                inputs.forEach(input => input.disabled = true)
+                const row = e.target.closest(".variant-row")
+
+                row.style.display = "none"
+
+                row.querySelectorAll("input").forEach(i => i.disabled = true)
 
             }
 
         })
 
-        function formatPriceInput(input) {
 
-            let value = input.value.replace(/\D/g, '')
 
-            if (value === '') {
-                input.value = ''
+        /* FORMAT PRICE */
+
+        function formatPrice(input) {
+
+            let value = input.value.replace(/\D/g, "")
+
+            if (value === "") {
+
+                input.value = ""
                 return
+
             }
 
-            input.value = Number(value).toLocaleString('vi-VN')
+            input.value = Number(value).toLocaleString("vi-VN")
 
         }
+
+
 
         document.addEventListener("input", function (e) {
 
             if (e.target.classList.contains("price-input")) {
-                formatPriceInput(e.target)
+
+                formatPrice(e.target)
+
             }
 
         })
 
-        document.querySelector('form').addEventListener('submit', function () {
 
-            document.querySelectorAll('.price-input').forEach(i => {
-                i.value = i.value.replace(/[^\d]/g, '')
+
+        /* SUBMIT FIX */
+
+        document.addEventListener("submit", function (e) {
+
+            document.querySelectorAll(".price-input").forEach(input => {
+
+                input.value = input.value.replace(/\./g, "")
+
             })
 
         })
 
+
+
+        /* FORMAT ON LOAD */
+
         window.addEventListener("load", function () {
 
-            document.querySelectorAll('.price-input').forEach(input => {
+            document.querySelectorAll(".price-input").forEach(input => {
 
-                if (!input.value) return
+                let value = input.value.replace(/[^\d]/g, "")
 
-                let value = input.value.replace(/[^\d]/g, '')
+                if (value) {
 
-                input.value = Number(value).toLocaleString('vi-VN')
+                    input.value = Number(value).toLocaleString("vi-VN")
+
+                }
 
             })
 
         })
 
     </script>
+
 </div>
 
 </html>

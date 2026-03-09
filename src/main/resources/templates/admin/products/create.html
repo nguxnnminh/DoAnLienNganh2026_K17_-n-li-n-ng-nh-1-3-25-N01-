@@ -3,7 +3,6 @@
 
 <div th:fragment="content">
 
-    <!-- HEADER -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 class="text-2xl font-semibold tracking-tight">
             Thêm sản phẩm mới
@@ -15,273 +14,324 @@
         </a>
     </div>
 
-    <!-- ERROR -->
     <div th:if="${error}" class="mb-6 px-6 py-4 rounded-2xl text-sm font-medium
-                bg-red-100 text-red-700
-                dark:bg-red-900/30 dark:text-red-300">
+bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
         <span th:text="${error}"></span>
     </div>
 
-    <!-- FORM CARD -->
-    <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data" class="glass rounded-2xl border border-zinc-200 dark:border-zinc-800
-                 p-6 sm:p-8 space-y-8">
+
+    <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data"
+        class="glass rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 space-y-8">
+
 
         <!-- CATEGORY -->
         <div>
+
             <label class="block text-sm font-medium text-zinc-500 mb-2">
                 Danh mục chính <span class="text-red-500">*</span>
             </label>
+
             <select id="categorySelect" name="categoryId" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-                       bg-white dark:bg-zinc-900
-                       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
+
                 <option value="">Chọn danh mục</option>
+
                 <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">
                 </option>
+
             </select>
+
         </div>
+
 
 
         <!-- SUB CATEGORY -->
         <div>
+
             <label class="block text-sm font-medium text-zinc-500 mb-2">
                 Danh mục phụ <span class="text-red-500">*</span>
             </label>
+
             <select name="subCategoryId" id="subCategorySelect" disabled class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-                       bg-white dark:bg-zinc-900
-                       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
+
                 <option value="">Chọn danh mục chính trước</option>
+
             </select>
+
         </div>
+
 
 
         <!-- NAME -->
         <div>
+
             <label class="block text-sm font-medium text-zinc-500 mb-2">
                 Tên sản phẩm <span class="text-red-500">*</span>
             </label>
+
             <input type="text" name="name" required class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-                       bg-white dark:bg-zinc-900
-                       focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition">
+bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
+
         </div>
+
 
 
         <!-- DESCRIPTION -->
         <div>
+
             <label class="block text-sm font-medium text-zinc-500 mb-2">
                 Mô tả
             </label>
+
             <textarea name="description" rows="4" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-bg-white dark:bg-zinc-900
-focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none transition"></textarea>
+bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition"></textarea>
+
         </div>
+
 
 
         <!-- VARIANTS -->
         <div>
+
             <label class="block text-sm font-medium text-zinc-500 mb-4">
                 Biến thể (Size - Màu - Giá - Tồn kho)
             </label>
 
             <div id="variants-container" class="space-y-4">
 
-                <!-- Variant Row -->
+
                 <div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
                     <input type="text" name="variants[0].size" placeholder="Size"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border border-zinc-300">
 
                     <input type="text" name="variants[0].color" placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border border-zinc-300">
 
-                    <input type="text" name="variants[0].price" placeholder="Giá" inputmode="numeric"
-                        class="price-input px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                    <input type="text" name="variants[0].price" placeholder="Giá"
+                        class="price-input px-4 py-3 rounded-xl border border-zinc-300">
 
                     <input type="number" name="variants[0].stock" placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+                        class="px-4 py-3 rounded-xl border border-zinc-300">
 
-                    <button type="button" class="remove-variant px-4 py-3 rounded-xl text-sm font-medium
-                               bg-red-50 text-red-600
-                               hover:bg-red-100
-                               dark:bg-red-900/30 dark:text-red-300
-                               transition">
+                    <button type="button" class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600">
+
                         Xóa
+
                     </button>
 
                 </div>
 
             </div>
 
+
             <button type="button" id="add-variant" class="mt-4 text-sm font-medium text-indigo-600 hover:underline">
+
                 + Thêm biến thể
+
             </button>
+
         </div>
+
 
 
         <!-- IMAGE -->
         <div>
+
             <label class="block text-sm font-medium text-zinc-500 mb-2">
                 Ảnh sản phẩm
             </label>
+
             <input type="file" name="images" multiple accept="image/*"
-                class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                class="w-full px-4 py-3 rounded-xl border border-zinc-300">
+
         </div>
+
 
 
         <!-- ACTIVE -->
         <div class="flex items-center gap-3">
+
             <input type="checkbox" name="active" checked class="w-5 h-5">
+
             <label class="text-sm text-zinc-600 dark:text-zinc-400">
                 Hiển thị sản phẩm
             </label>
+
         </div>
+
 
 
         <!-- SUBMIT -->
         <div class="flex justify-end pt-6">
+
             <button type="submit" class="px-8 py-3 rounded-xl font-medium text-sm
-                       bg-black text-white
-                       hover:bg-zinc-800
-                       dark:bg-zinc-800 dark:hover:bg-zinc-700
-                       transition">
+bg-black text-white hover:bg-zinc-800 transition">
+
                 Tạo sản phẩm
+
             </button>
+
         </div>
 
     </form>
 
-    <!-- JavaScript -->
-    <script>
-        // Cascading dropdown
-        const categorySelect = document.getElementById('categorySelect');
-        const subCategorySelect = document.getElementById('subCategorySelect');
 
-        categorySelect.addEventListener('change', async function () {
-            const categoryId = this.value;
-            subCategorySelect.disabled = true;
-            subCategorySelect.innerHTML = '<option value="">Đang tải...</option>';
+
+    <script>
+
+        /* CATEGORY -> SUBCATEGORY */
+
+        const categorySelect = document.getElementById("categorySelect")
+        const subCategorySelect = document.getElementById("subCategorySelect")
+
+        categorySelect.addEventListener("change", async function () {
+
+            const categoryId = this.value
 
             if (!categoryId) {
-                subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>';
-                return;
+
+                subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>'
+                subCategorySelect.disabled = true
+                return
+
             }
 
-            try {
-                const response = await fetch(`/api/subcategories/by-category/${categoryId}`);
-                const subCategories = await response.json();
+            subCategorySelect.innerHTML = '<option>Đang tải...</option>'
 
-                subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>';
-                subCategories.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub.id;
-                    option.textContent = sub.name;
-                    subCategorySelect.appendChild(option);
-                });
-                subCategorySelect.disabled = false;
-            } catch (error) {
-                subCategorySelect.innerHTML = '<option value="">Lỗi tải danh mục phụ</option>';
-                console.error(error);
-            }
-        });
+            const res = await fetch(`/api/subcategories/by-category/${categoryId}`)
+            const subs = await res.json()
 
-        // Thêm/xóa variant
-        let variantIndex = 1;
+            subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
 
-        const container = document.getElementById('variants-container');
-        const addBtn = document.getElementById('add-variant');
+            subs.forEach(sub => {
 
-        addBtn.addEventListener('click', function () {
+                const opt = document.createElement("option")
+                opt.value = sub.id
+                opt.textContent = sub.name
+
+                subCategorySelect.appendChild(opt)
+
+            })
+
+            subCategorySelect.disabled = false
+
+        })
+
+
+
+        /* ADD VARIANT */
+
+        let variantIndex = 1
+
+        const container = document.getElementById("variants-container")
+
+        document.getElementById("add-variant").addEventListener("click", function () {
 
             const html = `
-                <div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
-                    <input type="text"
-                        name="variants[${variantIndex}].size"
-                        placeholder="Size"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+<div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
-                    <input type="text"
-                        name="variants[${variantIndex}].color"
-                        placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+<input type="text" name="variants[${variantIndex}].size" placeholder="Size" class="px-4 py-3 rounded-xl border">
 
-                    <input type="text"
-                        name="variants[${variantIndex}].price"
-                        placeholder="Giá"
-                        inputmode="numeric"
-                        class="price-input px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+<input type="text" name="variants[${variantIndex}].color" placeholder="Màu" class="px-4 py-3 rounded-xl border">
 
-                    <input type="number"
-                        name="variants[${variantIndex}].stock"
-                        placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700">
+<input type="text" name="variants[${variantIndex}].price" placeholder="Giá" class="price-input px-4 py-3 rounded-xl border">
 
-                    <button type="button"
-                        class="remove-variant px-4 py-3 rounded-xl text-sm font-medium
-                            bg-red-50 text-red-600
-                            hover:bg-red-100
-                            dark:bg-red-900/30 dark:text-red-300
-                            transition">
-                        Xóa
-                    </button>
-                </div>
-            `;
+<input type="number" name="variants[${variantIndex}].stock" placeholder="Tồn kho" class="px-4 py-3 rounded-xl border">
 
-            container.insertAdjacentHTML('beforeend', html);
-            variantIndex++;
-        });
+<button type="button" class="remove-variant px-4 py-3 rounded-xl bg-red-50 text-red-600">Xóa</button>
 
-        // Xóa variant
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('remove-variant')) {
-                e.target.closest('.variant-row').remove();
+</div>
+
+`
+
+            container.insertAdjacentHTML("beforeend", html)
+
+            variantIndex++
+
+        })
+
+
+
+        /* REMOVE VARIANT */
+
+        document.addEventListener("click", function (e) {
+
+            if (e.target.classList.contains("remove-variant")) {
+
+                e.target.closest(".variant-row").remove()
+
             }
-        });
 
-        // FORMAT PRICE INPUT
-        function formatPriceInput(input) {
+        })
 
-            let value = input.value.replace(/\D/g, '')
 
-            if (value === '') {
-                input.value = ''
+
+        /* FORMAT PRICE */
+
+        function formatPrice(input) {
+
+            let value = input.value.replace(/\D/g, "")
+
+            if (value === "") {
+
+                input.value = ""
                 return
+
             }
 
-            input.value = Number(value).toLocaleString('vi-VN')
+            input.value = Number(value).toLocaleString("vi-VN")
 
         }
+
+
 
         document.addEventListener("input", function (e) {
 
             if (e.target.classList.contains("price-input")) {
-                formatPriceInput(e.target)
+
+                formatPrice(e.target)
+
             }
 
         })
 
-        // REMOVE DOT BEFORE SUBMIT
-        document.querySelector("form").addEventListener("submit", function () {
 
-            document.querySelectorAll(".price-input").forEach(i => {
-                i.value = i.value.replace(/[^\d]/g, "")
+
+        /* SUBMIT FIX */
+
+        document.addEventListener("submit", function () {
+
+            document.querySelectorAll(".price-input").forEach(input => {
+
+                input.value = input.value.replace(/\./g, "")
+
             })
 
         })
 
-        // FORMAT WHEN PAGE LOAD
+
+
+        /* FORMAT ON LOAD */
+
         window.addEventListener("load", function () {
 
-            document.querySelectorAll('.price-input').forEach(input => {
+            document.querySelectorAll(".price-input").forEach(input => {
 
-                if (!input.value) return
+                let value = input.value.replace(/[^\d]/g, "")
 
-                let value = input.value.replace(/[^\d]/g, '')
+                if (value) {
 
-                input.value = Number(value).toLocaleString('vi-VN')
+                    input.value = Number(value).toLocaleString("vi-VN")
+
+                }
 
             })
 
         })
+
     </script>
 
 </div>

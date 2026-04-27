@@ -14,4 +14,8 @@ public interface SubCategoryService {
     List<SubCategory> getByCategoryId(Long categoryId);
 
     Optional<SubCategory> getBySlug(String slug);
+
+    SubCategory saveSubCategory(SubCategory subCategory);
+
+    void deleteSubCategory(Long id);
 }

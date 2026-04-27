@@ -44,6 +44,17 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
 
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
+    @Query("""
+        SELECT o FROM Order o
+        WHERE o.status = :status
+          AND o.createdAt >= :since
+        ORDER BY o.createdAt DESC
+    """)
+    List<Order> findByStatusSince(
+            @Param("status") OrderStatus status,
+            @Param("since") java.time.LocalDateTime since
+    );
+
     // =====================================================
     // DASHBOARD CHART (GENERIC AGGREGATION)
     // =====================================================

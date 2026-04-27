@@ -1,17 +1,13 @@
 package com.shop.clothingstore.service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +24,7 @@ import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.SubCategoryRepository;
 import com.shop.clothingstore.service.base.GenericServiceBase;
+import com.shop.clothingstore.service.storage.FileStorageService;
 import com.shop.clothingstore.specification.ProductSpecification;
 
 import jakarta.transaction.Transactional;
@@ -35,18 +32,20 @@ import jakarta.transaction.Transactional;
 @Service
 public class ProductService extends GenericServiceBase<Product, Long> {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
+
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
-
-    @Value("${upload.dir:images/products}")
-    private String uploadDir;
+    private final FileStorageService fileStorageService;
 
     public ProductService(ProductRepository productRepository,
-            SubCategoryRepository subCategoryRepository) {
+            SubCategoryRepository subCategoryRepository,
+            FileStorageService fileStorageService) {
 
         super(productRepository);
         this.productRepository = productRepository;
         this.subCategoryRepository = subCategoryRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     /*
@@ -56,6 +55,8 @@ public class ProductService extends GenericServiceBase<Product, Long> {
      */
     @Transactional
     public Product createProduct(ProductCreateDTO dto) throws IOException {
+
+        log.info("Creating product: {}", dto.getName());
 
         if (dto.getSubCategoryId() == null) {
             throw new RuntimeException("SubCategoryId không được null");
@@ -95,7 +96,12 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             saveImages(product, dto.getImages(), dto.getPrimaryImageIndex());
         }
 
-        return save(product);
+        Product saved = save(product);
+
+        log.info("Product created | id={} | name={} | slug={}",
+                saved.getId(), saved.getName(), saved.getSlug());
+
+        return saved;
     }
 
     /*
@@ -158,12 +164,18 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             existing.put(v.getId(), v);
         }
 
-        // clear toàn bộ variant cũ
-        product.getProductVariants().clear();
-
         if (variantDTOs == null) {
             return;
         }
+
+        // IDs từ DTO
+        java.util.Set<Long> dtoIds = variantDTOs.stream()
+                .map(VariantDTO::getId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Xóa variant không còn trong DTO
+        product.getProductVariants().removeIf(v -> !dtoIds.contains(v.getId()));
 
         for (VariantDTO dto : variantDTOs) {
 
@@ -201,6 +213,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
      */
     @Transactional
     public void deleteProduct(Long id) {
+        log.info("Deleting product | id={}", id);
         delete(id);
     }
 
@@ -217,7 +230,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
 
     /*
      * =====================================================
-     * SAVE IMAGES
+     * SAVE IMAGES (delegate to FileStorageService)
      * =====================================================
      */
     private void saveImages(Product product,
@@ -228,12 +241,6 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             return;
         }
 
-        Path uploadPath = Paths.get(uploadDir);
-
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
         for (int i = 0; i < files.size(); i++) {
 
             MultipartFile file = files.get(i);
@@ -242,17 +249,11 @@ public class ProductService extends GenericServiceBase<Product, Long> {
                 continue;
             }
 
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
-
-            Files.copy(
-                    file.getInputStream(),
-                    filePath,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
+            // Delegate upload cho FileStorageService
+            String imageUrl = fileStorageService.upload(file, "products");
 
             ProductImage image = new ProductImage();
-            image.setImageUrl("/images/products/" + fileName);
+            image.setImageUrl(imageUrl);
             image.setPrimaryImage(primaryIndex != null && i == primaryIndex);
 
             product.addImage(image);
@@ -289,6 +290,16 @@ public class ProductService extends GenericServiceBase<Product, Long> {
         slug = slug.replaceAll("\\s+", "-");
 
         return slug;
+    }
+
+    /*
+     * =====================================================
+     * FIND BY SLUG
+     * =====================================================
+     */
+    public Product findBySlug(String slug) {
+        return productRepository.findBySlug(slug)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + slug));
     }
 
     /*

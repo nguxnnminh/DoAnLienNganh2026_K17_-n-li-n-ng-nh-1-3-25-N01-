@@ -2,7 +2,10 @@ package com.shop.clothingstore.service;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderItem;
@@ -13,11 +16,11 @@ import com.shop.clothingstore.repository.OrderRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 import com.shop.clothingstore.service.base.GenericServiceBase;
 
-import jakarta.transaction.Transactional;
-
 @Service
 public class OrderService
         extends GenericServiceBase<Order, Long> {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
     private final ProductVariantRepository variantRepository;
@@ -52,6 +55,8 @@ public class OrderService
         if (oldStatus == newStatus) {
             return order;
         }
+
+        log.info("Order status change | orderId={} | {} → {}", orderId, oldStatus, newStatus);
 
         // ===== CHECK STOCK BEFORE PROCESSING =====
         if (newStatus == OrderStatus.PROCESSING
@@ -92,17 +97,20 @@ public class OrderService
                         variant.getStock() + item.getQuantity()
                 );
 
+                // Không cho sold âm
                 variant.setSold(
-                        variant.getSold() - item.getQuantity()
+                        Math.max(0, variant.getSold() - item.getQuantity())
                 );
 
                 variantRepository.save(variant);
 
-                variantRepository.save(variant);
+                log.debug("Stock restored | variantId={} | +{} units", item.getVariantId(), item.getQuantity());
             }
         }
 
         order.setStatus(newStatus);
+
+        log.info("Order status updated | orderId={} | newStatus={}", orderId, newStatus);
 
         return save(order);   // 🔥 dùng GenericServiceBase
     }

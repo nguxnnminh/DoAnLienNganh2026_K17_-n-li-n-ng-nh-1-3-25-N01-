@@ -3,94 +3,138 @@
 
 <div th:fragment="content">
 
-    <!-- ================= PAGE HEADER ================= -->
+    <!-- PAGE HEADER -->
     <div class="flex justify-between items-center mb-8">
         <div>
-            <h1 class="text-2xl font-semibold tracking-tight">
-                Bảng điều khiển
-            </h1>
-            <p class="text-sm text-zinc-500 mt-1">
-                Tổng quan hoạt động cửa hàng
-            </p>
+            <h1 class="text-2xl font-semibold tracking-tight">Bảng điều khiển</h1>
+            <p class="text-sm text-zinc-500 mt-1">Tổng quan hoạt động kinh doanh</p>
         </div>
-
-        <span class="text-sm text-zinc-500">
-            Cập nhật lúc:
-            <span th:text="${#temporals.format(T(java.time.LocalDateTime).now(),'dd/MM/yyyy HH:mm')}"></span>
-        </span>
     </div>
 
-
-    <!-- ================= KPI CARDS ================= -->
+    <!-- KPI CARDS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
         <div class="glass rounded-2xl p-6">
             <p class="text-sm text-zinc-500">Tổng đơn hàng</p>
             <p class="text-4xl font-semibold mt-3" th:text="${totalTransactions ?: 0}"></p>
         </div>
-
         <div class="glass rounded-2xl p-6">
             <p class="text-sm text-zinc-500">Đơn đang chờ</p>
             <p class="text-4xl font-semibold mt-3 text-orange-500" th:text="${pendingTransactions ?: 0}"></p>
         </div>
-
         <div class="glass rounded-2xl p-6">
             <p class="text-sm text-zinc-500">Đơn hoàn thành</p>
             <p class="text-4xl font-semibold mt-3 text-green-600" th:text="${completedTransactions ?: 0}"></p>
         </div>
-
         <div class="glass rounded-2xl p-6">
             <p class="text-sm text-zinc-500">Doanh thu</p>
             <p class="text-4xl font-semibold mt-3">
                 <span th:text="${#numbers.formatDecimal(totalAmount ?: 0,0,'POINT',0,'COMMA')}"></span> ₫
             </p>
         </div>
-
     </div>
 
+    <!-- BI REPORT - BÁO CÁO KINH DOANH CHI TIẾT -->
+    <div class="mt-10 glass rounded-2xl p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Báo cáo kinh doanh chi tiết</h2>
+            <form th:action="@{/admin/export-excel}" method="post">
+                <button type="submit"
+                    class="px-6 py-3 bg-black text-white rounded-xl hover:bg-zinc-800 transition flex items-center gap-2">
+                    📥 Xuất Excel
+                </button>
+            </form>
+        </div>
 
-    <!-- ================= QUICK ACTIONS ================= -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6">
+                <p class="text-zinc-500">Tổng đơn hàng</p>
+                <p class="text-3xl font-semibold" th:text="${report.totalOrders}"></p>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6">
+                <p class="text-zinc-500">Đơn hoàn thành</p>
+                <p class="text-3xl font-semibold text-green-600" th:text="${report.completedOrders}"></p>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6">
+                <p class="text-zinc-500">Tỷ lệ hoàn thành</p>
+                <p class="text-3xl font-semibold"
+                    th:text="${#numbers.formatDecimal(report.completionRate, 0, 2)} + '%'"></p>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6">
+                <p class="text-zinc-500">Tổng doanh thu</p>
+                <p class="text-3xl font-semibold"
+                    th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'POINT', 0, 'COMMA')} + ' ₫'"></p>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6">
+                <p class="text-zinc-500">Tổng khách hàng</p>
+                <p class="text-3xl font-semibold" th:text="${report.totalCustomers}"></p>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl p-6">
+                <p class="text-zinc-500">Đơn bị hủy</p>
+                <p class="text-3xl font-semibold text-red-500" th:text="${report.cancelledOrders}"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CẢNH BÁO TỒN KHO THẤP ================= -->
+    <div class="mt-10 glass rounded-2xl p-8 border border-orange-300">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-orange-600 flex items-center gap-2">
+                ⚠️ Sản phẩm tồn kho thấp (<span th:text="${lowStockCount}"></span>)
+            </h2>
+        </div>
+
+        <div th:if="${lowStockCount > 0}" class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-orange-50 dark:bg-orange-900/30">
+                    <tr>
+                        <th class="text-left py-3 px-4">Tên sản phẩm</th>
+                        <th class="text-left py-3 px-4">Size - Màu</th>
+                        <th class="text-center py-3 px-4">Tồn kho</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="variant : ${lowStockProducts}"
+                        class="border-b border-orange-100 dark:border-orange-800">
+                        <td class="py-3 px-4 font-medium" th:text="${variant.product.name}"></td>
+                        <td class="py-3 px-4" th:text="${variant.size} + ' - ' + ${variant.color}"></td>
+                        <td class="py-3 px-4 text-center font-semibold text-orange-600" th:text="${variant.stock}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${lowStockCount == 0}" class="text-green-600 text-center py-8">
+            ✅ Tất cả sản phẩm đều còn hàng tốt
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
     <div class="grid sm:grid-cols-3 gap-6 mt-8">
-
         <a th:href="@{/admin/products/create}" class="glass rounded-2xl p-6 hover:scale-[1.02] transition">
             <h3 class="font-semibold mb-1">Thêm sản phẩm</h3>
             <p class="text-sm text-zinc-500">Tạo sản phẩm mới</p>
         </a>
-
         <a th:href="@{/admin/orders}" class="glass rounded-2xl p-6 hover:scale-[1.02] transition">
             <h3 class="font-semibold mb-1">Quản lý đơn hàng</h3>
             <p class="text-sm text-zinc-500">Xử lý & theo dõi</p>
         </a>
-
         <a th:href="@{/admin/users}" class="glass rounded-2xl p-6 hover:scale-[1.02] transition">
             <h3 class="font-semibold mb-1">Người dùng</h3>
             <p class="text-sm text-zinc-500">Quản lý tài khoản</p>
         </a>
-
     </div>
 
-
-    <!-- ================= CHART + RECENT ================= -->
+    <!-- CHART + RECENT ORDERS -->
     <div class="grid lg:grid-cols-2 gap-6 mt-8">
-
-        <!-- REVENUE CHART -->
+        <!-- Revenue Chart -->
         <div class="glass rounded-2xl p-6">
-            <h2 class="font-semibold text-lg mb-4">
-                Doanh thu theo thời gian
-            </h2>
-
-            <div style="height:300px">
-                <canvas id="revenueChart"></canvas>
-            </div>
+            <h2 class="font-semibold text-lg mb-4">Doanh thu theo thời gian</h2>
+            <div style="height:300px"><canvas id="revenueChart"></canvas></div>
         </div>
 
-
-        <!-- RECENT ORDERS -->
+        <!-- Recent Orders -->
         <div class="glass rounded-2xl p-6">
-            <h2 class="font-semibold text-lg mb-4">
-                Đơn hàng mới nhất
-            </h2>
-
+            <h2 class="font-semibold text-lg mb-4">Đơn hàng mới nhất</h2>
             <table class="w-full text-sm">
                 <thead class="text-zinc-500 border-b">
                     <tr>
@@ -99,52 +143,28 @@
                         <th class="text-right">Tổng</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     <tr th:each="o : ${latestTransactions}" class="border-b border-zinc-100 dark:border-zinc-800">
-
-                        <td class="py-3 font-medium" th:text="'#' + ${o.id}">
-                        </td>
-
+                        <td class="py-3 font-medium" th:text="'#' + ${o.id}"></td>
                         <td class="font-medium"
-                            th:text="${o.actor != null ? o.actor.fullName : (o.customerName ?: 'Khách lẻ')}">
-                        </td>
-
+                            th:text="${o.actor != null ? o.actor.fullName : (o.customerName ?: 'Khách lẻ')}"></td>
                         <td class="text-right font-medium">
                             <span th:text="${#numbers.formatDecimal(o.total ?: 0,0,'POINT',0,'COMMA')}"></span> ₫
                         </td>
-
                     </tr>
                 </tbody>
             </table>
-
         </div>
-
     </div>
 
-
-    <!-- ================= CHART SCRIPT ================= -->
+    <!-- CHART SCRIPT -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script th:inline="javascript">
-
         document.addEventListener("DOMContentLoaded", function () {
-
             const revenueLabels = /*[[${amountLabels}]]*/[];
             const revenueData = /*[[${amountData}]]*/[];
 
-            console.log("Labels:", revenueLabels);
-            console.log("Data:", revenueData);
-
-            const canvas = document.getElementById("revenueChart");
-
-            if (!canvas) {
-                console.error("Canvas revenueChart not found");
-                return;
-            }
-
-            const ctx = canvas.getContext("2d");
-
+            const ctx = document.getElementById("revenueChart").getContext("2d");
             new Chart(ctx, {
                 type: "line",
                 data: {
@@ -163,21 +183,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
+                    scales: { y: { beginAtZero: true } }
                 }
             });
-
         });
-
     </script>
 
 </div>

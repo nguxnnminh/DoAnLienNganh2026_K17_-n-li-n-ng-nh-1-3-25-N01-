@@ -145,7 +145,7 @@ public class DataInitializer {
                     v.setProduct(product);
                     v.setColor("Black");
                     v.setSize("M");
-                    v.setPrice(Long.valueOf(120000));
+                    v.setPrice(120000.0);
                     v.setStock(10);
                     v.setSold(0);
 
@@ -225,12 +225,13 @@ public class DataInitializer {
     ) {
 
         String baseSlug = toSlug(name);
+        String uniqueSlug = generateUniqueSlug(repo, baseSlug);
 
-        return repo.findBySlug(baseSlug).orElseGet(() -> {
+        return repo.findBySlug(uniqueSlug).orElseGet(() -> {
 
             Product p = new Product();
             p.setName(name);
-            p.setSlug(baseSlug); // ❗ Không generate unique ở initializer
+            p.setSlug(uniqueSlug);
             p.setDescription(description);
             p.setActive(true);
             p.setSubCategory(subCategory);

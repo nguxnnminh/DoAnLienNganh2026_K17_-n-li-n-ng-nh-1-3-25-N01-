@@ -6,12 +6,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.shop.clothingstore.service.CartService;
 
 @Controller
 @RequestMapping("/cart")
 public class CartController {
+
+    private static final int MAX_QUANTITY = 99;
 
     private final CartService cartService;
 
@@ -29,18 +32,42 @@ public class CartController {
     @PostMapping("/add")
     public String addToCart(
             @RequestParam Long variantId,
-            @RequestParam int quantity
+            @RequestParam int quantity,
+            RedirectAttributes redirectAttributes
     ) {
-        cartService.addToCart(variantId, quantity);
+        if (quantity < 1 || quantity > MAX_QUANTITY) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Số lượng phải từ 1 đến " + MAX_QUANTITY);
+            return "redirect:/cart";
+        }
+
+        try {
+            cartService.addToCart(variantId, quantity);
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
         return "redirect:/cart";
     }
 
     @PostMapping("/update")
     public String update(
             @RequestParam("variantId") Long variantId,
-            @RequestParam("quantity") int quantity
+            @RequestParam("quantity") int quantity,
+            RedirectAttributes redirectAttributes
     ) {
-        cartService.updateQuantity(variantId, quantity);
+        if (quantity < 1 || quantity > MAX_QUANTITY) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Số lượng phải từ 1 đến " + MAX_QUANTITY);
+            return "redirect:/cart";
+        }
+
+        try {
+            cartService.updateQuantity(variantId, quantity);
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
         return "redirect:/cart";
     }
 

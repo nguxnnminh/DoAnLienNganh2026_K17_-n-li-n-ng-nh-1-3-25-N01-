@@ -1,172 +1,140 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Tài khoản của tôi')}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Profile — Nova')}">
+<div th:fragment="content">
+  <style>
+    .pf-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #2e2e2e;
+      color: #e8e8e4;
+      padding: 13px 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .84rem;
+      outline: none;
+      transition: border-color .2s;
+      letter-spacing: .03em;
+    }
 
-<div th:fragment="content" class="py-10 max-w-3xl mx-auto space-y-10">
+    .pf-input:focus {
+      border-bottom-color: #666;
+    }
 
-    <!-- TITLE -->
-    <div>
-        <h1 class="text-3xl font-semibold tracking-tight">
-            Hồ sơ tài khoản
-        </h1>
+    .pf-input::placeholder {
+      color: #2e2e2e;
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
 
-        <p class="text-zinc-500 text-sm mt-2">
-            Quản lý thông tin cá nhân và liên hệ
-        </p>
+    .pf-input:disabled {
+      color: #3a3a3a;
+      cursor: not-allowed;
+    }
+
+    .pf-label {
+      font-size: .6rem;
+      letter-spacing: .38em;
+      text-transform: uppercase;
+      color: #555;
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .pf-section {
+      border: 1px solid #1a1a1a;
+      padding: 44px;
+    }
+  </style>
+
+  <div style="max-width:800px; margin:0 auto; padding:64px 56px;">
+
+    <!-- HEADER -->
+    <div
+      style="margin-bottom:52px; border-bottom:1px solid #1a1a1a; padding-bottom:28px; display:flex; justify-content:space-between; align-items:flex-end;">
+      <div>
+        <p style="font-size:.6rem; letter-spacing:.42em; text-transform:uppercase; color:#444; margin-bottom:10px;">
+          Account</p>
+        <h1
+          style="font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:.06em; line-height:1; color:#f5f5f3;">
+          Profile</h1>
+      </div>
+      <a th:href="@{/my-orders}"
+        style="font-size:.64rem; letter-spacing:.2em; text-transform:uppercase; color:#555; text-decoration:none; display:flex; align-items:center; gap:8px; transition:color .2s;"
+        onmouseover="this.style.color='#c0c0bc'" onmouseout="this.style.color='#555'">
+        My Orders
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </a>
     </div>
 
+    <!-- PROFILE FORM -->
+    <div class="pf-section" style="margin-bottom:2px;">
+      <p style="font-size:.58rem; letter-spacing:.4em; text-transform:uppercase; color:#444; margin-bottom:36px;">
+        Personal Info</p>
+      <form method="post" th:action="@{/profile/update}" style="display:flex; flex-direction:column; gap:34px;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
+        <div>
+          <label class="pf-label">Email</label>
+          <input class="pf-input" type="email" th:value="${user.email}" disabled />
+        </div>
+        <div>
+          <label class="pf-label">Full Name</label>
+          <input class="pf-input" type="text" name="fullName" th:value="${user.fullName}" placeholder="Your name" />
+        </div>
+        <div>
+          <label class="pf-label">Phone</label>
+          <input class="pf-input" type="text" name="phone" th:value="${user.phone}" placeholder="0900 000 000" />
+        </div>
+        <div>
+          <label class="pf-label">Address</label>
+          <textarea class="pf-input" name="address" rows="3" style="resize:none;" placeholder="Delivery address"
+            th:text="${user.address}"></textarea>
+        </div>
 
-    <!-- PROFILE CARD -->
-    <div class="border border-zinc-200 dark:border-zinc-800
-                rounded-2xl p-8 bg-white dark:bg-zinc-900">
-
-        <form method="post" th:action="@{/profile/update}" class="space-y-6">
-
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-
-
-            <!-- EMAIL -->
-            <div>
-
-                <label class="text-sm text-zinc-500">
-                    Email
-                </label>
-
-                <input type="email" th:value="${user.email}" disabled class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
-                              bg-zinc-100 dark:bg-zinc-800
-                              px-4 py-3 rounded-xl cursor-not-allowed">
-
-            </div>
-
-
-
-            <!-- FULL NAME -->
-            <div>
-
-                <label class="text-sm text-zinc-500">
-                    Họ và tên
-                </label>
-
-                <input type="text" name="fullName" th:value="${user.fullName}" class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
-                              bg-white dark:bg-zinc-900
-                              px-4 py-3 rounded-xl
-                              focus:outline-none
-                              focus:ring-2 focus:ring-black dark:focus:ring-white">
-
-            </div>
-
-
-
-            <!-- PHONE -->
-            <div>
-
-                <label class="text-sm text-zinc-500">
-                    Số điện thoại
-                </label>
-
-                <input type="text" name="phone" th:value="${user.phone}" class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
-                              bg-white dark:bg-zinc-900
-                              px-4 py-3 rounded-xl
-                              focus:outline-none
-                              focus:ring-2 focus:ring-black dark:focus:ring-white">
-
-            </div>
-
-
-
-            <!-- ADDRESS -->
-            <div>
-
-                <label class="text-sm text-zinc-500">
-                    Địa chỉ giao hàng
-                </label>
-
-                <textarea name="address" rows="3" th:text="${user.address}" class="w-full mt-2 border border-zinc-200 dark:border-zinc-700
-                                 bg-white dark:bg-zinc-900
-                                 px-4 py-3 rounded-xl
-                                 focus:outline-none
-                                 focus:ring-2 focus:ring-black dark:focus:ring-white">
-                </textarea>
-
-            </div>
-
-
-
-            <!-- ACTION -->
-            <div class="pt-4 flex justify-between items-center">
-
-                <a th:href="@{/my-orders}" class="text-sm underline underline-offset-4
-                          hover:text-blue-600 transition">
-                    Xem đơn hàng
-                </a>
-
-                <button type="submit" class="bg-black text-white
-                               px-8 py-3 rounded-xl
-                               hover:opacity-90 transition">
-                    Lưu thay đổi
-                </button>
-
-            </div>
-
-        </form>
-
+        <div style="display:flex; justify-content:flex-end; padding-top:8px; border-top:1px solid #1a1a1a;">
+          <button type="submit"
+            style="padding:15px 40px; background:#f5f5f3; color:#0a0a0a; border:none; font-family:'DM Sans',sans-serif; font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; font-weight:500; cursor:pointer; transition:background .25s;"
+            onmouseover="this.style.background='#d8d8d4'" onmouseout="this.style.background='#f5f5f3'">
+            Save Changes
+          </button>
+        </div>
+      </form>
     </div>
-
-
 
     <!-- CHANGE PASSWORD -->
-    <div class="border border-zinc-200 dark:border-zinc-800
-                rounded-2xl p-8 bg-white dark:bg-zinc-900">
+    <div class="pf-section">
+      <p style="font-size:.58rem; letter-spacing:.4em; text-transform:uppercase; color:#444; margin-bottom:36px;">Change
+        Password</p>
+      <form method="post" th:action="@{/profile/change-password}"
+        style="display:flex; flex-direction:column; gap:30px;">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-        <h2 class="text-lg font-semibold mb-6">
-            Đổi mật khẩu
-        </h2>
+        <div>
+          <label class="pf-label">Current Password</label>
+          <input class="pf-input" type="password" name="oldPassword" placeholder="••••••••" required />
+        </div>
+        <div>
+          <label class="pf-label">New Password</label>
+          <input class="pf-input" type="password" name="newPassword" placeholder="Min 6 characters" required />
+        </div>
+        <div>
+          <label class="pf-label">Confirm New Password</label>
+          <input class="pf-input" type="password" name="confirmPassword" placeholder="Repeat password" required />
+        </div>
 
-
-
-        <form method="post" th:action="@{/profile/change-password}" class="space-y-5">
-
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-
-
-            <input type="password" name="oldPassword" placeholder="Mật khẩu hiện tại" required class="w-full border border-zinc-200 dark:border-zinc-700
-                          bg-white dark:bg-zinc-900
-                          px-4 py-3 rounded-xl
-                          focus:outline-none
-                          focus:ring-2 focus:ring-black dark:focus:ring-white">
-
-
-
-            <input type="password" name="newPassword" placeholder="Mật khẩu mới" required class="w-full border border-zinc-200 dark:border-zinc-700
-                          bg-white dark:bg-zinc-900
-                          px-4 py-3 rounded-xl
-                          focus:outline-none
-                          focus:ring-2 focus:ring-black dark:focus:ring-white">
-
-
-
-            <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" required class="w-full border border-zinc-200 dark:border-zinc-700
-                          bg-white dark:bg-zinc-900
-                          px-4 py-3 rounded-xl
-                          focus:outline-none
-                          focus:ring-2 focus:ring-black dark:focus:ring-white">
-
-
-
-            <button type="submit" class="bg-black text-white
-                           px-6 py-3 rounded-xl
-                           hover:opacity-90 transition">
-
-                Cập nhật mật khẩu
-
-            </button>
-
-        </form>
-
+        <div style="display:flex; justify-content:flex-end; padding-top:8px; border-top:1px solid #1a1a1a;">
+          <button type="submit"
+            style="padding:15px 40px; background:transparent; color:#c0c0bc; border:1px solid #2e2e2e; font-family:'DM Sans',sans-serif; font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; cursor:pointer; transition:all .25s;"
+            onmouseover="this.style.borderColor='#555'" onmouseout="this.style.borderColor='#2e2e2e'">
+            Update Password
+          </button>
+        </div>
+      </form>
     </div>
-
+  </div>
 </div>
 
 </html>

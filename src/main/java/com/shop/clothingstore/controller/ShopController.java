@@ -11,12 +11,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.shop.clothingstore.dto.ProductFilterDTO;
 import com.shop.clothingstore.dto.VariantDTO;
@@ -25,6 +27,7 @@ import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.SubCategory;
 import com.shop.clothingstore.service.CategoryService;
 import com.shop.clothingstore.service.ProductService;
+import com.shop.clothingstore.service.RecommendationService;
 import com.shop.clothingstore.service.ReviewService;
 import com.shop.clothingstore.service.SubCategoryService;
 
@@ -35,16 +38,18 @@ public class ShopController {
     private final CategoryService categoryService;
     private final SubCategoryService subCategoryService;
     private final ReviewService reviewService;
+    private final RecommendationService recommendationService;
 
     public ShopController(ProductService productService,
             CategoryService categoryService,
             SubCategoryService subCategoryService,
-            ReviewService reviewService) {
-
+            ReviewService reviewService,
+            RecommendationService recommendationService) {
         this.productService = productService;
         this.categoryService = categoryService;
         this.subCategoryService = subCategoryService;
         this.reviewService = reviewService;
+        this.recommendationService = recommendationService;
     }
 
     // =====================================================
@@ -52,23 +57,11 @@ public class ShopController {
     // =====================================================
     @GetMapping("/")
     public String home(Model model) {
-
         List<Product> homeProducts = new ArrayList<>();
-
-        homeProducts.addAll(
-                productService.findTopByCategorySlug("top", PageRequest.of(0, 4)).getContent()
-        );
-
-        homeProducts.addAll(
-                productService.findTopByCategorySlug("bottom", PageRequest.of(0, 2)).getContent()
-        );
-
-        homeProducts.addAll(
-                productService.findTopByCategorySlug("accessories", PageRequest.of(0, 2)).getContent()
-        );
-
+        homeProducts.addAll(productService.findTopByCategorySlug("top", PageRequest.of(0, 4)).getContent());
+        homeProducts.addAll(productService.findTopByCategorySlug("bottom", PageRequest.of(0, 2)).getContent());
+        homeProducts.addAll(productService.findTopByCategorySlug("accessories", PageRequest.of(0, 2)).getContent());
         model.addAttribute("homeProducts", homeProducts);
-
         return "shop/home";
     }
 
@@ -76,32 +69,24 @@ public class ShopController {
     // HELPER SORT METHOD
     // =====================================================
     private Pageable buildPageable(int page, String sort) {
-
         Sort sortObj = Sort.by("id").descending();
-
         if (sort != null) {
-
             switch (sort) {
-
                 case "price_asc":
                     sortObj = Sort.by("productVariants.price").ascending();
                     break;
-
                 case "price_desc":
                     sortObj = Sort.by("productVariants.price").descending();
                     break;
-
                 case "best_seller":
                     sortObj = Sort.by("productVariants.sold").descending();
                     break;
-
                 case "newest":
                 default:
                     sortObj = Sort.by("id").descending();
                     break;
             }
         }
-
         return PageRequest.of(page, 12, sortObj);
     }
 
@@ -123,7 +108,6 @@ public class ShopController {
         filter.setKeyword(keyword);
 
         Pageable pageable = buildPageable(page, sort);
-
         Page<Product> products = productService.findWithFilter(filter, pageable);
 
         model.addAttribute("products", products);
@@ -148,7 +132,8 @@ public class ShopController {
             Model model) {
 
         Category category = categoryService.getCategoryBySlug(categorySlug)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Danh mục không tồn tại: " + categorySlug));
 
         ProductFilterDTO filter = new ProductFilterDTO();
         filter.setCategoryId(category.getId());
@@ -157,7 +142,6 @@ public class ShopController {
         filter.setKeyword(keyword);
 
         Pageable pageable = buildPageable(page, sort);
-
         Page<Product> products = productService.findWithFilter(filter, pageable);
 
         model.addAttribute("products", products);
@@ -165,8 +149,7 @@ public class ShopController {
         model.addAttribute("sort", sort);
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("currentCategory", category);
-        model.addAttribute("subCategories",
-                subCategoryService.getByCategoryId(category.getId()));
+        model.addAttribute("subCategories", subCategoryService.getByCategoryId(category.getId()));
 
         return "shop/products";
     }
@@ -186,13 +169,15 @@ public class ShopController {
             Model model) {
 
         Category category = categoryService.getCategoryBySlug(categorySlug)
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Danh mục không tồn tại: " + categorySlug));
 
         SubCategory subCategory = subCategoryService.getBySlug(subSlug)
-                .orElseThrow(() -> new RuntimeException("SubCategory not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Danh mục phụ không tồn tại: " + subSlug));
 
         if (!subCategory.getCategory().getId().equals(category.getId())) {
-            throw new RuntimeException("SubCategory not in Category");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Danh mục phụ không thuộc danh mục này");
         }
 
         ProductFilterDTO filter = new ProductFilterDTO();
@@ -203,7 +188,6 @@ public class ShopController {
         filter.setKeyword(keyword);
 
         Pageable pageable = buildPageable(page, sort);
-
         Page<Product> products = productService.findWithFilter(filter, pageable);
 
         model.addAttribute("products", products);
@@ -212,14 +196,27 @@ public class ShopController {
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("currentCategory", category);
         model.addAttribute("currentSubCategory", subCategory);
-        model.addAttribute("subCategories",
-                subCategoryService.getByCategoryId(category.getId()));
+        model.addAttribute("subCategories", subCategoryService.getByCategoryId(category.getId()));
 
         return "shop/products";
     }
 
     // =====================================================
-    // PRODUCT DETAIL
+    // PRODUCT DETAIL BY SLUG (for chatbot direct links)
+    // =====================================================
+    @GetMapping("/product/{slug}")
+    public String productDetailBySlug(
+            @PathVariable String slug,
+            Model model,
+            Authentication authentication) {
+
+        Product product = productService.findBySlug(slug);
+
+        return renderProductDetail(product, model);
+    }
+
+    // =====================================================
+    // PRODUCT DETAIL BY CATEGORY/SUB/ID (original URL)
     // =====================================================
     @GetMapping("/products/{categorySlug}/{subSlug}/{id}")
     public String productDetail(
@@ -230,7 +227,17 @@ public class ShopController {
             Authentication authentication) {
 
         Product product = productService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Sản phẩm không tồn tại"));
+
+        return renderProductDetail(product, model);
+    }
+
+    // =====================================================
+    // SHARED RENDER LOGIC
+    // =====================================================
+    private String renderProductDetail(Product product, Model model) {
+        Long id = product.getId();
 
         Set<String> sizes = product.getProductVariants()
                 .stream()
@@ -256,16 +263,13 @@ public class ShopController {
 
         var variantDTOs = product.getProductVariants()
                 .stream()
-                .map(v -> new VariantDTO(
-                v.getId(),
-                v.getSize(),
-                v.getColor(),
-                v.getPrice().longValue(),
-                v.getStock()
-        ))
+                .map(v -> new VariantDTO(v.getId(), v.getSize(), v.getColor(), v.getPrice(), v.getStock()))
                 .toList();
 
         model.addAttribute("variantsJson", variantDTOs);
+
+        List<Product> relatedProducts = recommendationService.getSimilarProducts(id, 4);
+        model.addAttribute("relatedProducts", relatedProducts);
 
         return "shop/product-detail";
     }

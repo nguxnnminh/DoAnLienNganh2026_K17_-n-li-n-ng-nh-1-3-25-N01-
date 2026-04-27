@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,9 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class ProductVariant extends BaseEntity implements ItemVariant {
 
+    @Version
+    private Long version;
+
     @Column(nullable = false)
     private String size;
 
@@ -30,7 +34,7 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
     private String color;
 
     @Column(nullable = false)
-    private Long price;
+    private Double price;
 
     @Column(nullable = false)
     private Integer stock;
@@ -50,7 +54,7 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
 
     @Override
     public Double getPrice() {
-        return price != null ? price.doubleValue() : 0.0;
+        return price != null ? price : 0.0;
     }
 
     @Override

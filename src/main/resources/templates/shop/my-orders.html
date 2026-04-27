@@ -1,120 +1,113 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Đơn hàng của tôi')}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'My Orders — Nova')}">
+<div th:fragment="content">
+  <style>
+    .status-badge {
+      display: inline-block;
+      font-size: .6rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      padding: 5px 13px;
+      border: 1px solid;
+    }
 
-<div th:fragment="content" class="py-10 space-y-10">
+    .status-PENDING {
+      border-color: #4a3a10;
+      color: #c8a52b;
+    }
 
-    <!-- TITLE -->
-    <div class="space-y-2">
-        <h1 class="text-3xl font-semibold tracking-tight">
-            Đơn hàng của tôi
-        </h1>
+    .status-CONFIRMED,
+    .status-PROCESSING {
+      border-color: #1a3a4a;
+      color: #5a9bbf;
+    }
 
-        <p class="text-zinc-500 text-sm">
-            Lịch sử mua sắm của bạn tại NOVA
-        </p>
+    .status-SHIPPING {
+      border-color: #2a1a4a;
+      color: #8a6dbf;
+    }
+
+    .status-COMPLETED {
+      border-color: #1a4a2a;
+      color: #6dbf6d;
+    }
+
+    .status-CANCELLED {
+      border-color: #4a1a1a;
+      color: #bf7070;
+    }
+
+    .order-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 32px;
+      padding: 32px 0;
+      border-bottom: 1px solid #1a1a1a;
+      text-decoration: none;
+      color: inherit;
+      transition: opacity .2s;
+    }
+
+    .order-row:hover {
+      opacity: .78;
+    }
+  </style>
+
+  <div style="max-width:960px; margin:0 auto; padding:64px 56px;">
+    <div style="margin-bottom:52px; border-bottom:1px solid #1a1a1a; padding-bottom:28px;">
+      <p style="font-size:.6rem; letter-spacing:.42em; text-transform:uppercase; color:#444; margin-bottom:10px;">
+        Account</p>
+      <h1
+        style="font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:.06em; line-height:1; color:#f5f5f3;">
+        My Orders</h1>
     </div>
-
 
     <!-- EMPTY -->
-    <div th:if="${#lists.isEmpty(orders)}" class="text-center py-24 border border-dashed
-                border-zinc-300 dark:border-zinc-700
-                rounded-2xl">
-
-        <p class="text-zinc-500 mb-4">
-            Bạn chưa đặt đơn hàng nào
-        </p>
-
-        <a th:href="@{/products}" class="inline-block border border-black dark:border-white
-                  px-6 py-2 text-sm
-                  hover:bg-black hover:text-white
-                  dark:hover:bg-white dark:hover:text-black
-                  transition">
-
-            Mua sắm ngay
-
-        </a>
-
+    <div th:if="${#lists.isEmpty(orders)}" style="text-align:center; padding:80px 0; border:1px solid #1a1a1a;">
+      <p
+        style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; letter-spacing:.08em; color:#1e1e1e; margin-bottom:28px;">
+        No Orders Yet</p>
+      <a th:href="@{/products}"
+        style="font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; color:#555; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:color .2s;"
+        onmouseover="this.style.color='#c0c0bc'" onmouseout="this.style.color='#555'">
+        Start Shopping
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </a>
     </div>
 
-
-
-    <!-- ORDER LIST -->
-    <div th:if="${!#lists.isEmpty(orders)}" class="space-y-6">
-
-        <div th:each="order : ${orders}" class="border border-zinc-200 dark:border-zinc-800
-                    rounded-2xl p-6
-                    hover:shadow-lg transition
-                    bg-white dark:bg-zinc-900">
-
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-
-                <!-- LEFT -->
-                <div class="space-y-2">
-
-                    <p class="text-sm text-zinc-500">
-                        Đơn hàng #
-                        <span class="font-medium text-zinc-900 dark:text-white" th:text="${order.id}">
-                        </span>
-                    </p>
-
-
-                    <p class="text-sm">
-                        Ngày đặt:
-                        <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
-                    </p>
-
-
-                    <p class="text-sm text-zinc-500">
-                        <span th:text="${order.items.size()}"></span>
-                        sản phẩm
-                    </p>
-
-
-                    <!-- STATUS -->
-                    <p class="text-sm">
-                        Trạng thái:
-
-                        <span class="px-3 py-1 rounded-full text-xs font-medium" th:text="${order.status}"
-                            th:classappend="
-                              ${order.status.name() == 'PENDING'} ? ' bg-yellow-100 text-yellow-700' :
-                              (${order.status.name() == 'CONFIRMED'} ? ' bg-blue-100 text-blue-700' :
-                              (${order.status.name() == 'SHIPPING'} ? ' bg-purple-100 text-purple-700' :
-                              (${order.status.name() == 'COMPLETED'} ? ' bg-green-100 text-green-700' :
-                              ' bg-red-100 text-red-700')))">
-                        </span>
-
-                    </p>
-
-                </div>
-
-
-
-                <!-- RIGHT -->
-                <div class="space-y-3 md:text-right">
-
-                    <p class="text-xl font-semibold tracking-tight">
-
-                        <span th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')}"></span>
-                        ₫
-
-                    </p>
-
-
-                    <a th:href="@{/orders/{id}(id=${order.id})}" class="inline-block text-sm underline underline-offset-4
-                              hover:text-blue-600 transition">
-
-                        Xem chi tiết
-
-                    </a>
-
-                </div>
-
-            </div>
-
+    <!-- ORDERS -->
+    <div th:unless="${#lists.isEmpty(orders)}">
+      <a th:each="order : ${orders}" th:href="@{/orders/{id}(id=${order.id})}" class="order-row">
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px; flex-wrap:wrap;">
+            <span style="font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:#e8e8e4;"
+              th:text="'Order #' + ${order.id}"></span>
+            <span class="status-badge" th:classappend="'status-' + ${order.status.name()}"
+              th:text="${order.status}"></span>
+          </div>
+          <p style="font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:#555; margin-bottom:6px;"
+            th:text="${#temporals.format(order.createdAt,'dd MMM yyyy · HH:mm')}"></p>
+          <p style="font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:#3a3a3a;">
+            <span th:text="${order.items.size()}"></span>&nbsp;item<span th:if="${order.items.size() > 1}">s</span>
+          </p>
         </div>
-
+        <div style="text-align:right; flex-shrink:0;">
+          <p style="font-size:.95rem; letter-spacing:.05em; color:#c0c0bc; margin-bottom:10px;"
+            th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')} + ' ₫'"></p>
+          <span
+            style="font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:#444; display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+            View
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+      </a>
     </div>
-
+  </div>
 </div>
 
 </html>

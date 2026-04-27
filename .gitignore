@@ -39,3 +39,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment ###
+.env
+application-local.properties
+
+### Logs ###
+logs/

@@ -1,8 +1,11 @@
 package com.shop.clothingstore.dto;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
-public class CartItemDTO {
+public class CartItemDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Long variantId;
     private String productName;
@@ -66,5 +69,9 @@ public class CartItemDTO {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public java.math.BigDecimal getLineTotal() {
+        return price.multiply(java.math.BigDecimal.valueOf(quantity));
     }
 }

@@ -22,7 +22,7 @@ public class VariantDTO {
 
     @NotNull
     @Positive
-    private Long price;
+    private Double price;
 
     @NotNull
     @Positive

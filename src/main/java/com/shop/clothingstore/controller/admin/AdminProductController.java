@@ -166,7 +166,7 @@ public class AdminProductController extends AdminBaseController {
                     vd.setId(v.getId());
                     vd.setSize(v.getSize());
                     vd.setColor(v.getColor());
-                    vd.setPrice(v.getPrice().longValue());
+                    vd.setPrice(v.getPrice());
                     vd.setStock(v.getStock());
 
                     variants.add(vd);
@@ -205,7 +205,7 @@ public class AdminProductController extends AdminBaseController {
 
         dto.setId(id);
         dto.setImagesToDelete(imagesToDelete != null ? imagesToDelete : new ArrayList<>());
-        System.out.println("SUB CATEGORY = " + dto.getSubCategoryId());
+
         if (result.hasErrors()) {
 
             redirectAttributes.addFlashAttribute(

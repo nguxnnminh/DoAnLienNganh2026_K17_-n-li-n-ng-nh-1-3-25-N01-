@@ -15,6 +15,7 @@ import com.shop.clothingstore.repository.ReviewRepository;
 import com.shop.clothingstore.repository.UserRepository;
 
 @Service
+@SuppressWarnings("null")
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;

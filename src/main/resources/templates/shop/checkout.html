@@ -2,131 +2,103 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Checkout — Nova')}">
 <div th:fragment="content">
   <style>
-    .co-input {
-      width: 100%;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid #2e2e2e;
-      color: #e8e8e4;
-      padding: 13px 0;
-      font-family: 'DM Sans', sans-serif;
-      font-size: .84rem;
-      outline: none;
-      transition: border-color .2s;
-      letter-spacing: .03em;
+    /* Shared field style — same as profile */
+    .n-field {
+      width:100%;background:transparent;border:none;border-bottom:1px solid #2e2e2e;
+      color:#e8e8e4;padding:13px 0;font-family:'DM Sans',sans-serif;font-size:.9rem;
+      outline:none;transition:border-color .2s;letter-spacing:.03em;
     }
-
-    .co-input:focus {
-      border-bottom-color: #666;
-    }
-
-    .co-input::placeholder {
-      color: #2e2e2e;
-      font-size: .72rem;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-
-    .co-label {
-      font-size: .6rem;
-      letter-spacing: .38em;
-      text-transform: uppercase;
-      color: #555;
-      display: block;
-      margin-bottom: 7px;
-    }
+    .n-field:focus { border-bottom-color:#555; }
+    .n-field::placeholder { color:#383838;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase; }
+    .n-label { font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#555;display:block;margin-bottom:8px; }
   </style>
 
-  <div style="max-width:1240px; margin:0 auto; padding:64px 56px;">
-    <div style="margin-bottom:52px; border-bottom:1px solid #1a1a1a; padding-bottom:28px;">
-      <p style="font-size:.6rem; letter-spacing:.42em; text-transform:uppercase; color:#444; margin-bottom:10px;">Final
-        Step</p>
-      <h1
-        style="font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:.06em; line-height:1; color:#f5f5f3;">
-        Checkout</h1>
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
+
+    <!-- HEADER -->
+    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Final Step</p>
+      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Checkout</h1>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 360px; gap:64px; align-items:start;">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 md:gap-16 items-start">
 
-      <!-- LEFT: FORM -->
+      <!-- FORM -->
       <div>
-        <p style="font-size:.6rem; letter-spacing:.38em; text-transform:uppercase; color:#444; margin-bottom:36px;">
-          Delivery Information</p>
-        <form th:action="@{/checkout}" method="post" style="display:flex; flex-direction:column; gap:36px;">
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-8 md:mb-10">Delivery Information</p>
+        <form th:action="@{/checkout}" method="post" class="flex flex-col gap-8 md:gap-9">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
           <div>
-            <label class="co-label">Full Name</label>
-            <input class="co-input" type="text" name="customerName" th:value="${user != null ? user.fullName : ''}"
-              required placeholder="Your name" />
+            <label class="n-label">Full Name</label>
+            <input class="n-field" type="text" name="customerName"
+                   th:value="${user!=null?user.fullName:''}" required placeholder="Your name" />
           </div>
           <div>
-            <label class="co-label">Phone</label>
-            <input class="co-input" type="text" name="phone" th:value="${user != null ? user.phone : ''}" required
-              placeholder="0900 000 000" />
+            <label class="n-label">Phone</label>
+            <input class="n-field" type="text" name="phone"
+                   th:value="${user!=null?user.phone:''}" required placeholder="0900 000 000" />
           </div>
           <div>
-            <label class="co-label">Delivery Address</label>
-            <textarea class="co-input" name="address" rows="3" style="resize:none;" required
-              placeholder="Street, District, City" th:text="${user != null ? user.address : ''}"></textarea>
+            <label class="n-label">Delivery Address</label>
+            <textarea class="n-field" name="address" rows="3" style="resize:none" required
+                      placeholder="Street, District, City"
+                      th:text="${user!=null?user.address:''}"></textarea>
           </div>
 
           <div th:if="${error}"
-            style="border:1px solid #4a2a2a; background:#1a0a0a; color:#bf8080; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; padding:14px 18px; line-height:1.6;"
-            th:text="${error}"></div>
+               class="border border-zinc-800 bg-zinc-900/60 text-zinc-500 text-xs tracking-widest uppercase px-4 py-3.5 leading-relaxed"
+               th:text="${error}"></div>
 
           <button type="submit"
-            style="background:#f5f5f3; color:#0a0a0a; border:none; padding:17px; font-family:'DM Sans',sans-serif; font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; font-weight:500; cursor:pointer; transition:background .25s; margin-top:4px;"
-            onmouseover="this.style.background='#d8d8d4'" onmouseout="this.style.background='#f5f5f3'">
+                  class="h-12 bg-[#f5f5f3] text-[#0a0a0a] border-none font-body
+                         text-xs tracking-widest uppercase font-medium cursor-pointer
+                         transition-colors duration-200 hover:bg-[#d8d8d4]">
             Place Order
           </button>
         </form>
       </div>
 
-      <!-- RIGHT: SUMMARY -->
-      <div style="position:sticky; top:100px; border:1px solid #1e1e1e; padding:36px;">
-        <p style="font-size:.6rem; letter-spacing:.4em; text-transform:uppercase; color:#444; margin-bottom:28px;">Order
-          Summary</p>
+      <!-- SUMMARY PANEL -->
+      <div class="lg:sticky lg:top-24 border border-zinc-800/60 p-6 md:p-8">
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-6">Order Summary</p>
 
-        <!-- ITEMS -->
-        <div
-          style="display:flex; flex-direction:column; gap:18px; margin-bottom:26px; padding-bottom:26px; border-bottom:1px solid #1a1a1a;">
-          <div th:each="item : ${cartItems}"
-            style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
-            <div style="flex:1;">
-              <p style="font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:#e0e0dc; margin-bottom:4px;"
-                th:text="${item.productName}"></p>
-              <p style="font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:#444;">
+        <div class="flex flex-col gap-4 mb-6 pb-6 border-b border-zinc-900">
+          <div th:each="item : ${cartItems}" class="flex justify-between items-start gap-3">
+            <div class="flex-1">
+              <p class="text-xs tracking-widest uppercase text-[#e0e0dc] mb-1"
+                 th:text="${item.productName}"></p>
+              <p class="text-xs tracking-widest uppercase text-zinc-600">
                 <span th:text="${item.size}"></span>&nbsp;·&nbsp;<span
                   th:text="${item.color}"></span>&nbsp;·&nbsp;×<span th:text="${item.quantity}"></span>
               </p>
             </div>
-            <span style="font-size:.7rem; color:#666; white-space:nowrap;"
-              th:text="${#numbers.formatDecimal(item.lineTotal,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+            <span class="text-xs text-zinc-500 whitespace-nowrap"
+                  th:text="${#numbers.formatDecimal(item.lineTotal,0,'POINT',0,'COMMA')}+' ₫'"></span>
           </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:26px;">
-          <div style="display:flex; justify-content:space-between;">
-            <span style="font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:#666;">Subtotal</span>
-            <span style="font-size:.7rem; color:#888;"
-              th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+        <div class="flex flex-col gap-4 mb-6">
+          <div class="flex justify-between">
+            <span class="text-xs tracking-widest uppercase text-zinc-500">Subtotal</span>
+            <span class="text-xs text-zinc-400"
+                  th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}+' ₫'"></span>
           </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:#666;">Shipping</span>
-            <span style="font-size:.7rem; color:#6dbf6d;">Free</span>
+          <div class="flex justify-between">
+            <span class="text-xs tracking-widest uppercase text-zinc-500">Shipping</span>
+            <span class="text-xs text-[#6dbf6d]">Free</span>
           </div>
         </div>
 
-        <div style="height:1px; background:#1a1a1a; margin-bottom:26px;"></div>
-        <div style="display:flex; justify-content:space-between;">
-          <span style="font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:#c0c0bc;">Total</span>
-          <span style="font-size:1.05rem; color:#f5f5f3;"
-            th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+        <div class="h-px bg-zinc-900 mb-6"></div>
+        <div class="flex justify-between">
+          <span class="text-xs tracking-widest uppercase text-[#c0c0bc]">Total</span>
+          <span class="text-base text-[#f5f5f3]"
+                th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}+' ₫'"></span>
         </div>
       </div>
+
     </div>
   </div>
 </div>
-
 </html>

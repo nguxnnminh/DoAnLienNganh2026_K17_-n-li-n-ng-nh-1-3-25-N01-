@@ -1,169 +1,189 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Order Detail — Nova')}">
 <div th:fragment="content">
-<style>
-.status-badge{display:inline-block;font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;padding:5px 14px;border:1px solid;}
-.status-PENDING{border-color:#4a3a10;color:#c8a52b;}
-.status-CONFIRMED,.status-PROCESSING{border-color:#1a3a4a;color:#4a9bbf;}
-.status-SHIPPING{border-color:#2a1a4a;color:#8a6dbf;}
-.status-COMPLETED{border-color:#1a4a2a;color:#6dbf6d;}
-.status-CANCELLED{border-color:#4a1a1a;color:#bf6d6d;}
-.star{font-size:1.2rem;cursor:pointer;color:#2a2a2a;transition:color .2s;}
-.star.lit{color:#f5f5f3;}
-.review-input{width:100%;background:transparent;border:1px solid #2a2a2a;color:#f5f5f3;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.75rem;resize:none;outline:none;transition:border-color .2s;}
-.review-input:focus{border-color:#555;}
-.review-input::placeholder{color:#333;font-size:.65rem;letter-spacing:.08em;}
-</style>
+  <style>
+    .status-badge { display:inline-block; font-size:.5rem; letter-spacing:.25em; text-transform:uppercase; padding:5px 14px; border:1px solid; }
+    .status-PENDING        { border-color:#4a3a10; color:#c8a52b; }
+    .status-CONFIRMED,
+    .status-PROCESSING     { border-color:#1a3a4a; color:#4a9bbf; }
+    .status-SHIPPING       { border-color:#2a1a4a; color:#8a6dbf; }
+    .status-COMPLETED      { border-color:#1a4a2a; color:#6dbf6d; }
+    .status-CANCELLED      { border-color:#4a1a1a; color:#bf6d6d; }
 
-<div style="max-width:1000px;margin:0 auto;padding:60px 48px;">
+    .star { font-size:1.2rem; cursor:pointer; color:#2a2a2a; transition:color .2s; }
+    .star.lit { color:#f5f5f3; }
 
-  <!-- BACK + HEADER -->
-  <div style="margin-bottom:40px;">
-    <a th:href="@{/my-orders}" style="font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:#444;text-decoration:none;display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;transition:color .2s;" onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#444'">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to Orders
-    </a>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #1a1a1a;padding-bottom:28px;">
-      <div>
-        <p style="font-size:.55rem;letter-spacing:.45em;text-transform:uppercase;color:#333;margin-bottom:8px;">Order</p>
-        <h1 style="font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.05em;line-height:1;">
-          #<span th:text="${order.id}"></span>
-        </h1>
-        <p style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#444;margin-top:8px;"
-           th:text="${#temporals.format(order.createdAt,'dd MMM yyyy · HH:mm')}"></p>
-      </div>
-      <span class="status-badge" th:classappend="'status-' + ${order.status.name()}" th:text="${order.status}"></span>
-    </div>
-  </div>
+    .review-input {
+      width:100%; background:transparent; border:1px solid #2a2a2a; color:#f5f5f3;
+      padding:12px 14px; font-family:'DM Sans',sans-serif; font-size:.75rem; resize:none; outline:none;
+      transition:border-color .2s;
+    }
+    .review-input:focus { border-color:#555; }
+    .review-input::placeholder { color:#333; font-size:.65rem; letter-spacing:.08em; }
+  </style>
 
-  <div style="display:grid;grid-template-columns:1fr 300px;gap:48px;align-items:start;">
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
 
-    <!-- LEFT: ITEMS + REVIEWS -->
-    <div>
-      <p style="font-size:.5rem;letter-spacing:.4em;text-transform:uppercase;color:#333;margin-bottom:24px;">Items</p>
+    <!-- BACK + HEADER -->
+    <div class="mb-8 md:mb-10">
+      <a th:href="@{/my-orders}"
+        class="text-[0.55rem] tracking-widest uppercase text-zinc-600 no-underline inline-flex items-center gap-2 mb-6 transition-colors duration-200 hover:text-[#f5f5f3]">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Back to Orders
+      </a>
 
-      <div th:each="item : ${order.items}" style="padding:24px 0;border-bottom:1px solid #1a1a1a;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-          <div>
-            <p style="font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:#f5f5f3;margin-bottom:6px;" th:text="${item.productName}"></p>
-            <p style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#444;">
-              <span th:text="${item.size}"></span> · <span th:text="${item.color}"></span> · ×<span th:text="${item.quantity}"></span>
-            </p>
-          </div>
-          <span style="font-size:.75rem;color:#888;" th:text="${#numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')} + ' ₫'"></span>
-        </div>
-
-        <!-- REVIEW SECTION -->
-        <div th:if="${isCompleted}">
-          <span th:if="${reviewedItemIds.contains(item.id)}"
-                style="font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#6dbf6d;border:1px solid #2a4a2a;padding:4px 12px;">
-            Reviewed
-          </span>
-
-          <div th:unless="${reviewedItemIds.contains(item.id)}">
-            <button th:attr="onclick='toggleReview(' + ${item.id} + ')'"
-                    style="font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#555;background:none;border:1px solid #2a2a2a;padding:6px 14px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;"
-                    onmouseover="this.style.borderColor='#555';this.style.color='#f5f5f3'"
-                    onmouseout="this.style.borderColor='#2a2a2a';this.style.color='#555'">
-              Leave Review
-            </button>
-
-            <form th:id="'rf-' + ${item.id}" th:action="@{/reviews/{id}(id=${item.id})}" method="post"
-                  style="display:none;margin-top:16px;padding:20px;border:1px solid #1a1a1a;background:#0f0f0f;">
-              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-              <div class="starSelect" th:data-item-id="${item.id}" style="display:flex;gap:6px;margin-bottom:16px;">
-                <input type="hidden" name="rating" th:id="'ri-' + ${item.id}" />
-                <span th:each="i : ${#numbers.sequence(1,5)}" class="star" th:data-value="${i}">★</span>
-              </div>
-
-              <textarea name="comment" required rows="3" class="review-input" placeholder="Share your thoughts..." style="margin-bottom:12px;"></textarea>
-
-              <button type="submit"
-                      style="padding:10px 24px;background:#f5f5f3;color:#0a0a0a;border:none;font-family:'DM Sans',sans-serif;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:background .25s;"
-                      onmouseover="this.style.background='#ccc'" onmouseout="this.style.background='#f5f5f3'">Submit</button>
-            </form>
-          </div>
-        </div>
-
-        <button th:unless="${isCompleted}" disabled
-                style="font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#2a2a2a;background:none;border:1px solid #1a1a1a;padding:5px 12px;cursor:not-allowed;font-family:'DM Sans',sans-serif;">
-          Review after delivery
-        </button>
-      </div>
-    </div>
-
-    <!-- RIGHT: SUMMARY -->
-    <div style="position:sticky;top:100px;border:1px solid #1e1e1e;padding:28px;">
-      <p style="font-size:.5rem;letter-spacing:.4em;text-transform:uppercase;color:#333;margin-bottom:20px;">Summary</p>
-
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-        <div style="display:flex;justify-content:space-between;">
-          <span style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#555;">Name</span>
-          <span style="font-size:.6rem;color:#888;" th:text="${order.customerName}"></span>
-        </div>
-        <div style="display:flex;justify-content:space-between;">
-          <span style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#555;">Phone</span>
-          <span style="font-size:.6rem;color:#888;" th:text="${order.phone}"></span>
-        </div>
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 border-b border-zinc-900 pb-6 md:pb-8">
         <div>
-          <span style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Address</span>
-          <span style="font-size:.6rem;color:#888;line-height:1.6;" th:text="${order.address}"></span>
+          <p class="text-[0.55rem] tracking-widest3 uppercase text-zinc-700 mb-2">Order</p>
+          <h1 class="font-display text-4xl md:text-5xl tracking-wide leading-none">
+            #<span th:text="${order.id}"></span>
+          </h1>
+          <p class="text-[0.6rem] tracking-widest uppercase text-zinc-600 mt-2"
+            th:text="${#temporals.format(order.createdAt,'dd MMM yyyy · HH:mm')}"></p>
         </div>
-      </div>
-
-      <div style="height:1px;background:#1a1a1a;margin-bottom:20px;"></div>
-
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#555;">Subtotal</span>
-        <span style="font-size:.6rem;color:#888;" th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')} + ' ₫'"></span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:20px;">
-        <span style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#555;">Shipping</span>
-        <span style="font-size:.6rem;color:#6dbf6d;">Free</span>
-      </div>
-      <div style="height:1px;background:#1a1a1a;margin-bottom:20px;"></div>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#f5f5f3;">Total</span>
-        <span style="font-size:.9rem;color:#f5f5f3;" th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+        <span class="status-badge self-start sm:self-auto" th:classappend="'status-' + ${order.status.name()}"
+          th:text="${order.status}"></span>
       </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 md:gap-12 items-start">
+
+      <!-- ITEMS + REVIEWS -->
+      <div>
+        <p class="text-[0.5rem] tracking-widest3 uppercase text-zinc-700 mb-6">Items</p>
+
+        <div th:each="item : ${order.items}" class="py-6 border-b border-zinc-900">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="text-[0.75rem] tracking-widest uppercase text-[#f5f5f3] mb-1.5"
+                th:text="${item.productName}"></p>
+              <p class="text-[0.6rem] tracking-widest uppercase text-zinc-600">
+                <span th:text="${item.size}"></span> · <span th:text="${item.color}"></span> · ×<span th:text="${item.quantity}"></span>
+              </p>
+            </div>
+            <span class="text-[0.75rem] text-zinc-500"
+              th:text="${#numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+          </div>
+
+          <!-- REVIEW SECTION -->
+          <div th:if="${isCompleted}">
+            <span th:if="${reviewedItemIds.contains(item.id)}"
+              class="text-[0.55rem] tracking-widest uppercase text-[#6dbf6d] border border-[#2a4a2a] px-3 py-1 inline-block">
+              Reviewed
+            </span>
+
+            <div th:unless="${reviewedItemIds.contains(item.id)}">
+              <button th:attr="onclick='toggleReview(' + ${item.id} + ')'"
+                class="text-[0.55rem] tracking-widest uppercase text-zinc-500 bg-transparent border border-zinc-800 px-3.5 py-1.5 cursor-pointer transition-all duration-200 hover:border-zinc-500 hover:text-[#f5f5f3] font-body">
+                Leave Review
+              </button>
+
+              <form th:id="'rf-' + ${item.id}" th:action="@{/reviews/{id}(id=${item.id})}" method="post"
+                class="hidden mt-4 p-5 border border-zinc-900 bg-[#0f0f0f]">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="starSelect flex gap-1.5 mb-4" th:data-item-id="${item.id}">
+                  <input type="hidden" name="rating" th:id="'ri-' + ${item.id}" />
+                  <span th:each="i : ${#numbers.sequence(1,5)}" class="star" th:data-value="${i}">★</span>
+                </div>
+
+                <textarea name="comment" required rows="3" class="review-input mb-3"
+                  placeholder="Share your thoughts..."></textarea>
+
+                <button type="submit"
+                  class="px-6 py-2.5 bg-[#f5f5f3] text-[#0a0a0a] border-none font-body text-[0.6rem] tracking-widest uppercase font-medium cursor-pointer transition-colors duration-200 hover:bg-[#ccc]">
+                  Submit
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <button th:unless="${isCompleted}" disabled
+            class="text-[0.55rem] tracking-widest uppercase text-zinc-800 bg-transparent border border-zinc-900 px-3 py-1.5 cursor-not-allowed font-body">
+            Review after delivery
+          </button>
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="lg:sticky lg:top-24 border border-zinc-800/60 p-6 md:p-7">
+        <p class="text-[0.5rem] tracking-widest3 uppercase text-zinc-700 mb-5">Summary</p>
+
+        <div class="flex flex-col gap-2.5 mb-5">
+          <div class="flex justify-between">
+            <span class="text-[0.6rem] tracking-widest uppercase text-zinc-600">Name</span>
+            <span class="text-[0.6rem] text-zinc-500" th:text="${order.customerName}"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[0.6rem] tracking-widest uppercase text-zinc-600">Phone</span>
+            <span class="text-[0.6rem] text-zinc-500" th:text="${order.phone}"></span>
+          </div>
+          <div>
+            <span class="text-[0.6rem] tracking-widest uppercase text-zinc-600 block mb-1">Address</span>
+            <span class="text-[0.6rem] text-zinc-500 leading-relaxed" th:text="${order.address}"></span>
+          </div>
+        </div>
+
+        <div class="h-px bg-zinc-900 mb-5"></div>
+
+        <div class="flex justify-between mb-2">
+          <span class="text-[0.6rem] tracking-widest uppercase text-zinc-600">Subtotal</span>
+          <span class="text-[0.6rem] text-zinc-500"
+            th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+        </div>
+        <div class="flex justify-between mb-5">
+          <span class="text-[0.6rem] tracking-widest uppercase text-zinc-600">Shipping</span>
+          <span class="text-[0.6rem] text-[#6dbf6d]">Free</span>
+        </div>
+
+        <div class="h-px bg-zinc-900 mb-5"></div>
+        <div class="flex justify-between">
+          <span class="text-[0.65rem] tracking-widest uppercase text-[#f5f5f3]">Total</span>
+          <span class="text-[0.9rem] text-[#f5f5f3]"
+            th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<script>
-function toggleReview(id) {
-  const f = document.getElementById('rf-' + id);
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
-}
+  <script>
+    function toggleReview(id) {
+      const f = document.getElementById('rf-' + id);
+      f.classList.toggle('hidden');
+    }
 
-document.querySelectorAll('.starSelect').forEach(function(container) {
-  const stars = container.querySelectorAll('.star');
-  const id = container.dataset.itemId;
-  const input = document.getElementById('ri-' + id);
-  let selected = 0;
+    document.querySelectorAll('.starSelect').forEach(function(container) {
+      const stars = container.querySelectorAll('.star');
+      const id = container.dataset.itemId;
+      const input = document.getElementById('ri-' + id);
+      let selected = 0;
 
-  function paint(n) {
-    stars.forEach(function(s) {
-      s.classList.toggle('lit', Number(s.dataset.value) <= n);
+      function paint(n) {
+        stars.forEach(function(s) {
+          s.classList.toggle('lit', Number(s.dataset.value) <= n);
+        });
+      }
+
+      stars.forEach(function(s) {
+        s.addEventListener('mouseenter', function() { paint(this.dataset.value); });
+        s.addEventListener('mouseleave', function() { paint(selected); });
+        s.addEventListener('click', function() {
+          selected = Number(this.dataset.value);
+          input.value = selected;
+          paint(selected);
+        });
+      });
+
+      const form = container.closest('form');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          if (!input.value) { e.preventDefault(); alert('Please select a star rating.'); }
+        });
+      }
     });
-  }
-
-  stars.forEach(function(s) {
-    s.addEventListener('mouseenter', function() { paint(this.dataset.value); });
-    s.addEventListener('mouseleave', function() { paint(selected); });
-    s.addEventListener('click', function() {
-      selected = Number(this.dataset.value);
-      input.value = selected;
-      paint(selected);
-    });
-  });
-
-  s.closest('form').addEventListener('submit', function(e) {
-    if (!input.value) { e.preventDefault(); alert('Please select a star rating.'); }
-  });
-});
-</script>
+  </script>
 </div>
 </html>

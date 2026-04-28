@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.shop.clothingstore.entity.Category;
@@ -22,6 +23,8 @@ import com.shop.clothingstore.repository.SubCategoryRepository;
 import com.shop.clothingstore.repository.UserRepository;
 
 @Configuration
+@Profile("!production") // Không chạy trên production — tránh overwrite dữ liệu thật
+@SuppressWarnings("unused")
 public class DataInitializer {
 
     @Bean
@@ -176,7 +179,12 @@ public class DataInitializer {
 
                 User u = new User();
                 u.setEmail("user@test.com");
-                u.setPassword(passwordEncoder.encode("123456"));
+                // Lấy password từ env var DEV_USER_PASSWORD, fallback là chuỗi mạnh hơn
+                String userPass = System.getenv("DEV_USER_PASSWORD");
+                if (userPass == null || userPass.isBlank()) {
+                    userPass = "User@Dev2024!";
+                }
+                u.setPassword(passwordEncoder.encode(userPass));
                 u.setRole(Role.USER);
                 u.setFullName("Test User");
                 u.setPhone("0123456789");
@@ -189,7 +197,11 @@ public class DataInitializer {
 
                 User a = new User();
                 a.setEmail("admin@test.com");
-                a.setPassword(passwordEncoder.encode("123456"));
+                String adminPass = System.getenv("DEV_ADMIN_PASSWORD");
+                if (adminPass == null || adminPass.isBlank()) {
+                    adminPass = "Admin@Dev2024!";
+                }
+                a.setPassword(passwordEncoder.encode(adminPass));
                 a.setRole(Role.ADMIN);
 
                 userRepo.save(a);
@@ -223,11 +235,12 @@ public class DataInitializer {
             String description,
             SubCategory subCategory
     ) {
-
         String baseSlug = toSlug(name);
-        String uniqueSlug = generateUniqueSlug(repo, baseSlug);
 
-        return repo.findBySlug(uniqueSlug).orElseGet(() -> {
+        return repo.findBySlug(baseSlug).orElseGet(() -> {
+
+            // ❗ CHỈ generate khi cần tạo mới
+            String uniqueSlug = generateUniqueSlug(repo, baseSlug);
 
             Product p = new Product();
             p.setName(name);
@@ -241,10 +254,12 @@ public class DataInitializer {
     }
 
     private String toSlug(String input) {
-        return input.toLowerCase()
-                .replaceAll("[^a-z0-9\\s]", "")
-                .trim()
-                .replaceAll("\\s+", "-");
+        String normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
+        String slug = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        slug = slug.toLowerCase();
+        slug = slug.replaceAll("[^a-z0-9\\s-]", "");
+        slug = slug.replaceAll("\\s+", "-");
+        return slug;
     }
 
     private String generateUniqueSlug(ProductRepository repo, String baseSlug) {

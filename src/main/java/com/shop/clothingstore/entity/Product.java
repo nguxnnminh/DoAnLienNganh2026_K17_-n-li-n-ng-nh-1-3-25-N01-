@@ -39,6 +39,11 @@ public class Product extends BaseEntity implements SellableItem {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    private String metaTitle;
+
+    @Column(columnDefinition = "TEXT")
+    private String metaDescription;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "sub_category_id")
     private SubCategory subCategory;

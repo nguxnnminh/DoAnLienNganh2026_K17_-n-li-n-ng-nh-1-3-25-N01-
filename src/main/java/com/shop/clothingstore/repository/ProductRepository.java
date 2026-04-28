@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.repository.base.BaseRepository;
@@ -28,7 +30,8 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
         "subCategory",
         "subCategory.category"
     })
-    Optional<Product> findById(Long id);
+    @NonNull
+    Optional<Product> findById(@NonNull Long id);
 
 
     /*
@@ -97,11 +100,13 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
      * Tránh N+1 khi hiển thị danh sách sản phẩm
      * =====================================================
      */
+    @Override
     @EntityGraph(attributePaths = {
         "subCategory",
         "subCategory.category"
     })
-    Page<Product> findAll(Pageable pageable);
+    @NonNull
+    Page<Product> findAll(@NonNull Pageable pageable);
 
     /*
      * =====================================================
@@ -109,12 +114,14 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
      * Tránh N+1 khi dùng filter API
      * =====================================================
      */
+    @Override
     @EntityGraph(attributePaths = {
         "subCategory",
         "subCategory.category",
         "images"
     })
-    Page<Product> findAll(Specification<Product> spec, Pageable pageable);
+    @NonNull
+    Page<Product> findAll(@Nullable Specification<Product> spec, @NonNull Pageable pageable);
 
     // =====================================================
     // RECOMMENDATION QUERIES
@@ -159,15 +166,10 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
     List<Product> findBestSellers(Pageable pageable);
 
     // =====================================================
-    // ANALYTICS QUERIES
+    // ANALYTICS: alias findBestSellers — dùng chung 1 query
     // =====================================================
-    @Query("""
-        SELECT p FROM Product p
-        LEFT JOIN p.productVariants v
-        WHERE p.active = true
-        GROUP BY p
-        ORDER BY COALESCE(SUM(v.sold), 0) DESC
-    """)
-    List<Product> findTopSellingProducts(Pageable pageable);
+    default List<Product> findTopSellingProducts(Pageable pageable) {
+        return findBestSellers(pageable);
+    }
 
 }

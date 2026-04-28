@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -19,6 +20,14 @@ public class FileStorageService {
     private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp", "gif");
+    private static final Set<String> ALLOWED_MAGIC_BYTES = Set.of(
+            "ffd8ff", // JPEG
+            "89504e47", // PNG
+            "47494638", // GIF
+            "52494646" // WEBP (RIFF)
+    );
+
     @Value("${upload.dir:src/main/resources/static/images}")
     private String baseUploadDir;
 
@@ -31,16 +40,30 @@ public class FileStorageService {
             throw new IllegalArgumentException("File không được rỗng");
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException(
-                    "Chỉ chấp nhận file ảnh. Loại file nhận được: " + contentType);
-        }
-
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new IllegalArgumentException(
                     "File quá lớn. Tối đa 5MB, file hiện tại: "
                     + (file.getSize() / 1024 / 1024) + "MB");
+        }
+
+        String originalName = file.getOriginalFilename();
+        String extension = "";
+        if (originalName != null && originalName.contains(".")) {
+            extension = originalName.substring(originalName.lastIndexOf(".") + 1).toLowerCase();
+        }
+
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException(
+                    "Định dạng file không được hỗ trợ. Chỉ chấp nhận: " + ALLOWED_EXTENSIONS);
+        }
+
+        // Validate magic bytes (file signature)
+        byte[] header = file.getInputStream().readNBytes(8);
+        String magic = bytesToHex(header).toLowerCase();
+        boolean validMagic = ALLOWED_MAGIC_BYTES.stream().anyMatch(magic::startsWith);
+        if (!validMagic) {
+            throw new IllegalArgumentException(
+                    "File signature không hợp lệ. Có thể file đã bị đổi đuôi.");
         }
 
         // =====================================================
@@ -52,12 +75,7 @@ public class FileStorageService {
             Files.createDirectories(uploadPath);
         }
 
-        String originalName = file.getOriginalFilename();
-        String extension = "";
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf("."));
-        }
-        String fileName = UUID.randomUUID() + extension;
+        String fileName = UUID.randomUUID() + "." + extension;
 
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -85,5 +103,13 @@ public class FileStorageService {
         } else {
             log.warn("File not found for deletion | path={}", fileUrl);
         }
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }

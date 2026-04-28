@@ -14,4 +14,7 @@ public class CheckoutRequest {
 
     @NotBlank(message = "Địa chỉ không được trống")
     private String address;
+
+    // Optional — null nếu không dùng coupon
+    private String couponCode;
 }

@@ -8,7 +8,6 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title th:text="${title} ?: 'NOVA'">NOVA</title>
 
-    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -27,20 +26,12 @@
         }
     </script>
 
-    <!-- Fonts: Bebas Neue (display) + DM Sans (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Be+Vietnam+Pro:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         /* ===== RESET & BASE ===== */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --c-black: #0a0a0a;
@@ -50,11 +41,10 @@
             --c-muted: #6b6b6b;
             --c-accent: #e8e0d0;
             --header-h: 72px;
+            --header-h-mobile: 56px;
         }
 
-        html {
-            background: var(--c-black);
-        }
+        html { background: var(--c-black); }
 
         body {
             font-family: 'DM Sans', sans-serif;
@@ -69,23 +59,15 @@
         }
 
         @keyframes bodyIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ===== HEADER ===== */
+        /* ===== DESKTOP HEADER ===== */
         .site-header {
             position: fixed;
             top: 36px;
-            left: 0;
-            right: 0;
+            left: 0; right: 0;
             z-index: 100;
             height: var(--header-h);
             background: transparent;
@@ -101,8 +83,27 @@
             backdrop-filter: blur(16px);
         }
 
-        .announcement-hidden {
-            transform: translateY(-100%);
+        .announcement-hidden { transform: translateY(-100%); }
+
+        /* ===== MOBILE HEADER ===== */
+        .mobile-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            height: var(--header-h-mobile);
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid #161616;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-header.scrolled {
+            background: rgba(10, 10, 10, 0.97);
         }
 
         /* ===== LOGO ===== */
@@ -115,7 +116,19 @@
             line-height: 1;
         }
 
-        /* ===== NAV ===== */
+        .logo-mobile {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.6rem;
+            letter-spacing: 0.14em;
+            color: var(--c-white);
+            text-decoration: none;
+            line-height: 1;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* ===== DESKTOP NAV ===== */
         .nav-link {
             font-size: 0.7rem;
             font-weight: 500;
@@ -131,21 +144,14 @@
         .nav-link::after {
             content: '';
             position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
+            bottom: -2px; left: 0;
+            width: 0; height: 1px;
             background: var(--c-white);
             transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .nav-link:hover {
-            color: var(--c-white);
-        }
-
-        .nav-link:hover::after {
-            width: 100%;
-        }
+        .nav-link:hover { color: var(--c-white); }
+        .nav-link:hover::after { width: 100%; }
 
         /* ===== DROPDOWN ===== */
         .nav-dropdown {
@@ -157,14 +163,12 @@
             border: 1px solid #2a2a2a;
             width: 220px;
             padding: 24px;
-            opacity: 0;
-            visibility: hidden;
+            opacity: 0; visibility: hidden;
             transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .nav-dropdown-wrap:hover .nav-dropdown {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1; visibility: visible;
             transform: translateX(-50%) translateY(0);
         }
 
@@ -179,9 +183,7 @@
             transition: color 0.2s;
         }
 
-        .nav-dropdown a:hover {
-            color: var(--c-white);
-        }
+        .nav-dropdown a:hover { color: var(--c-white); }
 
         .nav-dropdown-cat {
             font-size: 0.65rem;
@@ -192,9 +194,7 @@
             margin-bottom: 8px;
         }
 
-        .nav-dropdown-cat:first-child {
-            margin-top: 0;
-        }
+        .nav-dropdown-cat:first-child { margin-top: 0; }
 
         /* ===== ICON BUTTONS ===== */
         .icon-btn {
@@ -204,21 +204,31 @@
             align-items: center;
         }
 
-        .icon-btn:hover {
-            color: var(--c-white);
+        .icon-btn:hover { color: var(--c-white); }
+
+        /* Mobile icon — larger tap target */
+        .icon-btn-mobile {
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: color 0.15s;
+            -webkit-tap-highlight-color: transparent;
         }
+
+        .icon-btn-mobile:active { color: var(--c-white); }
 
         /* ===== CART BADGE ===== */
         .cart-badge {
             position: absolute;
-            top: -6px;
-            right: -6px;
+            top: -6px; right: -6px;
             background: var(--c-white);
             color: var(--c-black);
             font-size: 0.6rem;
             font-weight: 700;
-            width: 16px;
-            height: 16px;
+            width: 16px; height: 16px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -226,27 +236,23 @@
             letter-spacing: 0;
         }
 
-        /* ===== USER DROPDOWN ===== */
+        /* ===== DESKTOP USER DROPDOWN ===== */
         .user-dropdown {
             position: absolute;
-            top: calc(100% + 16px);
-            right: 0;
+            top: calc(100% + 16px); right: 0;
             background: var(--c-gray);
             border: 1px solid #2a2a2a;
             width: 180px;
             padding: 8px;
-            opacity: 0;
-            visibility: hidden;
+            opacity: 0; visibility: hidden;
             transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .user-dropdown-wrap:hover .user-dropdown {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1; visibility: visible;
         }
 
-        .user-dropdown a,
-        .user-dropdown button {
+        .user-dropdown a, .user-dropdown button {
             display: block;
             width: 100%;
             text-align: left;
@@ -262,62 +268,198 @@
             transition: color 0.2s, background 0.2s;
         }
 
-        .user-dropdown a:hover {
-            color: var(--c-white);
-            background: #222;
-        }
+        .user-dropdown a:hover { color: var(--c-white); background: #222; }
+        .user-dropdown button:hover { color: #ff4444; background: #1a0a0a; }
 
-        .user-dropdown button:hover {
-            color: #ff4444;
-            background: #1a0a0a;
-        }
+        /* ===== DESKTOP MOBILE MENU (legacy) ===== */
+        /* We replace this completely for mobile — see below */
 
-        /* ===== MOBILE MENU ===== */
-        .mobile-menu {
+        /* ===== MOBILE OFF-CANVAS MENU ===== */
+        .mobile-overlay {
             position: fixed;
             inset: 0;
-            background: var(--c-black);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 200;
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-            padding: 40px 32px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
 
-        .mobile-menu.open {
+        .mobile-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-drawer {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: min(80vw, 300px);
+            background: #0d0d0d;
+            border-left: 1px solid #1e1e1e;
+            z-index: 201;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow-y: auto;
+        }
+
+        .mobile-drawer.open {
             transform: translateX(0);
         }
 
-        .mobile-menu a {
-            display: block;
+        .mobile-drawer-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid #161616;
+            flex-shrink: 0;
+        }
+
+        .mobile-drawer-brand {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 3rem;
-            letter-spacing: 0.08em;
+            font-size: 1.4rem;
+            letter-spacing: 0.14em;
             color: var(--c-white);
-            text-decoration: none;
+        }
+
+        .drawer-close-btn {
+            width: 36px; height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: 1px solid #2a2a2a;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .drawer-close-btn:active { color: var(--c-white); border-color: #555; }
+
+        .mobile-drawer-nav {
+            flex: 1;
             padding: 8px 0;
-            border-bottom: 1px solid #1e1e1e;
-            transition: color 0.2s;
         }
 
-        .mobile-menu a:hover {
-            color: #888;
+        .drawer-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #aaa;
+            text-decoration: none;
+            border-bottom: 1px solid #111;
+            transition: color 0.15s, background 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 56px;
         }
 
-        .mobile-close {
-            position: absolute;
-            top: 28px;
-            right: 32px;
+        .drawer-nav-item:active {
+            color: var(--c-white);
+            background: #141414;
+        }
+
+        .drawer-nav-item svg {
+            opacity: 0.35;
+            flex-shrink: 0;
+        }
+
+        /* Sub-menu within drawer */
+        .drawer-sub {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            background: #080808;
+        }
+
+        .drawer-sub.open {
+            max-height: 400px;
+        }
+
+        .drawer-sub-cat {
+            font-size: 0.55rem;
+            letter-spacing: 0.3em;
+            color: #383838;
+            text-transform: uppercase;
+            padding: 16px 32px 6px;
+        }
+
+        .drawer-sub-link {
+            display: block;
+            padding: 12px 32px;
+            font-size: 0.78rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #666;
+            text-decoration: none;
+            border-bottom: 1px solid #0e0e0e;
+            transition: color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .drawer-sub-link:active { color: var(--c-white); }
+
+        .drawer-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .drawer-chevron.rotated {
+            transform: rotate(90deg);
+        }
+
+        /* Drawer footer area */
+        .drawer-footer {
+            padding: 24px;
+            border-top: 1px solid #161616;
+            flex-shrink: 0;
+        }
+
+        .drawer-footer-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 0;
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #555;
+            text-decoration: none;
+            transition: color 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .drawer-footer-link:active { color: var(--c-white); }
+
+        .drawer-footer-link svg { flex-shrink: 0; }
+
+        /* Sign out button in drawer */
+        .drawer-signout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 0;
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #4a2a2a;
             background: none;
             border: none;
-            color: #888;
-            font-size: 1.5rem;
             cursor: pointer;
-            transition: color 0.2s;
+            width: 100%;
+            transition: color 0.15s;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .mobile-close:hover {
-            color: var(--c-white);
-        }
+        .drawer-signout-btn:active { color: #bf6d6d; }
 
         /* ===== MAIN ===== */
         main {
@@ -325,11 +467,18 @@
             padding-top: 36px;
         }
 
+        /* Mobile: main has no announcement bar offset */
+        @media (max-width: 1023px) {
+            main {
+                padding-top: 0;
+                padding-top: var(--header-h-mobile);
+            }
+        }
+
         /* ===== TOAST ===== */
         .toast {
             position: fixed;
-            top: 88px;
-            right: 24px;
+            top: 88px; right: 24px;
             z-index: 999;
             background: var(--c-gray);
             border: 1px solid #2a2a2a;
@@ -340,27 +489,22 @@
             animation: toastIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
+        @media (max-width: 1023px) {
+            .toast {
+                top: 68px;
+                right: 16px; left: 16px;
+                font-size: 0.7rem;
+                padding: 12px 16px;
+            }
+        }
+
         @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
-        .toast-success {
-            border-color: #2a4a2a;
-            color: #6dbf6d;
-        }
-
-        .toast-error {
-            border-color: #4a2a2a;
-            color: #bf6d6d;
-        }
+        .toast-success { border-color: #2a4a2a; color: #6dbf6d; }
+        .toast-error { border-color: #4a2a2a; color: #bf6d6d; }
 
         /* ===== FOOTER ===== */
         .site-footer {
@@ -368,20 +512,27 @@
             padding: 60px 0 40px;
         }
 
+        /* Mobile footer */
+        @media (max-width: 1023px) {
+            .footer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0 !important;
+            }
+
+            .footer-col {
+                padding: 20px 0;
+                border-bottom: 1px solid #111;
+            }
+
+            .footer-col:last-child { border-bottom: none; }
+        }
+
         /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--c-black); }
+        ::-webkit-scrollbar-thumb { background: #333; }
 
-        ::-webkit-scrollbar-track {
-            background: var(--c-black);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-        }
-
-        /* ===== TRANSITIONS ===== */
+        /* ===== ANIMATIONS ===== */
         .fade-up {
             opacity: 0;
             transform: translateY(24px);
@@ -389,17 +540,11 @@
         }
 
         @keyframes fadeUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ===== TICKER BANNER ===== */
-        .ticker-wrap {
-            overflow: hidden;
-            white-space: nowrap;
-        }
+        /* ===== TICKER ===== */
+        .ticker-wrap { overflow: hidden; white-space: nowrap; }
 
         .ticker-track {
             display: inline-block;
@@ -407,12 +552,40 @@
         }
 
         @keyframes ticker {
-            from {
-                transform: translateX(0);
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* ===== MOBILE PRODUCT GRID ===== */
+        @media (max-width: 1023px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1px !important;
             }
 
-            to {
-                transform: translateX(-50%);
+            .product-card-name {
+                font-size: 0.82rem !important;
+                letter-spacing: 0.04em !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .product-card-price {
+                font-size: 0.75rem !important;
+            }
+        }
+
+        /* ===== CHATBOT ===== */
+        @media (max-width: 1023px) {
+            #chatbot-container {
+                bottom: 20px !important;
+                right: 16px !important;
+            }
+
+            #chatbot-window {
+                width: calc(100vw - 32px) !important;
+                right: 0 !important;
             }
         }
     </style>
@@ -420,9 +593,9 @@
 
 <body>
 
-    <!-- ============================== ANNOUNCEMENT BAR ============================== -->
-    <div id="announcementBar"
-        style="background:#111; height:36px; display:flex; align-items:center; position:fixed; top:0; left:0; right:0; z-index:101; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);">
+    <!-- ============================== ANNOUNCEMENT BAR (Desktop only) ============================== -->
+    <div id="announcementBar" class="hidden lg:flex"
+        style="background:#111; height:36px; align-items:center; position:fixed; top:0; left:0; right:0; z-index:101; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);">
         <div class="ticker-wrap w-full">
             <div class="ticker-track text-[0.6rem] tracking-[0.3em] uppercase text-[#555]">
                 <span class="mx-12">Free Shipping Over 500k</span>
@@ -441,18 +614,13 @@
         </div>
     </div>
 
-    <!-- ============================== HEADER ============================== -->
-    <header class="site-header" id="siteHeader">
-        <div
-            style="max-width:1400px; margin:0 auto; padding:0 32px; width:100%; display:flex; align-items:center; justify-content:space-between;">
+    <!-- ============================== DESKTOP HEADER ============================== -->
+    <header class="site-header hidden lg:flex" id="siteHeader">
+        <div style="max-width:1400px; margin:0 auto; padding:0 32px; width:100%; display:flex; align-items:center; justify-content:space-between;">
 
-            <!-- LOGO -->
             <a th:href="@{/}" class="logo">NOVA</a>
 
-            <!-- NAV CENTER -->
-            <nav style="display:flex; align-items:center; gap:40px;" class="hidden lg:flex">
-
-                <!-- SHOP DROPDOWN -->
+            <nav style="display:flex; align-items:center; gap:40px;">
                 <div class="nav-dropdown-wrap" style="position:relative;">
                     <a th:href="@{/products}" class="nav-link">Shop</a>
                     <div class="nav-dropdown">
@@ -470,39 +638,28 @@
                         <a th:href="@{/products/accessories/cap}">Cap</a>
                     </div>
                 </div>
-
                 <a href="#" class="nav-link">Collection</a>
                 <a href="#" class="nav-link">Lookbook</a>
-
             </nav>
 
-            <!-- RIGHT ICONS -->
             <div style="display:flex; align-items:center; gap:28px;">
-
-                <!-- CART -->
                 <a th:href="@{/cart}" class="icon-btn" style="position:relative;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.5">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                         <line x1="3" y1="6" x2="21" y2="6" />
                         <path d="M16 10a4 4 0 01-8 0" />
                     </svg>
-                    <span th:if="${cartItems != null and !cartItems.isEmpty()}" class="cart-badge"
-                        th:text="${cartItems.size()}"></span>
+                    <span th:if="${cartItems != null and !cartItems.isEmpty()}" class="cart-badge" th:text="${cartItems.size()}"></span>
                 </a>
 
-                <!-- USER -->
                 <div class="user-dropdown-wrap" style="position:relative;">
-                    <div th:if="${#authorization.expression('isAuthenticated()')}" class="icon-btn"
-                        style="cursor:pointer;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.5">
+                    <div th:if="${#authorization.expression('isAuthenticated()')}" class="icon-btn" style="cursor:pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                         </svg>
                     </div>
-                    <a th:unless="${#authorization.expression('isAuthenticated()')}" th:href="@{/login}"
-                        class="nav-link">Login</a>
+                    <a th:unless="${#authorization.expression('isAuthenticated()')}" th:href="@{/login}" class="nav-link">Login</a>
 
                     <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-dropdown">
                         <a th:href="@{/profile}">Profile</a>
@@ -512,33 +669,141 @@
                         </form>
                     </div>
                 </div>
-
-                <!-- MOBILE HAMBURGER -->
-                <button id="hamburger" class="icon-btn lg:hidden" style="cursor:pointer; background:none; border:none;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.5">
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <line x1="3" y1="12" x2="21" y2="12" />
-                        <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                </button>
-
             </div>
         </div>
     </header>
 
-    <!-- ============================== MOBILE MENU ============================== -->
-    <div class="mobile-menu" id="mobileMenu">
-        <button class="mobile-close" id="mobileClose">✕</button>
-        <div
-            style="font-family:'Bebas Neue',sans-serif; font-size:0.65rem; letter-spacing:0.3em; color:#444; margin-bottom:32px; margin-top:20px;">
-            NOVA — 2026</div>
-        <a th:href="@{/products}">Shop</a>
-        <a href="#">Collection</a>
-        <a href="#">Lookbook</a>
-        <a th:href="@{/cart}">Cart</a>
-        <a th:href="@{/profile}" th:if="${#authorization.expression('isAuthenticated()')}">Profile</a>
-        <a th:href="@{/login}" th:unless="${#authorization.expression('isAuthenticated()')}">Login</a>
+    <!-- ============================== MOBILE HEADER ============================== -->
+    <header class="mobile-header lg:hidden" id="mobileHeader">
+        <!-- Hamburger -->
+        <button id="mobileHamburger" class="icon-btn-mobile" aria-label="Open menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+
+        <!-- Logo centered -->
+        <a th:href="@{/}" class="logo-mobile">NOVA</a>
+
+        <!-- Cart -->
+        <a th:href="@{/cart}" class="icon-btn-mobile" style="position:relative;" aria-label="Cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 01-8 0" />
+            </svg>
+            <span th:if="${cartItems != null and !cartItems.isEmpty()}" class="cart-badge" th:text="${cartItems.size()}" style="top:-4px; right:-4px;"></span>
+        </a>
+    </header>
+
+    <!-- ============================== MOBILE OVERLAY ============================== -->
+    <div class="mobile-overlay lg:hidden" id="mobileOverlay"></div>
+
+    <!-- ============================== MOBILE DRAWER ============================== -->
+    <div class="mobile-drawer lg:hidden" id="mobileDrawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+
+        <!-- Drawer Head -->
+        <div class="mobile-drawer-head">
+            <span class="mobile-drawer-brand">NOVA</span>
+            <button class="drawer-close-btn" id="drawerClose" aria-label="Close menu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Nav items -->
+        <nav class="mobile-drawer-nav">
+
+            <!-- SHOP — expandable -->
+            <div>
+                <button id="shopToggle" class="drawer-nav-item w-full text-left" style="background:none; border:none; cursor:pointer; border-bottom:1px solid #111; -webkit-tap-highlight-color: transparent;">
+                    <span>Shop</span>
+                    <svg class="drawer-chevron" id="shopChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </button>
+                <div class="drawer-sub" id="shopSub">
+                    <p class="drawer-sub-cat">Top</p>
+                    <a th:href="@{/products/top/tee}" class="drawer-sub-link">Tee</a>
+                    <a th:href="@{/products/top/hoodie}" class="drawer-sub-link">Hoodie</a>
+                    <a th:href="@{/products/top/shirt}" class="drawer-sub-link">Shirt</a>
+                    <p class="drawer-sub-cat">Bottom</p>
+                    <a th:href="@{/products/bottom/pants}" class="drawer-sub-link">Pants</a>
+                    <a th:href="@{/products/bottom/shorts}" class="drawer-sub-link">Shorts</a>
+                    <a th:href="@{/products/bottom/jeans}" class="drawer-sub-link">Jeans</a>
+                    <p class="drawer-sub-cat">Accessories</p>
+                    <a th:href="@{/products/accessories/bag}" class="drawer-sub-link">Bag</a>
+                    <a th:href="@{/products/accessories/shoes}" class="drawer-sub-link">Shoes</a>
+                    <a th:href="@{/products/accessories/cap}" class="drawer-sub-link" style="border-bottom:none;">Cap</a>
+                </div>
+            </div>
+
+            <a href="#" class="drawer-nav-item">
+                <span>Collection</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="9 18 15 12 9 6" />
+                </svg>
+            </a>
+
+            <a href="#" class="drawer-nav-item">
+                <span>Lookbook</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="9 18 15 12 9 6" />
+                </svg>
+            </a>
+
+        </nav>
+
+        <!-- Drawer Footer: profile / login / signout -->
+        <div class="drawer-footer">
+            <!-- Authenticated -->
+            <div th:if="${#authorization.expression('isAuthenticated()')}">
+                <a th:href="@{/profile}" class="drawer-footer-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Profile
+                </a>
+                <a th:href="@{/my-orders}" class="drawer-footer-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
+                    </svg>
+                    My Orders
+                </a>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="drawer-signout-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        Sign Out
+                    </button>
+                </form>
+            </div>
+
+            <!-- Not authenticated -->
+            <div th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a th:href="@{/login}" class="drawer-footer-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Login
+                </a>
+            </div>
+
+            <!-- Season label -->
+            <p style="font-size:0.55rem; letter-spacing:0.3em; color:#2a2a2a; text-transform:uppercase; margin-top:20px;">NOVA — SS 2026</p>
+        </div>
     </div>
 
     <!-- ============================== MAIN ============================== -->
@@ -557,79 +822,54 @@
     <!-- ============================== FOOTER ============================== -->
     <footer class="site-footer">
         <div style="max-width:1400px; margin:0 auto; padding:0 32px;">
-            <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:48px;"
-                class="footer-grid">
 
-                <div>
-                    <div
-                        style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.1em; color:var(--c-white); margin-bottom:12px;">
-                        NOVA</div>
-                    <p
-                        style="font-size:0.7rem; letter-spacing:0.15em; color:#444; text-transform:uppercase; line-height:2;">
+            <!-- Desktop: 4-col grid | Mobile: stacked via footer-col -->
+            <div class="footer-grid" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:48px;">
+
+                <div class="footer-col">
+                    <div style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.1em; color:var(--c-white); margin-bottom:12px;">NOVA</div>
+                    <p style="font-size:0.7rem; letter-spacing:0.15em; color:#444; text-transform:uppercase; line-height:2;">
                         Essentials for the<br>modern generation.
                     </p>
                 </div>
 
-                <div>
-                    <p
-                        style="font-size:0.6rem; letter-spacing:0.3em; color:#444; text-transform:uppercase; margin-bottom:16px;">
-                        Shop</p>
+                <div class="footer-col">
+                    <p style="font-size:0.6rem; letter-spacing:0.3em; color:#444; text-transform:uppercase; margin-bottom:16px;">Shop</p>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <a th:href="@{/products/top}"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none; transition:color 0.2s;"
-                            onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#666'">Top</a>
-                        <a th:href="@{/products/bottom}"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none; transition:color 0.2s;"
-                            onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#666'">Bottom</a>
-                        <a th:href="@{/products/accessories}"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none; transition:color 0.2s;"
-                            onmouseover="this.style.color='#f5f5f3'"
-                            onmouseout="this.style.color='#666'">Accessories</a>
+                        <a th:href="@{/products/top}" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Top</a>
+                        <a th:href="@{/products/bottom}" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Bottom</a>
+                        <a th:href="@{/products/accessories}" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Accessories</a>
                     </div>
                 </div>
 
-                <div>
-                    <p
-                        style="font-size:0.6rem; letter-spacing:0.3em; color:#444; text-transform:uppercase; margin-bottom:16px;">
-                        Help</p>
+                <div class="footer-col">
+                    <p style="font-size:0.6rem; letter-spacing:0.3em; color:#444; text-transform:uppercase; margin-bottom:16px;">Help</p>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <a href="#"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Contact</a>
-                        <a href="#"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Returns</a>
-                        <a href="#"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Sizing</a>
+                        <a href="#" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Contact</a>
+                        <a href="#" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Returns</a>
+                        <a href="#" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Sizing</a>
                     </div>
                 </div>
 
-                <div>
-                    <p
-                        style="font-size:0.6rem; letter-spacing:0.3em; color:#444; text-transform:uppercase; margin-bottom:16px;">
-                        Follow</p>
+                <div class="footer-col">
+                    <p style="font-size:0.6rem; letter-spacing:0.3em; color:#444; text-transform:uppercase; margin-bottom:16px;">Follow</p>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <a href="#"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Instagram</a>
-                        <a href="#"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">TikTok</a>
-                        <a href="#"
-                            style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Facebook</a>
+                        <a href="#" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Instagram</a>
+                        <a href="#" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">TikTok</a>
+                        <a href="#" style="font-size:0.7rem; letter-spacing:0.15em; color:#666; text-transform:uppercase; text-decoration:none;">Facebook</a>
                     </div>
                 </div>
             </div>
 
-            <div
-                style="border-top:1px solid #1a1a1a; padding-top:24px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.6rem; letter-spacing:0.25em; color:#333; text-transform:uppercase;">© 2026
-                    Nova. All rights reserved.</span>
-                <span
-                    style="font-size:0.6rem; letter-spacing:0.25em; color:#333; text-transform:uppercase;">Vietnam</span>
+            <div style="border-top:1px solid #1a1a1a; padding-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <span style="font-size:0.6rem; letter-spacing:0.25em; color:#333; text-transform:uppercase;">© 2026 Nova. All rights reserved.</span>
+                <span style="font-size:0.6rem; letter-spacing:0.25em; color:#333; text-transform:uppercase;">Vietnam</span>
             </div>
         </div>
     </footer>
 
     <!-- ============================== CHATBOT ============================== -->
     <div id="chatbot-container" style="position:fixed; bottom:28px; right:28px; z-index:500;">
-        <!-- TOGGLE BUTTON -->
         <button id="chatbot-toggle" onclick="toggleChat()" style="
             width: 52px; height: 52px;
             background: var(--c-white);
@@ -643,7 +883,6 @@
             </svg>
         </button>
 
-        <!-- CHAT WINDOW -->
         <div id="chatbot-window" style="
             position: absolute;
             bottom: 68px; right: 0;
@@ -653,50 +892,32 @@
             display: none;
             flex-direction: column;
         ">
-            <!-- HEADER -->
-            <div
-                style="padding: 16px 20px; border-bottom: 1px solid #2a2a2a; display:flex; justify-content:space-between; align-items:center;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid #2a2a2a; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <p
-                        style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:#555; margin-bottom:2px;">
-                        Nova</p>
+                    <p style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:#555; margin-bottom:2px;">Nova</p>
                     <p style="font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase;">Style Assistant</p>
                 </div>
-                <button onclick="toggleChat()"
-                    style="background:none; border:none; color:#555; cursor:pointer; font-size:1.2rem; transition:color 0.2s;"
-                    onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#555'">✕</button>
+                <button onclick="toggleChat()" style="background:none; border:none; color:#555; cursor:pointer; font-size:1.2rem; transition:color 0.2s;" onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#555'">✕</button>
             </div>
 
-            <!-- MESSAGES -->
-            <div id="chat-messages" style="
-                height: 280px;
-                overflow-y: auto;
-                padding: 16px;
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-                scrollbar-width: thin;
-                scrollbar-color: #333 transparent;
-            ">
-                <div
-                    style="background:#1e1e1e; padding:10px 14px; font-size:0.75rem; line-height:1.6; color:#888; max-width:80%; align-self:flex-start;">
+            <div id="chat-messages" style="height: 280px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin; scrollbar-color: #333 transparent;">
+                <div style="background:#1e1e1e; padding:10px 14px; font-size:0.75rem; line-height:1.6; color:#888; max-width:80%; align-self:flex-start;">
                     What are you looking for today?
                 </div>
             </div>
 
-            <!-- INPUT -->
             <div style="padding:12px 16px; border-top:1px solid #222; display:flex; gap:8px;">
                 <input id="chat-input" type="text" placeholder="Ask anything..." style="
-                        flex:1;
-                        background: transparent;
-                        border: 1px solid #2a2a2a;
-                        color: var(--c-white);
-                        padding: 8px 12px;
-                        font-size: 0.75rem;
-                        letter-spacing: 0.05em;
-                        font-family: 'DM Sans', sans-serif;
-                        outline: none;
-                    " onkeydown="if(event.key==='Enter') sendChat()" />
+                    flex:1;
+                    background: transparent;
+                    border: 1px solid #2a2a2a;
+                    color: var(--c-white);
+                    padding: 8px 12px;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.05em;
+                    font-family: 'DM Sans', sans-serif;
+                    outline: none;
+                " onkeydown="if(event.key==='Enter') sendChat()" />
                 <button onclick="sendChat()" style="
                     background: var(--c-white);
                     color: var(--c-black);
@@ -715,31 +936,62 @@
 
     <!-- ============================== SCRIPTS ============================== -->
     <script>
-        // Header & Announcement Bar scroll effect
-        const header = document.getElementById('siteHeader');
+        // ===== DESKTOP HEADER SCROLL =====
+        const desktopHeader = document.getElementById('siteHeader');
         const annoBar = document.getElementById('announcementBar');
 
         window.addEventListener('scroll', () => {
             const isScrolled = window.scrollY > 40;
-            header.classList.toggle('scrolled', isScrolled);
+            if (desktopHeader) desktopHeader.classList.toggle('scrolled', isScrolled);
             if (annoBar) {
-                if (isScrolled) {
-                    annoBar.classList.add('announcement-hidden');
-                } else {
-                    annoBar.classList.remove('announcement-hidden');
-                }
+                if (isScrolled) annoBar.classList.add('announcement-hidden');
+                else annoBar.classList.remove('announcement-hidden');
             }
+
+            // Mobile header subtle scroll state
+            const mhdr = document.getElementById('mobileHeader');
+            if (mhdr) mhdr.classList.toggle('scrolled', window.scrollY > 10);
         });
 
-        // Mobile menu
-        document.getElementById('hamburger')?.addEventListener('click', () => {
-            document.getElementById('mobileMenu').classList.add('open');
-        });
-        document.getElementById('mobileClose')?.addEventListener('click', () => {
-            document.getElementById('mobileMenu').classList.remove('open');
+        // ===== MOBILE DRAWER =====
+        const overlay = document.getElementById('mobileOverlay');
+        const drawer = document.getElementById('mobileDrawer');
+
+        function openDrawer() {
+            overlay?.classList.add('open');
+            drawer?.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            overlay?.classList.remove('open');
+            drawer?.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('mobileHamburger')?.addEventListener('click', openDrawer);
+        document.getElementById('drawerClose')?.addEventListener('click', closeDrawer);
+        overlay?.addEventListener('click', closeDrawer);
+
+        // Swipe-to-close on drawer (right swipe = close, we close on left-to-right swipe out of drawer)
+        let touchStartX = 0;
+        drawer?.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+        drawer?.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (dx > 60) closeDrawer();
+        }, { passive: true });
+
+        // ===== SHOP SUBMENU TOGGLE =====
+        const shopToggle = document.getElementById('shopToggle');
+        const shopSub = document.getElementById('shopSub');
+        const shopChevron = document.getElementById('shopChevron');
+
+        shopToggle?.addEventListener('click', () => {
+            const isOpen = shopSub.classList.toggle('open');
+            shopChevron?.classList.toggle('rotated', isOpen);
         });
 
-        // Toast auto-hide
+        // ===== TOAST AUTO-HIDE =====
         ['toastSuccess', 'toastError'].forEach(id => {
             const el = document.getElementById(id);
             if (el) setTimeout(() => {
@@ -749,13 +1001,12 @@
             }, 3000);
         });
 
-        // Chatbot toggle
+        // ===== CHATBOT =====
         function toggleChat() {
             const w = document.getElementById('chatbot-window');
             w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // ===== CHATBOT LOGIC MỚI =====
         async function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
@@ -763,12 +1014,9 @@
             input.value = '';
 
             const msgs = document.getElementById('chat-messages');
-
-            // User bubble
             msgs.innerHTML += `<div style="background:#222;padding:10px 14px;font-size:0.75rem;line-height:1.6;color:var(--c-white);max-width:80%;align-self:flex-end;">${escapeHtml(msg)}</div>`;
             msgs.scrollTop = msgs.scrollHeight;
 
-            // CSRF
             const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
@@ -784,17 +1032,15 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
 
-                // Bot text message
                 let botHtml = `<div style="background:#1e1e1e;padding:10px 14px;font-size:0.75rem;line-height:1.6;color:#888;max-width:80%;align-self:flex-start;">${escapeHtml(data.message || 'No reply.')}</div>`;
 
-                // Product cards if any
                 if (data.products && data.products.length > 0) {
                     botHtml += `<div style="display:flex;flex-direction:column;gap:8px;max-width:100%;align-self:flex-start;">`;
                     for (const p of data.products) {
                         const imgUrl = p.imageUrl || '/images/sample.jpg';
                         const price = p.minPrice != null ? p.minPrice.toLocaleString('vi-VN') + 'đ' : '';
                         botHtml += `
-                            <a href="/product/${p.slug}" target="_blank" style="display:flex;gap:10px;align-items:center;background:#161616;border:1px solid #2a2a2a;padding:8px;text-decoration:none;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#444'" onmouseout="this.style.borderColor='#2a2a2a'">
+                            <a href="/product/${p.slug}" target="_blank" style="display:flex;gap:10px;align-items:center;background:#161616;border:1px solid #2a2a2a;padding:8px;text-decoration:none;">
                                 <img src="${escapeHtml(imgUrl)}" style="width:48px;height:48px;object-fit:cover;background:#222;flex-shrink:0;" alt="">
                                 <div style="min-width:0;">
                                     <div style="font-size:0.75rem;color:var(--c-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.name)}</div>
@@ -817,7 +1063,7 @@
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        // Intersection Observer fade-up
+        // ===== FADE-UP OBSERVER =====
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(e => {
                 if (e.isIntersecting) {
@@ -826,6 +1072,7 @@
                 }
             });
         }, { threshold: 0.1 });
+
         document.querySelectorAll('.fade-up').forEach(el => {
             el.style.animationPlayState = 'paused';
             observer.observe(el);
@@ -833,5 +1080,4 @@
     </script>
 
 </body>
-
 </html>

@@ -1,335 +1,158 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'NOVA — Essentials')}">
-
 <div th:fragment="content">
 
-    <!-- ============================== HERO FULLSCREEN ============================== -->
-    <section style="
-        position: relative;
-        width: 100vw;
-        margin-left: calc(-50vw + 50%);
-        height: 100vh;
-        min-height: 600px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-    ">
-        <!-- BG IMAGE -->
-        <img src="/images/winter-collection.png" alt="Nova Drop"
-             style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center top;" />
+  <style>
+    @keyframes scrollLine { 0%{top:-100%} 100%{top:100%} }
+    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .pcard-wrap { position:relative;overflow:hidden;background:#111;width:100%; }
+    .pcard-img  { width:100%;height:100%;object-fit:cover;transition:transform .65s cubic-bezier(.22,1,.36,1); }
+    .pcard-alt  { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s; }
+    .pcard-over { position:absolute;inset:0;background:rgba(10,10,10,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:24px;color:#f5f5f3;opacity:0;transition:opacity .3s; }
+    .pcard:hover .pcard-img  { transform:scale(1.04); }
+    .pcard:hover .pcard-alt  { opacity:1; }
+    .pcard:hover .pcard-over { opacity:1; }
+    .cat-card { transition:filter .3s; }
+    .cat-card:hover { filter:brightness(.82); }
+  </style>
 
-        <!-- GRADIENT OVERLAY -->
-        <div style="position:absolute; inset:0; background:linear-gradient(to bottom, transparent 30%, rgba(10,10,10,0.7) 75%, #0a0a0a 100%);"></div>
+  <!-- ── HERO ─────────────────────────────────── -->
+  <section class="relative w-full h-[90vh] md:h-screen min-h-[560px] overflow-hidden flex flex-col justify-end">
+    <img src="/images/winter-collection.png" alt="Nova Drop"
+         class="absolute inset-0 w-full h-full object-cover object-top" />
+    <div class="absolute inset-0"
+         style="background:linear-gradient(to bottom,transparent 30%,rgba(10,10,10,.72)75%,#0a0a0a 100%)"></div>
 
-        <!-- VERTICAL TEXT LEFT -->
-        <div style="
-            position: absolute;
-            left: 40px;
-            top: 50%;
-            transform: translateY(-50%) rotate(-90deg);
-            transform-origin: center;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.55rem;
-            letter-spacing: 0.4em;
-            color: rgba(245,245,243,0.35);
-            text-transform: uppercase;
-            white-space: nowrap;
-        ">SS26 — Nova Collection</div>
-
-        <!-- HERO TEXT -->
-        <div style="position:relative; z-index:10; padding: 0 48px 72px;">
-            <p style="
-                font-size: 0.6rem;
-                letter-spacing: 0.45em;
-                color: rgba(245,245,243,0.5);
-                text-transform: uppercase;
-                margin-bottom: 12px;
-                font-family: 'DM Sans', sans-serif;
-            ">Spring / Summer 2026</p>
-
-            <h1 style="
-                font-family: 'Bebas Neue', sans-serif;
-                font-size: clamp(5rem, 14vw, 13rem);
-                line-height: 0.88;
-                color: #f5f5f3;
-                letter-spacing: 0.02em;
-                margin-bottom: 8px;
-            ">NEW<br>DROP</h1>
-
-            <h2 style="
-                font-family: 'Bebas Neue', sans-serif;
-                font-size: clamp(2.5rem, 5vw, 5rem);
-                line-height: 1;
-                color: rgba(245,245,243,0.35);
-                letter-spacing: 0.08em;
-                margin-bottom: 40px;
-            ">ESSENTIALS</h2>
-
-            <div style="display:flex; align-items:center; gap:32px;">
-                <a th:href="@{/products}" style="
-                    display: inline-block;
-                    background: #f5f5f3;
-                    color: #0a0a0a;
-                    font-size: 0.65rem;
-                    letter-spacing: 0.3em;
-                    text-transform: uppercase;
-                    text-decoration: none;
-                    padding: 14px 36px;
-                    font-family: 'DM Sans', sans-serif;
-                    font-weight: 500;
-                    transition: background 0.25s;
-                " onmouseover="this.style.background='#ccc'" onmouseout="this.style.background='#f5f5f3'">Shop Now</a>
-
-                <a href="#" style="
-                    font-size: 0.65rem;
-                    letter-spacing: 0.2em;
-                    text-transform: uppercase;
-                    color: rgba(245,245,243,0.5);
-                    text-decoration: none;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    transition: color 0.2s;
-                    font-family: 'DM Sans', sans-serif;
-                " onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='rgba(245,245,243,0.5)'">
-                    Lookbook
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- SCROLL INDICATOR -->
-        <div style="
-            position: absolute;
-            bottom: 28px;
-            right: 48px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            z-index:10;
-        ">
-            <div style="width:1px; height:48px; background:rgba(245,245,243,0.2); position:relative; overflow:hidden;">
-                <div style="position:absolute; top:-100%; left:0; width:100%; height:100%; background:rgba(245,245,243,0.6); animation:scrollLine 1.5s ease-in-out infinite;"></div>
-            </div>
-        </div>
-    </section>
-
-    <style>
-        @keyframes scrollLine {
-            0%   { top: -100%; }
-            100% { top: 100%; }
-        }
-    </style>
-
-    <!-- ============================== EDITORIAL STRIP ============================== -->
-    <section style="padding: 80px 48px 0; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #1a1a1a; padding-bottom: 80px;">
-        <div>
-            <p style="font-size:0.55rem; letter-spacing:0.45em; text-transform:uppercase; color:#444; margin-bottom:8px;">The Philosophy</p>
-            <p style="font-size:1.1rem; color:#666; max-width:440px; line-height:1.8; letter-spacing:0.02em;">
-                Built for those who move through the city without looking back. Minimal form. Maximum presence.
-            </p>
-        </div>
-        <div style="font-family:'Bebas Neue',sans-serif; font-size:5rem; color:#1a1a1a; letter-spacing:0.05em; line-height:1; text-align:right;">
-            SS<br>26
-        </div>
-    </section>
-
-    <!-- ============================== BEST SELLERS ============================== -->
-    <section style="padding: 80px 48px;">
-
-        <!-- SECTION HEADER -->
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:48px;">
-            <div>
-                <p style="font-size:0.55rem; letter-spacing:0.45em; text-transform:uppercase; color:#444; margin-bottom:8px;">Curated</p>
-                <h2 style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; letter-spacing:0.05em; line-height:1; color:#f5f5f3;">Best Sellers</h2>
-            </div>
-            <a th:href="@{/products}" style="
-                font-size:0.6rem;
-                letter-spacing:0.3em;
-                text-transform:uppercase;
-                color:#555;
-                text-decoration:none;
-                display:flex;
-                align-items:center;
-                gap:8px;
-                transition:color 0.2s;
-            " onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#555'">
-                View All
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-            </a>
-        </div>
-
-        <!-- PRODUCT GRID -->
-        <div class="product-grid">
-            <div th:each="product, iter : ${homeProducts}"
-                 class="product-card"
-                 th:style="${iter.index == 0 ? 'grid-column: span 2; grid-row: span 2;' : ''}">
-
-                <a th:href="@{'/products/' + ${product.subCategory.category.slug} + '/' + ${product.subCategory.slug} + '/' + ${product.id}}"
-                   style="display:block; text-decoration:none; color:inherit;">
-
-                    <!-- IMAGE CONTAINER -->
-                    <div class="product-img-wrap" th:style="${iter.index == 0 ? 'aspect-ratio: 4/5;' : 'aspect-ratio: 3/4;'}">
-                        <img class="product-img-main"
-                             th:src="${product.images != null and !product.images.isEmpty() ? product.images[0].imageUrl : '/images/no-image.png'}"
-                             alt="" />
-                        <img th:if="${product.images != null and product.images.size() > 1}"
-                             class="product-img-hover"
-                             th:src="${product.images[1].imageUrl}" alt="" />
-
-                        <!-- QUICK INFO OVERLAY -->
-                        <div class="product-overlay">
-                            <span style="font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase;">Quick View</span>
-                        </div>
-
-                        <!-- NEW BADGE -->
-                        <div style="position:absolute; top:16px; left:16px;
-                                    background:var(--c-white); color:var(--c-black);
-                                    font-size:0.55rem; letter-spacing:0.25em; text-transform:uppercase;
-                                    padding:4px 10px; font-family:'DM Sans',sans-serif; font-weight:500;">
-                            New
-                        </div>
-                    </div>
-
-                    <!-- PRODUCT INFO -->
-                    <div style="padding:16px 0 0;">
-                        <div style="display:flex; justify-content:space-between; align-items:baseline;">
-                            <h3 style="font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:#f5f5f3; font-weight:400;"
-                                th:text="${product.name}"></h3>
-                            <p style="font-size:0.75rem; letter-spacing:0.1em; color:#555; font-weight:400;"
-                               th:with="hasPrice=${product.productVariants != null and !product.productVariants.isEmpty()}">
-                                <span th:text="${hasPrice ? #numbers.formatDecimal(product.productVariants[0].price,0,'POINT',0,'COMMA') : '—'}"></span>
-                                <span th:if="${hasPrice}" style="font-size:0.6rem;">₫</span>
-                            </p>
-                        </div>
-                        <p style="font-size:0.65rem; letter-spacing:0.1em; color:#444; text-transform:uppercase; margin-top:4px;"
-                           th:text="${product.subCategory?.name}"></p>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================== MARQUEE STRIP ============================== -->
-    <div style="border-top:1px solid #1a1a1a; border-bottom:1px solid #1a1a1a; padding:20px 0; overflow:hidden; white-space:nowrap;">
-        <div style="display:inline-block; animation:ticker 18s linear infinite;">
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">NOVA ESSENTIALS</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">—</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">SPRING 2026</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">—</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">NOVA ESSENTIALS</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">—</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">SPRING 2026</span>
-            <span style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.15em; color:#1e1e1e; margin:0 40px;">—</span>
-        </div>
+    <div class="hidden md:block absolute left-10 top-1/2 -translate-y-1/2 -rotate-90 origin-center
+                text-xs tracking-widest3 uppercase text-zinc-700 whitespace-nowrap">
+      SS26 — Nova Collection
     </div>
 
-    <!-- ============================== CATEGORY FEATURE ============================== -->
-    <section style="padding:80px 48px; display:grid; grid-template-columns:1fr 1fr; gap:2px;">
-        <a th:href="@{/products/top}" style="
-            position: relative;
-            aspect-ratio: 4/3;
-            overflow: hidden;
-            display: block;
-            text-decoration: none;
-            background: #111;
-        " class="cat-feature-link">
-            <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:32px;">
-                <p style="font-size:0.55rem; letter-spacing:0.4em; text-transform:uppercase; color:#555; margin-bottom:8px;">Category</p>
-                <h3 style="font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:0.08em; color:#f5f5f3;">Tops</h3>
-                <p style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:#555; margin-top:12px; display:flex; align-items:center; gap:8px;">
-                    Explore
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </p>
-            </div>
+    <div class="relative z-10 px-4 md:px-12 pb-10 md:pb-20">
+      <p class="text-xs tracking-widest3 uppercase text-zinc-500 mb-3">Spring / Summer 2026</p>
+      <h1 class="font-display text-[4.5rem] md:text-[10rem] lg:text-[13rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">
+        NEW<br>DROP
+      </h1>
+      <h2 class="font-display text-[2rem] md:text-[4.5rem] leading-none tracking-wide text-zinc-700 mb-8 md:mb-10">
+        ESSENTIALS
+      </h2>
+      <div class="flex items-center gap-4 md:gap-8 flex-wrap">
+        <a th:href="@{/products}"
+           class="h-11 md:h-12 px-8 md:px-10 bg-[#f5f5f3] text-[#0a0a0a]
+                  text-xs tracking-widest uppercase font-medium no-underline
+                  flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
+          Shop Now
         </a>
-        <a th:href="@{/products/bottom}" style="
-            position: relative;
-            aspect-ratio: 4/3;
-            overflow: hidden;
-            display: block;
-            text-decoration: none;
-            background: #111;
-        " class="cat-feature-link">
-            <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:32px;">
-                <p style="font-size:0.55rem; letter-spacing:0.4em; text-transform:uppercase; color:#555; margin-bottom:8px;">Category</p>
-                <h3 style="font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:0.08em; color:#f5f5f3;">Bottoms</h3>
-                <p style="font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:#555; margin-top:12px; display:flex; align-items:center; gap:8px;">
-                    Explore
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </p>
-            </div>
+        <a href="#"
+           class="text-xs tracking-widest uppercase text-zinc-500 no-underline
+                  flex items-center gap-2 transition-colors duration-200 hover:text-[#f5f5f3]">
+          Lookbook
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-    </section>
+      </div>
+    </div>
 
-    <style>
-        /* ===== PRODUCT GRID ===== */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2px;
-        }
+    <div class="hidden md:flex absolute bottom-7 right-12 flex-col items-center z-10">
+      <div class="w-px h-12 relative overflow-hidden" style="background:rgba(245,245,243,.18)">
+        <div class="absolute left-0 w-full h-full"
+             style="top:-100%;background:rgba(245,245,243,.55);animation:scrollLine 1.5s ease-in-out infinite"></div>
+      </div>
+    </div>
+  </section>
 
-        .product-card { position: relative; }
+  <!-- ── EDITORIAL STRIP ───────────────────────── -->
+  <section class="py-12 md:py-20 px-4 md:px-12 border-b border-zinc-900
+                  flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+    <div>
+      <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">The Philosophy</p>
+      <p class="text-sm md:text-base text-zinc-500 max-w-md leading-loose">
+        Built for those who move through the city without looking back.<br class="hidden md:block">
+        Minimal form. Maximum presence.
+      </p>
+    </div>
+    <div class="font-display text-[5rem] md:text-[6rem] text-zinc-900 tracking-wide leading-none md:text-right select-none">
+      SS<br>26
+    </div>
+  </section>
 
-        .product-img-wrap {
-            position: relative;
-            overflow: hidden;
-            background: #111;
-            width: 100%;
-        }
+  <!-- ── BEST SELLERS ──────────────────────────── -->
+  <section class="py-12 md:py-20 px-4 md:px-12">
+    <div class="flex justify-between items-end mb-8 md:mb-12">
+      <div>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Curated</p>
+        <h2 class="font-display text-3xl md:text-[3.5rem] tracking-wide leading-none text-[#f5f5f3]">Best Sellers</h2>
+      </div>
+      <a th:href="@{/products}"
+         class="text-xs tracking-widest uppercase text-zinc-600 no-underline
+                flex items-center gap-2 transition-colors hover:text-[#f5f5f3]">
+        View All
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
 
-        .product-img-main {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s cubic-bezier(0.22,1,0.36,1);
-        }
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5">
+      <div th:each="product,iter : ${bestSellers}" class="pcard relative"
+           th:classappend="${iter.index == 0 ? ' col-span-2 row-span-2' : ''}">
+        <a th:href="@{'/products/'+${product.subCategory.category.slug}+'/'+${product.subCategory.slug}+'/'+${product.id}}"
+           class="block no-underline text-inherit">
+          <div class="pcard-wrap" th:style="${iter.index==0?'aspect-ratio:4/5':'aspect-ratio:3/4'}">
+            <img class="pcard-img"
+                 th:src="${product.images!=null and !product.images.isEmpty()?product.images[0].imageUrl:'/images/no-image.png'}" alt="" />
+            <img th:if="${product.images!=null and product.images.size()>1}"
+                 class="pcard-alt" th:src="${product.images[1].imageUrl}" alt="" />
+            <div class="pcard-over"><span class="text-xs tracking-widest uppercase">Quick View</span></div>
+            <div class="absolute top-4 left-4 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase px-3 py-1 font-medium">New</div>
+          </div>
+          <div class="pt-4 pb-6">
+            <div class="flex justify-between items-baseline gap-2">
+              <h3 class="text-xs tracking-widest uppercase text-[#e8e8e4] font-normal" th:text="${product.name}"></h3>
+              <p class="text-xs text-zinc-600 whitespace-nowrap"
+                 th:with="hp=${product.productVariants!=null and !product.productVariants.isEmpty()}">
+                <span th:text="${hp?#numbers.formatDecimal(product.productVariants[0].price,0,'POINT',0,'COMMA')+' ₫':'—'}"></span>
+              </p>
+            </div>
+            <p class="text-xs tracking-widest text-zinc-700 uppercase mt-1" th:text="${product.subCategory?.name}"></p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
 
-        .product-img-hover {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
+  <!-- ── MARQUEE ───────────────────────────────── -->
+  <div class="border-t border-b border-zinc-900 py-5 overflow-hidden whitespace-nowrap">
+    <div class="inline-block" style="animation:ticker 22s linear infinite">
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">NOVA ESSENTIALS</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">SPRING 2026</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">NOVA ESSENTIALS</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">SPRING 2026</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
+    </div>
+  </div>
 
-        .product-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(10,10,10,0.5);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 24px;
-            color: #f5f5f3;
-            letter-spacing: 0.2em;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .product-card:hover .product-img-main  { transform: scale(1.04); }
-        .product-card:hover .product-img-hover  { opacity: 1; }
-        .product-card:hover .product-overlay    { opacity: 1; }
-
-        /* ===== CAT FEATURE ===== */
-        .cat-feature-link { transition: filter 0.3s; }
-        .cat-feature-link:hover { filter: brightness(0.85); }
-
-        @media (max-width: 768px) {
-            .product-grid { grid-template-columns: repeat(2, 1fr); }
-            .product-grid .product-card:first-child { grid-column: span 2; }
-        }
-    </style>
+  <!-- ── CATEGORY TILES ───────────────────────── -->
+  <section class="py-12 md:py-20 px-4 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-0.5">
+    <a th:href="@{/products/top}" class="cat-card relative aspect-[4/3] overflow-hidden block no-underline bg-[#111]">
+      <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-1.5">Category</p>
+        <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Tops</h3>
+        <p class="text-xs tracking-widest uppercase text-zinc-600 mt-3 flex items-center gap-2">
+          Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </p>
+      </div>
+    </a>
+    <a th:href="@{/products/bottom}" class="cat-card relative aspect-[4/3] overflow-hidden block no-underline bg-[#111]">
+      <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-1.5">Category</p>
+        <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Bottoms</h3>
+        <p class="text-xs tracking-widest uppercase text-zinc-600 mt-3 flex items-center gap-2">
+          Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </p>
+      </div>
+    </a>
+  </section>
 
 </div>
-
 </html>

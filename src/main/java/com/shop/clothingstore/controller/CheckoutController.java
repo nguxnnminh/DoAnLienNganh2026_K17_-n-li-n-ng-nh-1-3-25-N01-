@@ -13,6 +13,7 @@ import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.service.CartService;
 import com.shop.clothingstore.service.CheckoutService;
+import com.shop.clothingstore.service.CouponService;
 import com.shop.clothingstore.service.OrderService;
 import com.shop.clothingstore.service.UserService;
 
@@ -25,17 +26,20 @@ public class CheckoutController {
     private final CartService cartService;
     private final UserService userService;
     private final OrderService orderService;
+    private final CouponService couponService;
 
     public CheckoutController(
             CheckoutService checkoutService,
             CartService cartService,
             UserService userService,
-            OrderService orderService
+            OrderService orderService,
+            CouponService couponService
     ) {
         this.checkoutService = checkoutService;
         this.cartService = cartService;
         this.userService = userService;
         this.orderService = orderService;
+        this.couponService = couponService;
     }
 
     // ===============================
@@ -43,7 +47,6 @@ public class CheckoutController {
     // ===============================
     @GetMapping("/checkout")
     public String checkoutPage(Model model, Principal principal) {
-
         loadCartData(model);
 
         User user = getCurrentUser(principal);
@@ -56,36 +59,36 @@ public class CheckoutController {
 
     // ===============================
     // POST CHECKOUT (PRG: Post → Redirect → Get)
+    // FIX: thêm couponCode param, truyền vào CheckoutService
     // ===============================
     @PostMapping("/checkout")
     public String processCheckout(
             @RequestParam String customerName,
             @RequestParam String phone,
             @RequestParam String address,
+            @RequestParam(required = false) String couponCode,
             HttpSession session,
             Principal principal,
             RedirectAttributes redirectAttributes
     ) {
-
         User user = getCurrentUser(principal);
 
         try {
-
             var order = checkoutService.checkout(
                     customerName,
                     phone,
                     address,
-                    session,
-                    user
+                    cartService.getCart(),
+                    user,
+                    couponCode
             );
 
-            // PRG: redirect thay vì return view trực tiếp
-            // → F5 sẽ GET /checkout/success thay vì POST lại
+            cartService.clear();
+
             redirectAttributes.addFlashAttribute("orderId", order.getId());
             return "redirect:/checkout/success";
 
         } catch (IllegalStateException e) {
-
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/checkout";
         }
@@ -96,12 +99,9 @@ public class CheckoutController {
     // ===============================
     @GetMapping("/checkout/success")
     public String checkoutSuccess(Model model) {
-
-        // orderId được truyền qua flash attribute từ POST
         Long orderId = (Long) model.asMap().get("orderId");
 
         if (orderId == null) {
-            // User truy cập trực tiếp hoặc F5 → về trang chủ
             return "redirect:/";
         }
 
@@ -115,7 +115,7 @@ public class CheckoutController {
     }
 
     // ===============================
-    // PRIVATE HELPER METHODS
+    // PRIVATE HELPERS
     // ===============================
     private void loadCartData(Model model) {
         model.addAttribute("cartItems", cartService.getCart());

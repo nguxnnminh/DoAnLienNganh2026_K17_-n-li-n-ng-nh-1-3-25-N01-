@@ -61,14 +61,20 @@ public class UserService
     // FIND BY EMAIL
     // =====================================================
     public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        if (email == null) {
+            return Optional.empty();
+        }
+        return userRepository.findByEmail(email.toLowerCase().trim());
     }
 
     // =====================================================
     // CHECK EMAIL EXISTS
     // =====================================================
     public boolean existsByEmail(String email) {
-        return userRepository.findByEmail(email).isPresent();
+        if (email == null) {
+            return false;
+        }
+        return userRepository.findByEmail(email.toLowerCase().trim()).isPresent();
     }
 
     // =====================================================

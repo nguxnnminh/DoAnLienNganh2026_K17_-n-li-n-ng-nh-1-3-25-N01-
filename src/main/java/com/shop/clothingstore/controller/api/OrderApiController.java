@@ -14,11 +14,11 @@ import com.shop.clothingstore.dto.api.CheckoutRequest;
 import com.shop.clothingstore.dto.api.OrderResponse;
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.User;
+import com.shop.clothingstore.service.CartService;
 import com.shop.clothingstore.service.CheckoutService;
 import com.shop.clothingstore.service.OrderService;
 import com.shop.clothingstore.service.UserService;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 @RestController
@@ -28,20 +28,26 @@ public class OrderApiController {
     private final CheckoutService checkoutService;
     private final OrderService orderService;
     private final UserService userService;
+    private final CartService cartService;
 
     public OrderApiController(
             CheckoutService checkoutService,
             OrderService orderService,
-            UserService userService) {
+            UserService userService,
+            CartService cartService) {
         this.checkoutService = checkoutService;
         this.orderService = orderService;
         this.userService = userService;
+        this.cartService = cartService;
     }
 
+    // =====================================================
+    // POST /api/orders/checkout
+    // FIX: truyền couponCode từ request vào CheckoutService
+    // =====================================================
     @PostMapping("/checkout")
     public ResponseEntity<OrderResponse> checkout(
             @Valid @RequestBody CheckoutRequest request,
-            HttpSession session,
             Principal principal) {
 
         User user = getUser(principal);
@@ -49,15 +55,19 @@ public class OrderApiController {
                 request.getCustomerName(),
                 request.getPhone(),
                 request.getAddress(),
-                session,
-                user
+                cartService.getCart(),
+                user,
+                request.getCouponCode()
         );
+        cartService.clear();
         return ResponseEntity.ok(OrderResponse.from(order));
     }
 
+    // =====================================================
+    // GET /api/orders/my
+    // =====================================================
     @GetMapping("/my")
     public ResponseEntity<List<OrderResponse>> myOrders(Principal principal) {
-
         User user = getUser(principal);
         if (user == null) {
             throw new IllegalStateException("Bạn cần đăng nhập để xem đơn hàng");

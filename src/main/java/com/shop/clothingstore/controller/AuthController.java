@@ -18,6 +18,8 @@ import com.shop.clothingstore.service.EmailService;
 import com.shop.clothingstore.service.PasswordResetService;
 import com.shop.clothingstore.service.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @Controller
 public class AuthController {
 
@@ -58,8 +60,11 @@ public class AuthController {
             RedirectAttributes redirectAttributes
     ) {
 
+        // ===== normalize email =====
+        String normalizedEmail = email.toLowerCase().trim();
+
         // ===== check email tồn tại =====
-        if (userService.existsByEmail(email)) {
+        if (userService.existsByEmail(normalizedEmail)) {
             redirectAttributes.addFlashAttribute("error", "Email đã tồn tại");
             return "redirect:/register";
         }
@@ -78,7 +83,7 @@ public class AuthController {
 
         // ===== create user =====
         userService.registerUser(
-                email,
+                normalizedEmail,
                 passwordEncoder.encode(password),
                 Role.USER
         );
@@ -99,10 +104,14 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public String processForgotPassword(
             @RequestParam String email,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes
     ) {
 
-        Optional<User> userOpt = userService.findByEmail(email);
+        // Normalize email — same as registration
+        String normalizedEmail = email.toLowerCase().trim();
+
+        Optional<User> userOpt = userService.findByEmail(normalizedEmail);
 
         redirectAttributes.addFlashAttribute(
                 "success",
@@ -116,8 +125,13 @@ public class AuthController {
             PasswordResetToken token
                     = passwordResetService.createTokenForUser(user);
 
-            String resetLink
-                    = "http://localhost:8080/reset-password?token=" + token.getToken();
+            // Build base URL dynamically — không hardcode localhost
+            String baseUrl = request.getScheme() + "://"
+                    + request.getServerName()
+                    + (request.getServerPort() != 80 && request.getServerPort() != 443
+                    ? ":" + request.getServerPort() : "");
+
+            String resetLink = baseUrl + "/reset-password?token=" + token.getToken();
 
             emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         }

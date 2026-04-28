@@ -75,9 +75,9 @@ public class SecurityConfig {
                         "/forgot-password", "/reset-password",
                         "/css/**", "/js/**", "/images/**"
                 ).permitAll()
-                .requestMatchers("/my-orders", "/profile").authenticated()
+                .requestMatchers("/my-orders", "/profile", "/orders/**", "/reviews/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().permitAll())
+                .anyRequest().authenticated())
                 .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
@@ -100,6 +100,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @SuppressWarnings("deprecation")
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);

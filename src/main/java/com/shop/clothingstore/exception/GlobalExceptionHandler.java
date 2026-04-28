@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     }
 
     // =====================================================
-    // 404 - Spring static resource not found (css, js, images)
+    // 404 - Spring static resource not found
     // =====================================================
     @ExceptionHandler(NoResourceFoundException.class)
     public String handleNoResourceFound(
@@ -111,12 +111,34 @@ public class GlobalExceptionHandler {
 
     // =====================================================
     // HELPER: redirect về trang trước đó
+    // BUG FIX: Validate Referer chỉ chấp nhận path nội bộ
+    // tránh Open Redirect qua Referer header giả mạo
     // =====================================================
     private String redirectToReferer(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
+
         if (referer != null && !referer.isBlank()) {
-            return "redirect:" + referer;
+            // Chỉ redirect nếu là path tương đối hoặc cùng host
+            try {
+                java.net.URI refererUri = new java.net.URI(referer);
+                java.net.URI requestUri = new java.net.URI(request.getRequestURL().toString());
+
+                boolean sameHost = requestUri.getHost() != null
+                        && requestUri.getHost().equalsIgnoreCase(refererUri.getHost());
+                boolean isRelative = refererUri.getHost() == null;
+
+                if (sameHost || isRelative) {
+                    String path = refererUri.getPath();
+                    if (refererUri.getQuery() != null) {
+                        path += "?" + refererUri.getQuery();
+                    }
+                    return "redirect:" + path;
+                }
+            } catch (java.net.URISyntaxException ignored) {
+                // URI không hợp lệ → fall through
+            }
         }
+
         String uri = request.getRequestURI();
         if (uri.startsWith("/admin")) {
             return "redirect:/admin/dashboard";

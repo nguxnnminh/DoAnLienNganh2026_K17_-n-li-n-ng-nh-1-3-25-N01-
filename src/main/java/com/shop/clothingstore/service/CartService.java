@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.shop.clothingstore.dto.CartItemDTO;
 import com.shop.clothingstore.entity.ProductVariant;
@@ -19,18 +21,16 @@ public class CartService {
     private static final String CART_SESSION_KEY = "CART";
 
     private final ProductVariantRepository variantRepository;
-    private final HttpServletRequest request;
 
-    public CartService(ProductVariantRepository variantRepository,
-            HttpServletRequest request) {
+    public CartService(ProductVariantRepository variantRepository) {
         this.variantRepository = variantRepository;
-        this.request = request;
     }
 
     // =====================================================
-    // HELPER: always get fresh session from current request
+    // HELPER: get session from current request thread-safely
     // =====================================================
     private HttpSession getSession() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         return request.getSession(true);
     }
 

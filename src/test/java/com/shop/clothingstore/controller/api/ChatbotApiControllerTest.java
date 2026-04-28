@@ -11,38 +11,34 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.clothingstore.security.JwtUtil;
 import com.shop.clothingstore.service.CartService;
 import com.shop.clothingstore.service.ChatbotService;
 import com.shop.clothingstore.service.ChatbotService.ChatbotResponse;
-import com.shop.clothingstore.service.ChatbotService.ProductSummary;
 import com.shop.clothingstore.service.CustomUserDetailsService;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("null")
 class ChatbotApiControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @MockitoBean
     private ChatbotService chatbotService;
 
-    @MockBean
+    @MockitoBean
     private CartService cartService;
 
-    @MockBean
+    @MockitoBean
     private JwtUtil jwtUtil;
 
-    @MockBean
+    @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
     // =============================================================
@@ -66,7 +62,6 @@ class ChatbotApiControllerTest {
     @Test
     @DisplayName("POST /api/chatbot with product search returns products list")
     void chat_ProductSearch_ReturnsOkWithProducts() throws Exception {
-        ProductSummary summary = new ProductSummary();
         // We need to construct via the available static factory from entity,
         // but since constructor && fields are private/package, we test the response
         // by mocking ChatbotService.withProducts via ChatbotService.text + products

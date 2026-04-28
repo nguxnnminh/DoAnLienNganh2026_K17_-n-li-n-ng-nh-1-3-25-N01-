@@ -1,0 +1,177 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.shop:clothingstore >-----------------------
+[INFO] Building clothingstore 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ clothingstore ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 31 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ clothingstore ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ clothingstore ---
+[INFO] skip non existing resourceDirectory c:\Users\ADMIN\Desktop\clothingstore\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ clothingstore ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 3 source files with javac [debug parameters release 17] to target\test-classes
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by lombok.permit.Permit
+WARNING: Please consider reporting this to the maintainers of class lombok.permit.Permit
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ clothingstore ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.shop.clothingstore.ClothingstoreApplicationTests
+02:46:55.104 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.shop.clothingstore.ClothingstoreApplicationTests]: ClothingstoreApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+02:46:55.199 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.shop.clothingstore.ClothingstoreApplication for test class com.shop.clothingstore.ClothingstoreApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.11)
+
+02:46:55.688 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+02:46:55.714 [main] INFO  c.s.c.ClothingstoreApplicationTests - Starting ClothingstoreApplicationTests using Java 25.0.2 with PID 13424 (started by ADMIN in c:\Users\ADMIN\Desktop\clothingstore)
+02:46:55.715 [main] DEBUG c.s.c.ClothingstoreApplicationTests - Running with Spring Boot v3.5.11, Spring v6.2.16
+02:46:55.715 [main] INFO  c.s.c.ClothingstoreApplicationTests - No active profile set, falling back to 1 default profile: "default"
+02:46:56.639 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+02:46:56.741 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 93 ms. Found 18 JPA repository interfaces.
+02:46:57.433 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+02:46:57.774 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@16e195cf
+02:46:57.776 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+02:46:57.942 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+02:46:58.032 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.42.Final
+02:46:58.096 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+02:46:58.517 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+02:46:58.602 [main] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+02:46:58.607 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+02:46:58.620 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+02:46:59.837 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+02:47:00.548 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+02:47:00.801 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+02:47:01.667 [main] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+02:47:01.668 [main] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+02:47:01.930 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+02:47:03.075 [main] INFO  c.s.c.ClothingstoreApplicationTests - Started ClothingstoreApplicationTests in 7.732 seconds (process running for 8.927)
+>>> INIT SAMPLE DATA
+>>> SAMPLE DATA READY
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\ADMIN\.m2\repository\net\bytebuddy\byte-buddy-agent\1.17.8\byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.40 s -- in com.shop.clothingstore.ClothingstoreApplicationTests
+[INFO] Running com.shop.clothingstore.controller.api.ChatbotApiControllerTest
+02:47:05.380 [main] INFO  o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.shop.clothingstore.controller.api.ChatbotApiControllerTest]: ChatbotApiControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+02:47:05.403 [main] INFO  o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.shop.clothingstore.ClothingstoreApplication for test class com.shop.clothingstore.controller.api.ChatbotApiControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.11)
+
+02:47:05.424 [main] INFO  c.s.c.c.api.ChatbotApiControllerTest - Starting ChatbotApiControllerTest using Java 25.0.2 with PID 13424 (started by ADMIN in c:\Users\ADMIN\Desktop\clothingstore)
+02:47:05.424 [main] DEBUG c.s.c.c.api.ChatbotApiControllerTest - Running with Spring Boot v3.5.11, Spring v6.2.16
+02:47:05.425 [main] INFO  c.s.c.c.api.ChatbotApiControllerTest - No active profile set, falling back to 1 default profile: "default"
+02:47:05.670 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+02:47:05.716 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 44 ms. Found 18 JPA repository interfaces.
+02:47:06.369 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Starting...
+02:47:06.382 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@72021abd
+02:47:06.382 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Start completed.
+02:47:06.441 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+02:47:06.450 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+02:47:06.476 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+02:47:06.484 [main] WARN  org.hibernate.dialect.Dialect - HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+02:47:06.485 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+02:47:06.487 [main] INFO  o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+02:47:06.773 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+02:47:07.050 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+02:47:07.387 [main] INFO  o.s.s.c.a.a.c.InitializeAuthenticationProviderBeanManagerConfigurer$InitializeAuthenticationProviderManagerConfigurer - Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+02:47:07.387 [main] WARN  o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+02:47:07.565 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+02:47:08.135 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+02:47:08.136 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+02:47:08.137 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+02:47:08.165 [main] INFO  c.s.c.c.api.ChatbotApiControllerTest - Started ChatbotApiControllerTest in 2.756 seconds (process running for 14.016)
+>>> INIT SAMPLE DATA
+>>> SAMPLE DATA READY
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.749 s -- in com.shop.clothingstore.controller.api.ChatbotApiControllerTest
+[INFO] Running com.shop.clothingstore.service.ChatbotServiceTest
+02:47:10.436 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: tôi mu?n áo xanh d??i 400k trên 100k
+02:47:10.437 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='tôi mu?n áo xanh d??i 400k trên 100k' | keyword=áo xanh | color=xanh | minPrice=100000.0 | maxPrice=400000.0
+02:47:10.448 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: xyz không t?n t?i
+02:47:10.448 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='xyz không t?n t?i' | keyword=xyz t?n t?i | color=null | minPrice=null | maxPrice=null
+02:47:10.563 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: no images
+02:47:10.563 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='no images' | keyword=no images | color=null | minPrice=null | maxPrice=null
+02:47:10.568 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: tìm qu?n jeans
+02:47:10.569 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='tìm qu?n jeans' | keyword=qu?n jeans | color=null | minPrice=null | maxPrice=null
+02:47:10.576 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: áo s? mi d??i 500k
+02:47:10.576 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='áo s? mi d??i 500k' | keyword=áo s? mi | color=null | minPrice=null | maxPrice=500000.0
+02:47:10.579 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: qu?n trên 300k
+02:47:10.579 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='qu?n trên 300k' | keyword=qu?n | color=null | minPrice=300000.0 | maxPrice=null
+02:47:10.609 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: xin chào
+02:47:10.615 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: hello
+02:47:10.617 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: hi
+02:47:10.621 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: chào b?n
+02:47:10.624 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: hey there
+02:47:10.630 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: test
+02:47:10.630 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='test' | keyword=test | color=null | minPrice=null | maxPrice=null
+02:47:10.640 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: áo màu ?en
+02:47:10.640 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='áo màu ?en' | keyword=áo ?en | color=?en | minPrice=null | maxPrice=null
+02:47:10.648 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: no primary
+02:47:10.648 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='no primary' | keyword=no primary | color=null | minPrice=null | maxPrice=null
+02:47:10.659 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: áo d??i 500k
+02:47:10.660 [main] DEBUG c.s.c.service.ChatbotService - Parsed query | original='áo d??i 500k' | keyword=áo | color=null | minPrice=null | maxPrice=500000.0
+02:47:10.663 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: giúp
+02:47:10.666 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: help
+02:47:10.668 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: h??ng d?n
+02:47:10.670 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: làm sao ?? mua
+02:47:10.675 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: bán ch?y
+02:47:10.680 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: best seller
+02:47:10.683 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: ph? bi?n
+02:47:10.685 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: hot
+02:47:10.689 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: trending
+02:47:10.692 [main] INFO  c.s.c.service.ChatbotService - Chatbot received: hot
+[INFO] Tests run: 29, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.553 s -- in com.shop.clothingstore.service.ChatbotServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  20.970 s
+[INFO] Finished at: 2026-04-28T02:47:10+07:00
+[INFO] ------------------------------------------------------------------------

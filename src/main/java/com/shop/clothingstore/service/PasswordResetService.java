@@ -12,6 +12,7 @@ import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.PasswordResetTokenRepository;
 
 @Service
+@SuppressWarnings("null")
 public class PasswordResetService {
 
     private final PasswordResetTokenRepository tokenRepository;

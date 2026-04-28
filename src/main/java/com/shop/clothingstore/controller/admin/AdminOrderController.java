@@ -1,7 +1,8 @@
 package com.shop.clothingstore.controller.admin;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,11 +28,15 @@ public class AdminOrderController extends AdminBaseController {
     // ADMIN - ORDER LIST
     // ===============================
     @GetMapping("/admin/orders")
-    public String orders(Model model) {
+    public String orders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Model model) {
 
         model.addAttribute("title", "Quản lý đơn hàng");
 
-        List<Order> orders = orderService.getAllOrders();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> orders = orderService.getAllOrders(pageable);
 
         model.addAttribute("orders", orders);
         model.addAttribute("statuses", OrderStatus.values());
@@ -50,7 +55,7 @@ public class AdminOrderController extends AdminBaseController {
 
         try {
 
-            Order order = orderService.findById(id) // 🔥 dùng generic
+            Order order = orderService.findById(id)
                     .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
             model.addAttribute("title", "Chi tiết đơn hàng #" + id);

@@ -26,6 +26,7 @@ import com.shop.clothingstore.entity.ProductImage;
 import com.shop.clothingstore.repository.ProductRepository;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class ChatbotServiceTest {
 
     @Mock

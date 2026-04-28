@@ -91,7 +91,9 @@ public class ProductSpecification {
                     );
                 }
 
-                query.distinct(true);
+                if (query != null) {
+                    query.distinct(true);
+                }
             }
 
             // ==================================================

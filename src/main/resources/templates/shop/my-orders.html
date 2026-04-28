@@ -10,67 +10,48 @@
       padding: 5px 13px;
       border: 1px solid;
     }
-
-    .status-PENDING {
-      border-color: #4a3a10;
-      color: #c8a52b;
-    }
-
+    .status-PENDING        { border-color: #4a3a10; color: #c8a52b; }
     .status-CONFIRMED,
-    .status-PROCESSING {
-      border-color: #1a3a4a;
-      color: #5a9bbf;
-    }
-
-    .status-SHIPPING {
-      border-color: #2a1a4a;
-      color: #8a6dbf;
-    }
-
-    .status-COMPLETED {
-      border-color: #1a4a2a;
-      color: #6dbf6d;
-    }
-
-    .status-CANCELLED {
-      border-color: #4a1a1a;
-      color: #bf7070;
-    }
+    .status-PROCESSING     { border-color: #1a3a4a; color: #5a9bbf; }
+    .status-SHIPPING       { border-color: #2a1a4a; color: #8a6dbf; }
+    .status-COMPLETED      { border-color: #1a4a2a; color: #6dbf6d; }
+    .status-CANCELLED      { border-color: #4a1a1a; color: #bf7070; }
 
     .order-row {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 32px;
-      padding: 32px 0;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px 0;
       border-bottom: 1px solid #1a1a1a;
       text-decoration: none;
       color: inherit;
       transition: opacity .2s;
     }
-
-    .order-row:hover {
-      opacity: .78;
+    @media (min-width: 640px) {
+      .order-row {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 32px;
+        padding: 28px 0;
+      }
     }
+    .order-row:hover { opacity: .78; }
   </style>
 
-  <div style="max-width:960px; margin:0 auto; padding:64px 56px;">
-    <div style="margin-bottom:52px; border-bottom:1px solid #1a1a1a; padding-bottom:28px;">
-      <p style="font-size:.6rem; letter-spacing:.42em; text-transform:uppercase; color:#444; margin-bottom:10px;">
-        Account</p>
-      <h1
-        style="font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:.06em; line-height:1; color:#f5f5f3;">
-        My Orders</h1>
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
+
+    <!-- HEADER -->
+    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
+      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">My Orders</h1>
     </div>
 
     <!-- EMPTY -->
-    <div th:if="${#lists.isEmpty(orders)}" style="text-align:center; padding:80px 0; border:1px solid #1a1a1a;">
-      <p
-        style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; letter-spacing:.08em; color:#1e1e1e; margin-bottom:28px;">
-        No Orders Yet</p>
+    <div th:if="${#lists.isEmpty(orders)}" class="text-center py-16 md:py-20 border border-zinc-900">
+      <p class="font-display text-4xl md:text-6xl tracking-wide text-zinc-900 mb-6">No Orders Yet</p>
       <a th:href="@{/products}"
-        style="font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; color:#555; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:color .2s;"
-        onmouseover="this.style.color='#c0c0bc'" onmouseout="this.style.color='#555'">
+        class="text-[0.68rem] tracking-widest uppercase text-zinc-500 no-underline inline-flex items-center gap-2 transition-colors duration-200 hover:text-[#c0c0bc]">
         Start Shopping
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M5 12h14M12 5l7 7-7 7" />
@@ -78,36 +59,38 @@
       </a>
     </div>
 
-    <!-- ORDERS -->
+    <!-- ORDERS LIST -->
     <div th:unless="${#lists.isEmpty(orders)}">
       <a th:each="order : ${orders}" th:href="@{/orders/{id}(id=${order.id})}" class="order-row">
-        <div style="flex:1;">
-          <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px; flex-wrap:wrap;">
-            <span style="font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:#e8e8e4;"
+
+        <div class="flex-1">
+          <div class="flex items-center gap-4 mb-3 flex-wrap">
+            <span class="text-[0.78rem] tracking-widest uppercase text-[#e8e8e4]"
               th:text="'Order #' + ${order.id}"></span>
             <span class="status-badge" th:classappend="'status-' + ${order.status.name()}"
               th:text="${order.status}"></span>
           </div>
-          <p style="font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:#555; margin-bottom:6px;"
+          <p class="text-[0.65rem] tracking-widest uppercase text-zinc-600 mb-1.5"
             th:text="${#temporals.format(order.createdAt,'dd MMM yyyy · HH:mm')}"></p>
-          <p style="font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:#3a3a3a;">
+          <p class="text-[0.65rem] tracking-widest uppercase text-zinc-800">
             <span th:text="${order.items.size()}"></span>&nbsp;item<span th:if="${order.items.size() > 1}">s</span>
           </p>
         </div>
-        <div style="text-align:right; flex-shrink:0;">
-          <p style="font-size:.95rem; letter-spacing:.05em; color:#c0c0bc; margin-bottom:10px;"
+
+        <div class="sm:text-right flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-3">
+          <p class="text-[0.95rem] tracking-wide text-[#c0c0bc]"
             th:text="${#numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')} + ' ₫'"></p>
-          <span
-            style="font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; color:#444; display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+          <span class="text-[0.6rem] tracking-widest uppercase text-zinc-600 flex items-center gap-1.5">
             View
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </span>
         </div>
+
       </a>
     </div>
+
   </div>
 </div>
-
 </html>

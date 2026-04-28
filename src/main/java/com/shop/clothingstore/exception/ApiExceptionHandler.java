@@ -42,12 +42,18 @@ public class ApiExceptionHandler {
     }
 
     // =====================================================
-    // 400 - Illegal state (cart empty, invalid operation)
+    // 400/401 - Illegal state (cart empty, invalid operation, unauthorized)
     // =====================================================
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalState(
             IllegalStateException ex,
             HttpServletRequest request) {
+
+        if ("Unauthorized".equals(ex.getMessage()) || "User not found".equals(ex.getMessage())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new ApiErrorResponse(401, "UNAUTHORIZED", ex.getMessage(), request.getRequestURI())
+            );
+        }
 
         log.warn("Illegal state: {} | URI: {}", ex.getMessage(), request.getRequestURI());
 

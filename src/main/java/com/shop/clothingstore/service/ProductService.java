@@ -30,6 +30,7 @@ import com.shop.clothingstore.specification.ProductSpecification;
 import jakarta.transaction.Transactional;
 
 @Service
+@SuppressWarnings("null")
 public class ProductService extends GenericServiceBase<Product, Long> {
 
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);

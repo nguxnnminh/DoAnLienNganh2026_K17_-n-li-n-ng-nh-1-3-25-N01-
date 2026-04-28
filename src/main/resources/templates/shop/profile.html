@@ -15,53 +15,22 @@
       transition: border-color .2s;
       letter-spacing: .03em;
     }
-
-    .pf-input:focus {
-      border-bottom-color: #666;
-    }
-
-    .pf-input::placeholder {
-      color: #2e2e2e;
-      font-size: .72rem;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-    }
-
-    .pf-input:disabled {
-      color: #3a3a3a;
-      cursor: not-allowed;
-    }
-
-    .pf-label {
-      font-size: .6rem;
-      letter-spacing: .38em;
-      text-transform: uppercase;
-      color: #555;
-      display: block;
-      margin-bottom: 7px;
-    }
-
-    .pf-section {
-      border: 1px solid #1a1a1a;
-      padding: 44px;
-    }
+    .pf-input:focus { border-bottom-color: #666; }
+    .pf-input::placeholder { color: #2e2e2e; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+    .pf-input:disabled { color: #3a3a3a; cursor: not-allowed; }
+    .pf-label { font-size: .6rem; letter-spacing: .38em; text-transform: uppercase; color: #555; display: block; margin-bottom: 7px; }
   </style>
 
-  <div style="max-width:800px; margin:0 auto; padding:64px 56px;">
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
 
     <!-- HEADER -->
-    <div
-      style="margin-bottom:52px; border-bottom:1px solid #1a1a1a; padding-bottom:28px; display:flex; justify-content:space-between; align-items:flex-end;">
+    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
       <div>
-        <p style="font-size:.6rem; letter-spacing:.42em; text-transform:uppercase; color:#444; margin-bottom:10px;">
-          Account</p>
-        <h1
-          style="font-family:'Bebas Neue',sans-serif; font-size:4rem; letter-spacing:.06em; line-height:1; color:#f5f5f3;">
-          Profile</h1>
+        <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Profile</h1>
       </div>
       <a th:href="@{/my-orders}"
-        style="font-size:.64rem; letter-spacing:.2em; text-transform:uppercase; color:#555; text-decoration:none; display:flex; align-items:center; gap:8px; transition:color .2s;"
-        onmouseover="this.style.color='#c0c0bc'" onmouseout="this.style.color='#555'">
+        class="text-[0.64rem] tracking-widest uppercase text-zinc-500 no-underline flex items-center gap-2 transition-colors hover:text-[#c0c0bc] self-start sm:self-auto">
         My Orders
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M5 12h14M12 5l7 7-7 7" />
@@ -69,72 +38,70 @@
       </a>
     </div>
 
-    <!-- PROFILE FORM -->
-    <div class="pf-section" style="margin-bottom:2px;">
-      <p style="font-size:.58rem; letter-spacing:.4em; text-transform:uppercase; color:#444; margin-bottom:36px;">
-        Personal Info</p>
-      <form method="post" th:action="@{/profile/update}" style="display:flex; flex-direction:column; gap:34px;">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <div class="flex flex-col gap-0.5 max-w-2xl">
 
-        <div>
-          <label class="pf-label">Email</label>
-          <input class="pf-input" type="email" th:value="${user.email}" disabled />
-        </div>
-        <div>
-          <label class="pf-label">Full Name</label>
-          <input class="pf-input" type="text" name="fullName" th:value="${user.fullName}" placeholder="Your name" />
-        </div>
-        <div>
-          <label class="pf-label">Phone</label>
-          <input class="pf-input" type="text" name="phone" th:value="${user.phone}" placeholder="0900 000 000" />
-        </div>
-        <div>
-          <label class="pf-label">Address</label>
-          <textarea class="pf-input" name="address" rows="3" style="resize:none;" placeholder="Delivery address"
-            th:text="${user.address}"></textarea>
-        </div>
+      <!-- PERSONAL INFO -->
+      <div class="border border-zinc-900 p-6 md:p-10">
+        <p class="text-[0.58rem] tracking-widest3 uppercase text-zinc-600 mb-8">Personal Info</p>
+        <form method="post" th:action="@{/profile/update}" class="flex flex-col gap-7 md:gap-8">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-        <div style="display:flex; justify-content:flex-end; padding-top:8px; border-top:1px solid #1a1a1a;">
-          <button type="submit"
-            style="padding:15px 40px; background:#f5f5f3; color:#0a0a0a; border:none; font-family:'DM Sans',sans-serif; font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; font-weight:500; cursor:pointer; transition:background .25s;"
-            onmouseover="this.style.background='#d8d8d4'" onmouseout="this.style.background='#f5f5f3'">
-            Save Changes
-          </button>
-        </div>
-      </form>
-    </div>
+          <div>
+            <label class="pf-label">Email</label>
+            <input class="pf-input" type="email" th:value="${user.email}" disabled />
+          </div>
+          <div>
+            <label class="pf-label">Full Name</label>
+            <input class="pf-input" type="text" name="fullName" th:value="${user.fullName}" placeholder="Your name" />
+          </div>
+          <div>
+            <label class="pf-label">Phone</label>
+            <input class="pf-input" type="text" name="phone" th:value="${user.phone}" placeholder="0900 000 000" />
+          </div>
+          <div>
+            <label class="pf-label">Address</label>
+            <textarea class="pf-input" name="address" rows="3" style="resize:none;"
+              placeholder="Delivery address" th:text="${user.address}"></textarea>
+          </div>
 
-    <!-- CHANGE PASSWORD -->
-    <div class="pf-section">
-      <p style="font-size:.58rem; letter-spacing:.4em; text-transform:uppercase; color:#444; margin-bottom:36px;">Change
-        Password</p>
-      <form method="post" th:action="@{/profile/change-password}"
-        style="display:flex; flex-direction:column; gap:30px;">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <div class="flex justify-end pt-2 border-t border-zinc-900">
+            <button type="submit"
+              class="px-8 py-4 bg-[#f5f5f3] text-[#0a0a0a] border-none font-body text-[0.68rem] tracking-widest uppercase font-medium cursor-pointer transition-colors duration-200 hover:bg-[#d8d8d4]">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
 
-        <div>
-          <label class="pf-label">Current Password</label>
-          <input class="pf-input" type="password" name="oldPassword" placeholder="••••••••" required />
-        </div>
-        <div>
-          <label class="pf-label">New Password</label>
-          <input class="pf-input" type="password" name="newPassword" placeholder="Min 6 characters" required />
-        </div>
-        <div>
-          <label class="pf-label">Confirm New Password</label>
-          <input class="pf-input" type="password" name="confirmPassword" placeholder="Repeat password" required />
-        </div>
+      <!-- CHANGE PASSWORD -->
+      <div class="border border-zinc-900 p-6 md:p-10">
+        <p class="text-[0.58rem] tracking-widest3 uppercase text-zinc-600 mb-8">Change Password</p>
+        <form method="post" th:action="@{/profile/change-password}" class="flex flex-col gap-7">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-        <div style="display:flex; justify-content:flex-end; padding-top:8px; border-top:1px solid #1a1a1a;">
-          <button type="submit"
-            style="padding:15px 40px; background:transparent; color:#c0c0bc; border:1px solid #2e2e2e; font-family:'DM Sans',sans-serif; font-size:.68rem; letter-spacing:.28em; text-transform:uppercase; cursor:pointer; transition:all .25s;"
-            onmouseover="this.style.borderColor='#555'" onmouseout="this.style.borderColor='#2e2e2e'">
-            Update Password
-          </button>
-        </div>
-      </form>
+          <div>
+            <label class="pf-label">Current Password</label>
+            <input class="pf-input" type="password" name="oldPassword" placeholder="••••••••" required />
+          </div>
+          <div>
+            <label class="pf-label">New Password</label>
+            <input class="pf-input" type="password" name="newPassword" placeholder="Min 6 characters" required />
+          </div>
+          <div>
+            <label class="pf-label">Confirm New Password</label>
+            <input class="pf-input" type="password" name="confirmPassword" placeholder="Repeat password" required />
+          </div>
+
+          <div class="flex justify-end pt-2 border-t border-zinc-900">
+            <button type="submit"
+              class="px-8 py-4 bg-transparent text-[#c0c0bc] border border-zinc-800 font-body text-[0.68rem] tracking-widest uppercase cursor-pointer transition-all duration-200 hover:border-zinc-500">
+              Update Password
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
   </div>
 </div>
-
 </html>

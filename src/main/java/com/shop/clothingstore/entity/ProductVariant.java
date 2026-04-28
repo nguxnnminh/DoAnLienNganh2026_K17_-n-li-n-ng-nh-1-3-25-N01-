@@ -10,7 +10,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,8 +23,8 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class ProductVariant extends BaseEntity implements ItemVariant {
 
-    @Version
-    private Long version;
+    @Column(unique = true)
+    private String sku;
 
     @Column(nullable = false)
     private String size;
@@ -41,6 +40,8 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
 
     @Column(nullable = false)
     private Integer sold = 0;
+
+    private Double weight; // in grams, for shipping calculation
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
@@ -59,12 +60,12 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
 
     @Override
     public Integer getStock() {
-        return stock;
+        return stock != null ? stock : 0;
     }
 
     @Override
     public Integer getSold() {
-        return sold;
+        return sold != null ? sold : 0;
     }
 
     @Override

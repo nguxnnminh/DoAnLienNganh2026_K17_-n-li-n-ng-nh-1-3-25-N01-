@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -49,12 +52,19 @@ public class AdminProductController extends AdminBaseController {
     // LIST PRODUCTS
     // ===============================
     @GetMapping
-    public String listProducts(Model model) {
+    public String listProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Model model) {
 
         model.addAttribute("title", "Quản lý sản phẩm");
 
-        List<Product> products = productService.findAll();
-        model.addAttribute("products", products);
+        Page<Product> productPage = productService.findAll(
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        );
+        model.addAttribute("products", productPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productPage.getTotalPages());
 
         return "admin/products/index";
     }

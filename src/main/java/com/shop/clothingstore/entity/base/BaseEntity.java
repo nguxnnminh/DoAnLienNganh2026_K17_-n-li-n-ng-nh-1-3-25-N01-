@@ -33,7 +33,6 @@ public abstract class BaseEntity {
     }
 
     // ===== GETTER & SETTER =====
-
     public Long getId() {
         return id;
     }
@@ -46,7 +45,8 @@ public abstract class BaseEntity {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {  // 👈 Checkout đang dùng
+    // Protected setter — chỉ dùng nội bộ/test. updatable=false nên không nên set từ bên ngoài.
+    protected void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 

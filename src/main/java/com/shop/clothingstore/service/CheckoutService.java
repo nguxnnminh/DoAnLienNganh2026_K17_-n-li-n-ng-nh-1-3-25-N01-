@@ -18,49 +18,50 @@ import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.repository.OrderRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 
-import jakarta.servlet.http.HttpSession;
-
 @Service
 public class CheckoutService {
 
     private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);
 
     private final OrderRepository orderRepository;
-    private final CartService cartService;
     private final ProductVariantRepository variantRepository;
+    private final CouponService couponService;
 
     public CheckoutService(
             OrderRepository orderRepository,
-            CartService cartService,
-            ProductVariantRepository variantRepository
+            ProductVariantRepository variantRepository,
+            CouponService couponService
     ) {
         this.orderRepository = orderRepository;
-        this.cartService = cartService;
         this.variantRepository = variantRepository;
+        this.couponService = couponService;
     }
 
+    // =====================================================
+    // CHECKOUT (hỗ trợ cả guest + user, có coupon)
+    // =====================================================
     @Transactional
     public Order checkout(
             String customerName,
             String phone,
             String address,
-            HttpSession session,
-            User user
+            List<CartItemDTO> cart,
+            User user,
+            String couponCode
     ) {
+        log.info("Checkout started | customer={} | user={} | coupon={}",
+                customerName, user != null ? user.getEmail() : "GUEST",
+                couponCode != null ? couponCode : "none");
 
-        log.info("Checkout started | customer={} | user={}",
-                customerName, user != null ? user.getEmail() : "GUEST");
-
-        // 1️⃣ LẤY CART
-        List<CartItemDTO> cart = cartService.getCart();
-        if (cart.isEmpty()) {
+        // 1. VALIDATE CART
+        if (cart == null || cart.isEmpty()) {
             log.warn("Checkout failed: cart is empty | customer={}", customerName);
-            throw new IllegalStateException("Cart is empty");
+            throw new IllegalStateException("Giỏ hàng trống, vui lòng thêm sản phẩm trước khi đặt hàng.");
         }
 
         log.debug("Cart has {} items", cart.size());
 
-        // 2️⃣ TẠO ORDER
+        // 2. TẠO ORDER
         Order order = new Order();
         order.setCustomerName(customerName);
         order.setPhone(phone);
@@ -71,19 +72,18 @@ public class CheckoutService {
             order.setActor(user);
         }
 
-        // 3️⃣ CHECK STOCK + TRỪ STOCK ATOMIC (Pessimistic Lock)
-        //    Gộp check và trừ trong 1 vòng lặp duy nhất
+        // 3. CHECK STOCK + TRỪ STOCK ATOMIC (Pessimistic Lock)
         //    findByIdForUpdate → SELECT ... FOR UPDATE → lock row
         List<OrderItem> items = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
 
         for (CartItemDTO c : cart) {
 
-            // 🔒 LOCK ROW → tránh race condition
+            // LOCK ROW → tránh race condition overselling
             ProductVariant variant = variantRepository
                     .findByIdForUpdate(c.getVariantId())
                     .orElseThrow(() -> new IllegalStateException(
-                    "Variant not found: ID = " + c.getVariantId()));
+                    "Sản phẩm không tồn tại: variantId=" + c.getVariantId()));
 
             // CHECK STOCK (đang giữ lock)
             if (variant.getStock() < c.getQuantity()) {
@@ -100,7 +100,7 @@ public class CheckoutService {
             variant.setSold(variant.getSold() + c.getQuantity());
             variantRepository.save(variant);
 
-            // Lấy giá HIỆN TẠI từ DB (không dùng giá cũ trong cart)
+            // Lấy giá HIỆN TẠI từ DB (không dùng giá cũ trong cart session)
             BigDecimal currentPrice = BigDecimal.valueOf(variant.getPrice());
 
             OrderItem item = new OrderItem();
@@ -114,23 +114,36 @@ public class CheckoutService {
 
             items.add(item);
 
-            BigDecimal lineTotal = currentPrice
-                    .multiply(BigDecimal.valueOf(c.getQuantity()));
-            total = total.add(lineTotal);
+            subtotal = subtotal.add(currentPrice.multiply(BigDecimal.valueOf(c.getQuantity())));
         }
+
+        // 4. ÁP DỤNG COUPON (nếu có)
+        //    couponService.applyCoupon cũng tăng usageCount trong cùng transaction
+        BigDecimal total = couponService.applyCoupon(couponCode, subtotal);
 
         order.setItems(items);
         order.setTotal(total.doubleValue());
 
-        // 4️⃣ SAVE
+        // 5. SAVE
         Order savedOrder = orderRepository.save(order);
 
-        log.info("Order created | orderId={} | total={} | items={} | customer={}",
-                savedOrder.getId(), total, items.size(), customerName);
-
-        // 5️⃣ CLEAR CART
-        session.removeAttribute("CART");
+        log.info("Order created | orderId={} | subtotal={} | total={} | items={} | customer={}",
+                savedOrder.getId(), subtotal, total, items.size(), customerName);
 
         return savedOrder;
+    }
+
+    // =====================================================
+    // OVERLOAD: backward-compat (không có coupon)
+    // =====================================================
+    @Transactional
+    public Order checkout(
+            String customerName,
+            String phone,
+            String address,
+            List<CartItemDTO> cart,
+            User user
+    ) {
+        return checkout(customerName, phone, address, cart, user, null);
     }
 }

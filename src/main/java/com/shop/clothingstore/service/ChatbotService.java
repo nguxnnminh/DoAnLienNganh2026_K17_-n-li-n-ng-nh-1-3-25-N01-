@@ -18,6 +18,31 @@ public class ChatbotService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatbotService.class);
 
+    // Static compiled patterns for performance
+    private static final Pattern PRICE_RANGE_PATTERN = Pattern.compile(
+            "(?:từ\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng)?\\s*(?:đến|tới|-)\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng)?)"
+            + "|(?:between\\s*(\\d+)\\s*(?:and|to)\\s*(\\d+))"
+    );
+    private static final Pattern PRICE_UNDER_PATTERN = Pattern.compile(
+            "(dưới|under|<|tối đa|max)\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng|đ)?"
+    );
+    private static final Pattern PRICE_OVER_PATTERN = Pattern.compile(
+            "(?<!đến\\s|tới\\s|to\\s|and\\s)(trên|over|>|tối thiểu|min|từ)\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng|đ)?"
+    );
+
+    private static final String[] COLORS = {
+        "xanh da trời", "xanh dương", "xanh lá",
+        "đen", "trắng", "xanh", "đỏ", "vàng",
+        "xám", "nâu", "hồng", "tím", "cam",
+        "be", "navy", "cream"
+    };
+
+    private static final String[] STOP_WORDS = {
+        "tôi", "muốn", "tìm", "mua", "kiếm", "cho", "xem",
+        "cần", "hãy", "giúp", "sản phẩm", "có", "không",
+        "cái", "chiếc", "đôi", "bộ", "một", "vài", "màu"
+    };
+
     private final ProductService productService;
     private final ProductRepository productRepository;
 
@@ -101,11 +126,7 @@ public class ChatbotService {
         String original = message;
 
         // Parse giá range: "từ 200k đến 500k", "100k - 500k", "200k-500k"
-        Pattern priceRange = Pattern.compile(
-                "(?:từ\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng)?\\s*(?:đến|tới|-)\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng)?)"
-                + "|(?:between\\s*(\\d+)\\s*(?:and|to)\\s*(\\d+))"
-        );
-        Matcher mRange = priceRange.matcher(message);
+        Matcher mRange = PRICE_RANGE_PATTERN.matcher(message);
         if (mRange.find()) {
             String minStr = mRange.group(1) != null ? mRange.group(1) : mRange.group(5);
             String maxStr = mRange.group(3) != null ? mRange.group(3) : mRange.group(6);
@@ -119,23 +140,15 @@ public class ChatbotService {
         }
 
         // Parse giá: "dưới 500k", "< 300k", "tối đa 500.000đ", "under 500000"
-        Pattern priceUnder = Pattern.compile(
-                "(dưới|under|<|tối đa|max)\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng|đ)?"
-        );
-        Matcher m1 = priceUnder.matcher(message);
+        Matcher m1 = PRICE_UNDER_PATTERN.matcher(message);
         if (m1.find()) {
             result.maxPrice = parsePrice(m1.group(2));
             message = message.replace(m1.group(), "");
         }
 
         // Parse giá: "trên 300k", "> 200000", "từ 100k" (khi không có range)
-        // Regex dùng negative lookbehind để tránh conflict với "từ...đến" đã parse ở trên
-        Pattern priceOver = Pattern.compile(
-                "(?<!đến\\s|tới\\s|to\\s|and\\s)(trên|over|>|tối thiểu|min|từ)\\s*(\\d+(?:[.,]\\d{3})?)\\s*(k|nghìn|đồng|đ)?"
-        );
-        Matcher m2 = priceOver.matcher(message);
+        Matcher m2 = PRICE_OVER_PATTERN.matcher(message);
         if (m2.find()) {
-            // Nếu "từ" đã được dùng trong range thì skip
             if ("từ".equals(m2.group(1)) && result.minPrice != null) {
                 // already parsed in range, do nothing
             } else {
@@ -145,13 +158,7 @@ public class ChatbotService {
         }
 
         // Parse màu sắc: sắp xếp theo độ dài giảm dần để match cụm dài trước
-        String[] colors = {
-            "xanh da trời", "xanh dương", "xanh lá",
-            "đen", "trắng", "xanh", "đỏ", "vàng",
-            "xám", "nâu", "hồng", "tím", "cam",
-            "be", "navy", "cream"
-        };
-        for (String color : colors) {
+        for (String color : COLORS) {
             if (message.contains(color)) {
                 result.color = color;
                 message = message.replace(color, "");
@@ -160,13 +167,7 @@ public class ChatbotService {
         }
 
         // Xóa stop words
-        String[] stopWords = {
-            "tôi", "muốn", "tìm", "mua", "kiếm", "cho", "xem",
-            "cần", "hãy", "giúp", "sản phẩm", "có", "không",
-            "cái", "chiếc", "đôi", "bộ", "một", "vài", "màu"
-        };
-
-        for (String word : stopWords) {
+        for (String word : STOP_WORDS) {
             message = message.replace(word, "");
         }
 
@@ -195,8 +196,8 @@ public class ChatbotService {
         double value = Double.parseDouble(cleaned);
         if (value < 1000) {
             value *= 1000; // "500k" -> 500000
-
-                }return value;
+        }
+        return value;
     }
 
     private String buildIntro(ParsedQuery parsed, int count) {

@@ -1,5 +1,6 @@
 package com.shop.clothingstore.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shop.clothingstore.entity.base.BaseEntity;
 import com.shop.clothingstore.entity.base.ItemImage;
 
@@ -24,6 +25,7 @@ public class ProductImage extends BaseEntity implements ItemImage {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
+    @JsonIgnore
     private Product product;
 
     // ===== Implement ItemImage =====

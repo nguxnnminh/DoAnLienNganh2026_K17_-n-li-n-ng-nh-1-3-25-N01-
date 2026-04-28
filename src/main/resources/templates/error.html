@@ -1,28 +1,42 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Error — Nova</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    body{background:#0a0a0a;color:#f5f5f3;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;}
-    body{opacity:0;animation:fadeIn .6s ease forwards;}
-    @keyframes fadeIn{to{opacity:1;}}
-  </style>
-</head>
-<body>
-  <div style="text-align:center;max-width:480px;">
-    <p style="font-size:.55rem;letter-spacing:.45em;text-transform:uppercase;color:#333;margin-bottom:16px;">Nova</p>
-    <h1 style="font-family:'Bebas Neue',sans-serif;font-size:8rem;line-height:1;letter-spacing:.04em;color:#1a1a1a;margin-bottom:0;" th:text="${status} ?: '500'">500</h1>
-    <p style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.1em;color:#f5f5f3;margin-bottom:16px;" th:text="${error} ?: 'Something went wrong'">Error</p>
-    <p style="font-size:.7rem;letter-spacing:.08em;color:#444;line-height:1.8;margin-bottom:48px;" th:text="${message} ?: 'An unexpected error occurred. Please try again or contact support.'">An error occurred.</p>
-    <div style="display:flex;gap:12px;justify-content:center;">
-      <a href="/" style="padding:14px 28px;background:#f5f5f3;color:#0a0a0a;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;text-decoration:none;font-weight:500;transition:background .25s;" onmouseover="this.style.background='#ccc'" onmouseout="this.style.background='#f5f5f3'">Home</a>
-      <button onclick="history.back()" style="padding:14px 28px;background:transparent;color:#555;border:1px solid #2a2a2a;font-family:'DM Sans',sans-serif;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#555';this.style.color='#f5f5f3'" onmouseout="this.style.borderColor='#2a2a2a';this.style.color='#555'">Go Back</button>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Error — Nova')}">
+<div th:fragment="content">
+
+  <div class="min-h-[70vh] flex items-center justify-center px-4 py-16 md:py-20">
+    <div class="w-full max-w-md text-center">
+
+      <!-- ERROR CODE -->
+      <h1 class="font-display text-[6rem] md:text-[10rem] leading-none text-zinc-900 tracking-[0.04em]"
+          th:text="${status} ?: '500'">500</h1>
+
+      <!-- ERROR TITLE -->
+      <p class="font-display text-2xl md:text-4xl tracking-[0.1em] text-[#f5f5f3] mb-4"
+         th:text="${error} ?: 'Something went wrong'">Error</p>
+
+      <!-- DESCRIPTION -->
+      <p class="text-sm text-zinc-600 leading-loose tracking-[0.04em] mb-12"
+         th:text="${message} ?: 'An unexpected error occurred. Please try again or contact support.'">
+        An error occurred.
+      </p>
+
+      <!-- ACTIONS -->
+      <div class="flex gap-3 justify-center flex-wrap">
+        <a href="/"
+           class="h-11 px-6 bg-[#f5f5f3] text-[#0a0a0a] no-underline font-medium
+                  text-[0.6rem] tracking-[0.25em] uppercase flex items-center
+                  transition-colors duration-200 hover:bg-[#ccc]">
+          Home
+        </a>
+        <button onclick="history.back()"
+                class="h-11 px-6 bg-transparent text-zinc-600 border border-zinc-800
+                       font-body text-[0.6rem] tracking-[0.25em] uppercase cursor-pointer
+                       transition-all duration-200 hover:border-zinc-500 hover:text-[#f5f5f3]">
+          Go Back
+        </button>
+      </div>
+
     </div>
   </div>
-  <p style="position:fixed;bottom:24px;font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:#222;">© 2026 Nova</p>
-</body>
+
+</div>
 </html>

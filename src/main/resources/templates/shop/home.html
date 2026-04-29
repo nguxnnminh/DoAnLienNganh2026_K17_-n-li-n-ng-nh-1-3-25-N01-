@@ -8,20 +8,22 @@
     .pcard-wrap { position:relative;overflow:hidden;background:#111;width:100%; }
     .pcard-img  { width:100%;height:100%;object-fit:cover;transition:transform .65s cubic-bezier(.22,1,.36,1); }
     .pcard-alt  { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s; }
-    .pcard-over { position:absolute;inset:0;background:rgba(10,10,10,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:24px;color:#f5f5f3;opacity:0;transition:opacity .3s; }
+    .pcard-over { position:absolute;inset:0;background:rgba(17,17,17,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:24px;color:#f5f5f3;opacity:0;transition:opacity .3s; }
     .pcard:hover .pcard-img  { transform:scale(1.04); }
     .pcard:hover .pcard-alt  { opacity:1; }
     .pcard:hover .pcard-over { opacity:1; }
-    .cat-card { transition:filter .3s; }
-    .cat-card:hover { filter:brightness(.82); }
+    .cat-card { transition:all .5s cubic-bezier(.22,1,.36,1); }
+    .cat-card:hover { filter:brightness(.78); }
+    .cat-card img { transition:transform .7s cubic-bezier(.22,1,.36,1); }
+    .cat-card:hover img { transform:scale(1.06); }
   </style>
 
   <!-- ── HERO ─────────────────────────────────── -->
   <section class="relative w-full h-[90vh] md:h-screen min-h-[560px] overflow-hidden flex flex-col justify-end">
-    <img src="/images/winter-collection.png" alt="Nova Drop"
+    <img src="/images/winter-collection.jpg" alt="Nova Drop"
          class="absolute inset-0 w-full h-full object-cover object-top" />
     <div class="absolute inset-0"
-         style="background:linear-gradient(to bottom,transparent 30%,rgba(10,10,10,.72)75%,#0a0a0a 100%)"></div>
+         style="background:linear-gradient(to bottom,transparent 30%,rgba(17,17,17,.72)75%,#111111 100%)"></div>
 
     <div class="hidden md:block absolute left-10 top-1/2 -translate-y-1/2 -rotate-90 origin-center
                 text-xs tracking-widest3 uppercase text-zinc-700 whitespace-nowrap">
@@ -43,7 +45,7 @@
                   flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
           Shop Now
         </a>
-        <a href="#"
+        <a th:href="@{/products}"
            class="text-xs tracking-widest uppercase text-zinc-500 no-underline
                   flex items-center gap-2 transition-colors duration-200 hover:text-[#f5f5f3]">
           Lookbook
@@ -90,18 +92,18 @@
       </a>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5">
-      <div th:each="product,iter : ${bestSellers}" class="pcard relative"
-           th:classappend="${iter.index == 0 ? ' col-span-2 row-span-2' : ''}">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-0.5">
+      <div th:each="product,iter : ${bestSellers}" class="pcard relative">
         <a th:href="@{'/products/'+${product.subCategory.category.slug}+'/'+${product.subCategory.slug}+'/'+${product.id}}"
            class="block no-underline text-inherit">
-          <div class="pcard-wrap" th:style="${iter.index==0?'aspect-ratio:4/5':'aspect-ratio:3/4'}">
+          <div class="pcard-wrap" style="aspect-ratio:3/4">
             <img class="pcard-img"
                  th:src="${product.images!=null and !product.images.isEmpty()?product.images[0].imageUrl:'/images/no-image.png'}" alt="" />
             <img th:if="${product.images!=null and product.images.size()>1}"
                  class="pcard-alt" th:src="${product.images[1].imageUrl}" alt="" />
             <div class="pcard-over"><span class="text-xs tracking-widest uppercase">Quick View</span></div>
-            <div class="absolute top-4 left-4 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase px-3 py-1 font-medium">New</div>
+            <div class="absolute top-4 left-4 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase px-3 py-1 font-medium"
+                 th:text="${product.subCategory.category.name}">Category</div>
           </div>
           <div class="pt-4 pb-6">
             <div class="flex justify-between items-baseline gap-2">
@@ -121,37 +123,63 @@
   <!-- ── MARQUEE ───────────────────────────────── -->
   <div class="border-t border-b border-zinc-900 py-5 overflow-hidden whitespace-nowrap">
     <div class="inline-block" style="animation:ticker 22s linear infinite">
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">NOVA ESSENTIALS</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">SPRING 2026</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">NOVA ESSENTIALS</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">SPRING 2026</span>
-      <span class="font-display text-[2.5rem] tracking-widest text-zinc-900 mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">NOVA ESSENTIALS</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">SPRING 2026</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">NOVA ESSENTIALS</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">—</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">SPRING 2026</span>
+      <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">—</span>
     </div>
   </div>
 
   <!-- ── CATEGORY TILES ───────────────────────── -->
-  <section class="py-12 md:py-20 px-4 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-0.5">
-    <a th:href="@{/products/top}" class="cat-card relative aspect-[4/3] overflow-hidden block no-underline bg-[#111]">
-      <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
-        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-1.5">Category</p>
-        <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Tops</h3>
-        <p class="text-xs tracking-widest uppercase text-zinc-600 mt-3 flex items-center gap-2">
-          Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </p>
+  <section class="py-12 md:py-20 px-4 md:px-12">
+    <div class="flex justify-between items-end mb-8 md:mb-12">
+      <div>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Browse</p>
+        <h2 class="font-display text-3xl md:text-[3.5rem] tracking-wide leading-none text-[#f5f5f3]">Categories</h2>
       </div>
-    </a>
-    <a th:href="@{/products/bottom}" class="cat-card relative aspect-[4/3] overflow-hidden block no-underline bg-[#111]">
-      <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
-        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-1.5">Category</p>
-        <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Bottoms</h3>
-        <p class="text-xs tracking-widest uppercase text-zinc-600 mt-3 flex items-center gap-2">
-          Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </p>
-      </div>
-    </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-0.5">
+      <!-- Tops -->
+      <a th:href="@{/products/top}" class="cat-card relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]">
+        <img src="/images/top.jpg" alt="Tops" class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(17,17,17,.85) 0%,rgba(17,17,17,.2) 50%,transparent 100%)"></div>
+        <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8 z-10">
+          <p class="text-xs tracking-widest3 uppercase text-zinc-400 mb-1.5">Category</p>
+          <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Tops</h3>
+          <p class="text-xs tracking-widest uppercase text-zinc-400 mt-3 flex items-center gap-2">
+            Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </p>
+        </div>
+      </a>
+      <!-- Bottoms -->
+      <a th:href="@{/products/bottom}" class="cat-card relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]">
+        <img src="/images/bottom.jpg" alt="Bottoms" class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(17,17,17,.85) 0%,rgba(17,17,17,.2) 50%,transparent 100%)"></div>
+        <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8 z-10">
+          <p class="text-xs tracking-widest3 uppercase text-zinc-400 mb-1.5">Category</p>
+          <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Bottoms</h3>
+          <p class="text-xs tracking-widest uppercase text-zinc-400 mt-3 flex items-center gap-2">
+            Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </p>
+        </div>
+      </a>
+      <!-- Accessories -->
+      <a th:href="@{/products/accessories}" class="cat-card relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]">
+        <img src="/images/accessories.jpg" alt="Accessories" class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(17,17,17,.85) 0%,rgba(17,17,17,.2) 50%,transparent 100%)"></div>
+        <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8 z-10">
+          <p class="text-xs tracking-widest3 uppercase text-zinc-400 mb-1.5">Category</p>
+          <h3 class="font-display text-[2.8rem] tracking-wide text-[#f5f5f3]">Accessories</h3>
+          <p class="text-xs tracking-widest uppercase text-zinc-400 mt-3 flex items-center gap-2">
+            Explore <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </p>
+        </div>
+      </a>
+    </div>
   </section>
 
 </div>

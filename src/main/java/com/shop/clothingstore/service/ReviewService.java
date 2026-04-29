@@ -15,7 +15,6 @@ import com.shop.clothingstore.repository.ReviewRepository;
 import com.shop.clothingstore.repository.UserRepository;
 
 @Service
-@SuppressWarnings("null")
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -26,59 +25,41 @@ public class ReviewService {
             ReviewRepository reviewRepository,
             OrderItemRepository orderItemRepository,
             UserRepository userRepository) {
-
         this.reviewRepository = reviewRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
     }
 
-    // ======================================================
-    // CREATE REVIEW
-    // ======================================================
     @Transactional
-    public Long createReview(
-            Long actorId,
-            Long orderItemId,
-            double rating,
-            String comment) {
+    public Long createReview(Long actorId, Long orderItemId, double rating, String comment) {
 
-        // VALIDATE RATING
+        java.util.Objects.requireNonNull(actorId, "actorId must not be null");
+        java.util.Objects.requireNonNull(orderItemId, "orderItemId must not be null");
+
         if (rating < 1 || rating > 5) {
-            throw new IllegalArgumentException("Rating không hợp lệ.");
+            throw new IllegalArgumentException("Rating phai tu 1 den 5.");
         }
 
-        // CHECK REVIEW EXIST
         if (reviewRepository.findByOrderItem_Id(orderItemId).isPresent()) {
-            throw new IllegalStateException("Item này đã được đánh giá.");
+            throw new IllegalStateException("Item nay da duoc danh gia.");
         }
 
-        // LOAD ORDER ITEM
-        OrderItem orderItem = orderItemRepository
-                .findById(orderItemId)
-                .orElseThrow(()
-                        -> new IllegalStateException("Order item không tồn tại."));
+        OrderItem orderItem = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new IllegalStateException("Order item khong ton tai."));
 
         Order order = orderItem.getOrder();
 
-        // CHECK OWNER
-        if (order.getActor() == null
-                || !order.getActor().getId().equals(actorId)) {
-
-            throw new IllegalStateException(
-                    "Bạn không có quyền đánh giá item này.");
+        if (order.getActor() == null || !order.getActor().getId().equals(actorId)) {
+            throw new IllegalStateException("Ban khong co quyen danh gia item nay.");
         }
 
-        // CHECK COMPLETED
         if (order.getStatus() != OrderStatus.COMPLETED) {
-            throw new IllegalStateException(
-                    "Chỉ có thể đánh giá khi giao dịch hoàn tất.");
+            throw new IllegalStateException("Chi co the danh gia khi giao dich hoan tat.");
         }
 
-        User user = userRepository.findById(actorId)
-                .orElseThrow(()
-                        -> new IllegalStateException("User không tồn tại."));
+        User user = userRepository.findById(java.util.Objects.requireNonNull(actorId))
+                .orElseThrow(() -> new IllegalStateException("User khong ton tai."));
 
-        // CREATE REVIEW
         Review review = new Review();
         review.setRating(rating);
         review.setComment(comment);
@@ -90,31 +71,20 @@ public class ReviewService {
         return order.getId();
     }
 
-    // ======================================================
-    // RATING INFO
-    // ======================================================
     public double getAverageRating(Long itemId) {
-
         Double avg = reviewRepository.getAverageRatingByItemId(itemId);
-
         return avg != null ? avg : 0.0;
     }
 
     public long getReviewCount(Long itemId) {
-
         return reviewRepository.countByItemId(itemId);
     }
 
     public List<Review> getReviewsByItem(Long itemId) {
-
-        return reviewRepository
-                .findAllByItemIdOrderByCreatedAtDesc(itemId);
+        return reviewRepository.findAllByItemIdOrderByCreatedAtDesc(itemId);
     }
 
     public boolean hasReviewByOrderItem(Long orderItemId) {
-
-        return reviewRepository
-                .findByOrderItem_Id(orderItemId)
-                .isPresent();
+        return reviewRepository.findByOrderItem_Id(orderItemId).isPresent();
     }
 }

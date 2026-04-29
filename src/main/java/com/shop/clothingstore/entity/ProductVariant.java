@@ -1,5 +1,7 @@
 package com.shop.clothingstore.entity;
 
+import java.math.BigDecimal;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shop.clothingstore.entity.base.BaseEntity;
 import com.shop.clothingstore.entity.base.ItemVariant;
@@ -10,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,16 +35,20 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
     @Column(nullable = false)
     private String color;
 
-    @Column(nullable = false)
-    private Double price;
+    // Suppress Lombok getter — we provide an explicit null-safe override below
+    @Getter(AccessLevel.NONE)
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal price = BigDecimal.ZERO;
 
+    @Getter(AccessLevel.NONE)
     @Column(nullable = false)
-    private Integer stock;
+    private Integer stock = 0;
 
+    @Getter(AccessLevel.NONE)
     @Column(nullable = false)
     private Integer sold = 0;
 
-    private Double weight; // in grams, for shipping calculation
+    private Double weight; // grams, for shipping
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
@@ -54,8 +61,8 @@ public class ProductVariant extends BaseEntity implements ItemVariant {
     }
 
     @Override
-    public Double getPrice() {
-        return price != null ? price : 0.0;
+    public BigDecimal getPrice() {
+        return price != null ? price : BigDecimal.ZERO;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.shop.clothingstore.config;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
@@ -148,7 +149,7 @@ public class DataInitializer {
                     v.setProduct(product);
                     v.setColor("Black");
                     v.setSize("M");
-                    v.setPrice(120000.0);
+                    v.setPrice(new BigDecimal("120000"));
                     v.setStock(10);
                     v.setSold(0);
 

@@ -1,5 +1,6 @@
 package com.shop.clothingstore.entity.base;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface SellableItem {
@@ -12,7 +13,7 @@ public interface SellableItem {
 
     boolean isActive();
 
-    Double getMinPrice();
+    BigDecimal getMinPrice();
 
     Integer getTotalStock();
 

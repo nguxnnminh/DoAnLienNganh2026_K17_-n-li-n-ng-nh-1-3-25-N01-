@@ -1,7 +1,9 @@
 package com.shop.clothingstore.service;
 
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +29,14 @@ public class WishlistService {
         return wishlistItemRepository.findByUser(user);
     }
 
+    public boolean isInWishlist(User user, Long productId) {
+        return wishlistItemRepository.existsByUserAndProductId(user, productId);
+    }
+
     @Transactional
-    public void addToWishlist(User user, Long productId) {
+    public void addToWishlist(User user, @NonNull Long productId) {
+        Objects.requireNonNull(productId, "productId must not be null");
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalStateException("Sản phẩm không tồn tại"));
 
@@ -43,7 +51,9 @@ public class WishlistService {
     }
 
     @Transactional
-    public void removeFromWishlist(User user, Long productId) {
+    public void removeFromWishlist(User user, @NonNull Long productId) {
+        Objects.requireNonNull(productId, "productId must not be null");
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalStateException("Sản phẩm không tồn tại"));
         wishlistItemRepository.deleteByUserAndProduct(user, product);

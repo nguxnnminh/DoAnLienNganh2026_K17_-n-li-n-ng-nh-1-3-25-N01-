@@ -26,11 +26,9 @@ public class CartService {
         this.variantRepository = variantRepository;
     }
 
-    // =====================================================
-    // HELPER: get session from current request thread-safely
-    // =====================================================
     private HttpSession getSession() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
+                .currentRequestAttributes()).getRequest();
         return request.getSession(true);
     }
 
@@ -53,22 +51,22 @@ public class CartService {
     // =====================================================
     public void addToCart(Long variantId, int quantity) {
         if (variantId == null || quantity < 1) {
-            throw new IllegalStateException("Dữ liệu không hợp lệ");
+            throw new IllegalStateException("Du lieu khong hop le");
         }
 
         ProductVariant variant = variantRepository
                 .findById(variantId)
-                .orElseThrow(() -> new IllegalStateException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new IllegalStateException("San pham khong ton tai"));
 
         if (!variant.getProduct().isActive()) {
             throw new IllegalStateException(
-                    "Sản phẩm " + variant.getProduct().getName() + " hiện không còn bán");
+                    "San pham " + variant.getProduct().getName() + " hien khong con ban");
         }
 
         int stock = variant.getStock();
         if (stock <= 0) {
             throw new IllegalStateException(
-                    "Sản phẩm " + variant.getProduct().getName() + " đã hết hàng");
+                    "San pham " + variant.getProduct().getName() + " da het hang");
         }
 
         HttpSession session = getSession();
@@ -81,10 +79,7 @@ public class CartService {
 
         for (CartItemDTO item : cart) {
             if (item.getVariantId().equals(variantId)) {
-                int newQty = item.getQuantity() + quantity;
-                if (newQty > stock) {
-                    newQty = stock;
-                }
+                int newQty = Math.min(item.getQuantity() + quantity, stock);
                 item.setQuantity(newQty);
                 session.setAttribute(CART_SESSION_KEY, cart);
                 return;
@@ -104,7 +99,8 @@ public class CartService {
                         .orElse(""));
         newItem.setSize(variant.getSize());
         newItem.setColor(variant.getColor());
-        newItem.setPrice(BigDecimal.valueOf(variant.getPrice()));
+        // getPrice() now returns BigDecimal directly — no conversion needed
+        newItem.setPrice(variant.getPrice());
         newItem.setQuantity(finalQty);
 
         cart.add(newItem);
@@ -116,21 +112,19 @@ public class CartService {
     // =====================================================
     public void updateQuantity(Long variantId, int quantity) {
         if (variantId == null || quantity < 1) {
-            throw new IllegalStateException("Dữ liệu không hợp lệ");
+            throw new IllegalStateException("Du lieu khong hop le");
         }
 
         ProductVariant variant = variantRepository
                 .findById(variantId)
-                .orElseThrow(() -> new IllegalStateException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new IllegalStateException("San pham khong ton tai"));
 
         if (!variant.getProduct().isActive()) {
             throw new IllegalStateException(
-                    "Sản phẩm " + variant.getProduct().getName() + " hiện không còn bán");
+                    "San pham " + variant.getProduct().getName() + " hien khong con ban");
         }
 
-        if (quantity > variant.getStock()) {
-            quantity = variant.getStock();
-        }
+        int clampedQty = Math.min(quantity, variant.getStock());
 
         HttpSession session = getSession();
 
@@ -142,7 +136,7 @@ public class CartService {
 
         for (CartItemDTO item : cart) {
             if (item.getVariantId().equals(variantId)) {
-                item.setQuantity(quantity);
+                item.setQuantity(clampedQty);
                 session.setAttribute(CART_SESSION_KEY, cart);
                 return;
             }

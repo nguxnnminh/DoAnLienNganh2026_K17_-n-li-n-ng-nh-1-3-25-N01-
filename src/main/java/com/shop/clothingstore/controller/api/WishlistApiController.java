@@ -11,11 +11,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.shop.clothingstore.dto.api.WishlistResponse;
 import com.shop.clothingstore.entity.User;
-import com.shop.clothingstore.entity.WishlistItem;
 import com.shop.clothingstore.service.UserService;
 import com.shop.clothingstore.service.WishlistService;
 
+/**
+ * REST API cho Wishlist. FIXED: Trả DTO thay vì entity trực tiếp — tránh
+ * circular reference và lộ data nội bộ.
+ */
 @RestController
 @RequestMapping("/api/wishlist")
 public class WishlistApiController {
@@ -29,9 +33,12 @@ public class WishlistApiController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WishlistItem>> getWishlist(Authentication authentication) {
+    public ResponseEntity<List<WishlistResponse>> getWishlist(Authentication authentication) {
         User user = getUser(authentication);
-        return ResponseEntity.ok(wishlistService.getWishlist(user));
+        List<WishlistResponse> response = wishlistService.getWishlist(user).stream()
+                .map(WishlistResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{productId}")

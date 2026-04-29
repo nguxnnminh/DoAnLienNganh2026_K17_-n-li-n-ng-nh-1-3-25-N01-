@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, ${product.name})}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout/base :: layout(~{::content}, ${product.name})}">
 <div th:fragment="content">
   <style>
     /* ── VARIANT BUTTONS ─── shared selector system ─────────── */
     .n-var {
       padding:10px 18px;
       background:transparent;
-      border:1px solid #2a2a2a;
-      color:#888;
+      border:1px solid #303030;
+      color:#aaa;
       font-family:'DM Sans',sans-serif;
       font-size:.75rem;
       letter-spacing:.16em;
@@ -15,25 +15,25 @@
       cursor:pointer;
       transition:all .2s;
     }
-    .n-var:hover,.n-var.active { background:#f5f5f3;color:#0a0a0a;border-color:#f5f5f3; }
-    .n-var:disabled { opacity:.2;cursor:not-allowed; }
+    .n-var:hover,.n-var.active { background:#f5f5f3;color:#111111;border-color:#f5f5f3; }
+    .n-var:disabled { opacity:.25;cursor:not-allowed; }
 
     /* ── THUMBNAILS ──────────────────────────────────────────── */
     .thumb {
       width:68px;height:86px;object-fit:cover;cursor:pointer;
-      border:1px solid #1a1a1a;opacity:.45;transition:opacity .2s,border-color .2s;flex-shrink:0;
+      border:1px solid #2a2a2a;opacity:.5;transition:opacity .2s,border-color .2s;flex-shrink:0;
     }
-    .thumb.active-thumb,.thumb:hover { opacity:1;border-color:#555; }
+    .thumb.active-thumb,.thumb:hover { opacity:1;border-color:#777; }
 
     /* ── ACCORDION ───────────────────────────────────────────── */
     .acc-btn {
-      width:100%;background:none;border:none;border-top:1px solid #1e1e1e;
-      color:#c0c0bc;display:flex;justify-content:space-between;align-items:center;
+      width:100%;background:none;border:none;border-top:1px solid #272727;
+      color:#c8c8c4;display:flex;justify-content:space-between;align-items:center;
       padding:16px 0;font-family:'DM Sans',sans-serif;font-size:.75rem;
       letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:color .2s;
     }
     .acc-btn:hover { color:#f5f5f3; }
-    .acc-body { display:none;font-size:.85rem;line-height:1.85;color:#666;padding:4px 0 16px; }
+    .acc-body { display:none;font-size:.85rem;line-height:1.85;color:#999;padding:4px 0 16px; }
     .acc-body.open { display:block; }
 
     /* ── REC CARDS ───────────────────────────────────────────── */
@@ -42,7 +42,7 @@
     .rec-card:hover .rec-img-wrap img { transform:scale(1.04); }
 
     /* ── REVIEW STARS ────────────────────────────────────────── */
-    .n-star { font-size:1.15rem;cursor:pointer;color:#2a2a2a;transition:color .2s; }
+    .n-star { font-size:1.15rem;cursor:pointer;color:#444;transition:color .2s; }
     .n-star.lit { color:#e8e8e4; }
   </style>
 
@@ -96,7 +96,7 @@
       <div class="mb-7">
         <div class="flex justify-between items-center mb-4">
           <p class="text-xs tracking-widest3 uppercase text-zinc-600">Size</p>
-          <a href="#" class="text-xs tracking-widest uppercase text-zinc-700 no-underline transition-colors hover:text-zinc-400">Guide</a>
+          <a th:href="@{/products}" class="text-xs tracking-widest uppercase text-zinc-700 no-underline transition-colors hover:text-zinc-400">Guide</a>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button th:each="s : ${sizes}" type="button" th:data-size="${s}" th:text="${s}"
@@ -133,12 +133,28 @@
             Add to Cart
           </button>
         </div>
-        <button type="button"
-                class="w-full h-11 bg-transparent border border-zinc-800 text-zinc-600
-                       font-body text-xs tracking-widest uppercase cursor-pointer
-                       transition-all duration-200 hover:border-zinc-600 hover:text-zinc-400">
-          ♡ &nbsp;Save to Wishlist
-        </button>
+        <!-- Wishlist uses formaction to avoid nested forms -->
+        <div sec:authorize="isAuthenticated()" style="width:100%">
+          <button type="submit"
+                  formmethod="post"
+                  th:formaction="@{'/wishlist/'+${product.id}+(${isInWishlist} ? '/remove' : '/add')}"
+                  class="w-full h-11 bg-transparent border cursor-pointer font-body
+                         text-xs tracking-widest uppercase transition-all duration-200"
+                  th:classappend="${isInWishlist}
+                      ? 'border-zinc-600 text-zinc-400 hover:border-red-800 hover:text-red-400'
+                      : 'border-zinc-800 text-zinc-600 hover:border-zinc-600 hover:text-zinc-400'"
+                  th:text="${isInWishlist} ? '♡  Saved' : '♡  Save to Wishlist'">
+            ♡  Save to Wishlist
+          </button>
+        </div>
+        <a sec:authorize="!isAuthenticated()"
+           th:href="@{/login}"
+           class="w-full h-11 bg-transparent border border-zinc-800 text-zinc-600
+                  font-body text-xs tracking-widest uppercase cursor-pointer
+                  transition-all duration-200 hover:border-zinc-600 hover:text-zinc-400
+                  flex items-center justify-center no-underline">
+          ♡ &nbsp;Sign In to Save
+        </a>
       </form>
 
       <!-- ACCORDION -->

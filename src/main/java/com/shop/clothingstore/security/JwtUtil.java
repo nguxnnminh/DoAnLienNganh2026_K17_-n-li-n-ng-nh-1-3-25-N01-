@@ -9,12 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class JwtUtil {
@@ -25,18 +27,28 @@ public class JwtUtil {
     private String secret;
 
     @Value("${jwt.expiration:86400000}")
-    private long expiration; // mặc định 24h
+    private long expiration;
+
+    // Fail fast on startup if JWT_SECRET is not configured
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret is not configured. Set the JWT_SECRET environment variable (>= 32 characters).");
+        }
+        if (secret.length() < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET must be at least 32 characters long. Current length: " + secret.length());
+        }
+        log.info("JWT configuration validated successfully");
+    }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // =====================================================
-    // GENERATE TOKEN
-    // =====================================================
     public String generateToken(String email, String role) {
-
         return Jwts.builder()
                 .subject(email)
                 .claim("role", role)
@@ -46,16 +58,10 @@ public class JwtUtil {
                 .compact();
     }
 
-    // =====================================================
-    // EXTRACT EMAIL FROM TOKEN
-    // =====================================================
     public String getEmailFromToken(String token) {
         return getClaims(token).getSubject();
     }
 
-    // =====================================================
-    // VALIDATE TOKEN
-    // =====================================================
     public boolean validateToken(String token) {
         try {
             getClaims(token);
@@ -68,9 +74,6 @@ public class JwtUtil {
         return false;
     }
 
-    // =====================================================
-    // PARSE CLAIMS
-    // =====================================================
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

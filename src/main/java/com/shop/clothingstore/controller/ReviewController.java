@@ -4,6 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.shop.clothingstore.entity.User;
@@ -16,8 +17,7 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final UserService userService;
 
-    public ReviewController(ReviewService reviewService,
-            UserService userService) {
+    public ReviewController(ReviewService reviewService, UserService userService) {
         this.reviewService = reviewService;
         this.userService = userService;
     }
@@ -25,8 +25,8 @@ public class ReviewController {
     @PostMapping("/reviews/{orderItemId}")
     public String createReview(
             @PathVariable Long orderItemId,
-            @org.springframework.web.bind.annotation.RequestParam double rating,
-            @org.springframework.web.bind.annotation.RequestParam String comment,
+            @RequestParam double rating,
+            @RequestParam String comment,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
@@ -34,34 +34,21 @@ public class ReviewController {
             return "redirect:/login";
         }
 
-        User user = userService
-                .findByEmail(authentication.getName())
-                .orElseThrow();
+        User user = userService.findByEmail(authentication.getName()).orElseThrow();
 
         try {
+            // createReview returns the ORDER id (not item id) — use it for the redirect
+            Long orderId = reviewService.createReview(user.getId(), orderItemId, rating, comment);
 
-            Long orderId = reviewService.createReview(
-                    user.getId(),
-                    orderItemId,
-                    rating,
-                    comment
-            );
-
-            redirectAttributes.addFlashAttribute(
-                    "success",
-                    "Đánh giá thành công!"
-            );
-
+            redirectAttributes.addFlashAttribute("success", "Danh gia thanh cong!");
             return "redirect:/orders/" + orderId;
 
         } catch (IllegalStateException e) {
-
-            redirectAttributes.addFlashAttribute(
-                    "error",
-                    e.getMessage()
-            );
-
-            return "redirect:/orders/" + orderItemId;
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            // BUG-04 FIX: we need the orderId for the redirect.
+            // If createReview failed before returning it, fall back to /my-orders
+            // since we cannot reliably know which order this item belongs to from here.
+            return "redirect:/my-orders";
         }
     }
 }

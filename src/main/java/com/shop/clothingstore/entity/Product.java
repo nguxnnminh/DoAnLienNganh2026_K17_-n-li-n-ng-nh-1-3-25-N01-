@@ -1,5 +1,6 @@
 package com.shop.clothingstore.entity;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,11 @@ public class Product extends BaseEntity implements SellableItem {
 
     private boolean active = true;
 
+    // Denormalized for efficient sorting — updated whenever variants change.
+    // Using a column so Spring Data Pageable can ORDER BY min_price.
+    @Column(name = "min_price", precision = 19, scale = 2)
+    private BigDecimal minPrice = BigDecimal.ZERO;
+
     // ================= VARIANTS =================
     @OneToMany(
             mappedBy = "product",
@@ -67,13 +73,11 @@ public class Product extends BaseEntity implements SellableItem {
             fetch = FetchType.LAZY)
     private Set<ProductImage> images = new HashSet<>();
 
-    // ================= INTERFACE IMPLEMENT =================
+    // ================= INTERFACE IMPLEMENTATION =================
+
     @Override
-    public Double getMinPrice() {
-        return productVariants.stream()
-                .map(ProductVariant::getPrice)
-                .min(Double::compareTo)
-                .orElse(0.0);
+    public BigDecimal getMinPrice() {
+        return minPrice != null ? minPrice : BigDecimal.ZERO;
     }
 
     @Override
@@ -92,22 +96,53 @@ public class Product extends BaseEntity implements SellableItem {
 
     @Override
     public List<? extends ItemVariant> getVariants() {
-        return productVariants.stream().toList();
+        return new ArrayList<>(productVariants);
     }
 
+    /**
+     * Returns a mutable copy of the image collection.
+     * Use removeImagesByIds() or addImage() to mutate the actual collection.
+     */
     @Override
     public List<ProductImage> getImages() {
-        return images.stream().toList();
+        return new ArrayList<>(images);
     }
 
     // ================= HELPER METHODS =================
+
     public void addVariant(ProductVariant variant) {
-        variant.setProduct(this);
-        productVariants.add(variant);
+        if (!productVariants.contains(variant)) {
+            variant.setProduct(this);
+            productVariants.add(variant);
+        }
+        refreshMinPrice();
     }
 
     public void addImage(ProductImage image) {
         image.setProduct(this);
         images.add(image);
+    }
+
+    /**
+     * Remove images whose IDs are in the deletion list.
+     * Operates on the actual backing Set, bypassing the read-only copy from getImages().
+     */
+    public void removeImagesByIds(List<Long> imageIds) {
+        if (imageIds == null || imageIds.isEmpty()) {
+            return;
+        }
+        images.removeIf(img -> imageIds.contains(img.getId()));
+    }
+
+    /**
+     * Recompute the denormalized minPrice from current variants.
+     * Call after any variant add/update/remove.
+     */
+    public void refreshMinPrice() {
+        this.minPrice = productVariants.stream()
+                .map(ProductVariant::getPrice)
+                .filter(p -> p != null && p.compareTo(BigDecimal.ZERO) > 0)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
     }
 }

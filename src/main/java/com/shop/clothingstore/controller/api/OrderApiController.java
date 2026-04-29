@@ -57,7 +57,8 @@ public class OrderApiController {
                 request.getAddress(),
                 cartService.getCart(),
                 user,
-                request.getCouponCode()
+                request.getCouponCode(),
+                request.getNote()
         );
         cartService.clear();
         return ResponseEntity.ok(OrderResponse.from(order));

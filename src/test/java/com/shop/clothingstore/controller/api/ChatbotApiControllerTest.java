@@ -17,8 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.shop.clothingstore.security.JwtUtil;
 import com.shop.clothingstore.service.CartService;
-import com.shop.clothingstore.service.ChatbotService;
-import com.shop.clothingstore.service.ChatbotService.ChatbotResponse;
+import com.shop.clothingstore.service.AiChatbotService;
+import com.shop.clothingstore.dto.api.ChatbotResponse;
 import com.shop.clothingstore.service.CustomUserDetailsService;
 
 @SpringBootTest
@@ -30,7 +30,7 @@ class ChatbotApiControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ChatbotService chatbotService;
+    private AiChatbotService chatbotService;
 
     @MockitoBean
     private CartService cartService;
@@ -48,6 +48,7 @@ class ChatbotApiControllerTest {
     @DisplayName("POST /api/chatbot with greeting returns 200 and message")
     void chat_Greeting_ReturnsOkWithMessage() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Xin chào! Tôi là trợ lý mua sắm.");
+        when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
         when(chatbotService.processMessage("xin chào")).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
@@ -62,19 +63,8 @@ class ChatbotApiControllerTest {
     @Test
     @DisplayName("POST /api/chatbot with product search returns products list")
     void chat_ProductSearch_ReturnsOkWithProducts() throws Exception {
-        // We need to construct via the available static factory from entity,
-        // but since constructor && fields are private/package, we test the response
-        // by mocking ChatbotService.withProducts via ChatbotService.text + products
-        // Actually ChatbotResponse is an inner class with private fields and static factories.
-        // We'll mock the service to return a response and verify JSON structure.
-
-        // Use reflection or the factory method. Since we have ProductSummary with
-        // private constructor, the only way is via ChatbotResponse.withProducts which
-        // requires Product entities. Instead, we mock the service return value.
-        // Mockito can mock the return value even if internals are private.
         ChatbotResponse response = ChatbotResponse.text("Tìm thấy 2 sản phẩm:");
-        // We can't easily inject products into the private field from outside package.
-        // Instead, we verify the controller delegates correctly.
+        when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
         when(chatbotService.processMessage("áo thun")).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
@@ -88,6 +78,7 @@ class ChatbotApiControllerTest {
     @DisplayName("POST /api/chatbot with empty body returns welcome response")
     void chat_EmptyBody_ReturnsWelcome() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Xin chào!");
+        when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
         when(chatbotService.processMessage("")).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
@@ -101,6 +92,7 @@ class ChatbotApiControllerTest {
     @DisplayName("POST /api/chatbot without message field defaults to empty string")
     void chat_NoMessageField_ReturnsOk() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Xin chào!");
+        when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
         when(chatbotService.processMessage("")).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
@@ -116,6 +108,7 @@ class ChatbotApiControllerTest {
     @Test
     @DisplayName("POST /api/chatbot is accessible without authentication")
     void chat_PublicEndpoint_NoAuthRequired() throws Exception {
+        when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
         when(chatbotService.processMessage(anyString()))
                 .thenReturn(ChatbotResponse.text("OK"));
 

@@ -46,28 +46,6 @@ class ProductApiControllerTest {
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
-    private Product mockProduct(Long id, String name) {
-        Category category = new Category();
-        category.setId(1L);
-        category.setName("Top");
-        category.setSlug("top");
-
-        SubCategory sub = new SubCategory();
-        sub.setId(2L);
-        sub.setName("Tee");
-        sub.setSlug("tee");
-        sub.setCategory(category);
-
-        Product product = new Product();
-        product.setId(id);
-        product.setName(name);
-        product.setSlug(name.toLowerCase().replace(" ", "-"));
-        product.setDescription("Test description");
-        product.setActive(true);
-        product.setSubCategory(sub);
-        return product;
-    }
-
     // =============================================================
     // GET /api/products
     // =============================================================
@@ -133,5 +111,46 @@ class ProductApiControllerTest {
         mockMvc.perform(get("/api/products/1/similar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Similar Tee"));
+    }
+
+    // =============================================================
+    // Helper — setId() is protected in BaseEntity; use reflection
+    // =============================================================
+    private Product mockProduct(Long id, String name) {
+        Category category = new Category();
+        injectId(category, 1L);
+        category.setName("Top");
+        category.setSlug("top");
+
+        SubCategory sub = new SubCategory();
+        injectId(sub, 2L);
+        sub.setName("Tee");
+        sub.setSlug("tee");
+        sub.setCategory(category);
+
+        Product product = new Product();
+        injectId(product, id);
+        product.setName(name);
+        product.setSlug(name.toLowerCase().replace(" ", "-"));
+        product.setDescription("Test description");
+        product.setActive(true);
+        product.setSubCategory(sub);
+        return product;
+    }
+
+    /**
+     * Inject an ID into a BaseEntity via reflection.
+     * Required because setId() is protected in BaseEntity and the test class
+     * is in a different package (not a subclass of BaseEntity).
+     */
+    private static void injectId(Object entity, Long id) {
+        try {
+            java.lang.reflect.Field field =
+                    com.shop.clothingstore.entity.base.BaseEntity.class.getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(entity, id);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to inject ID in test", e);
+        }
     }
 }

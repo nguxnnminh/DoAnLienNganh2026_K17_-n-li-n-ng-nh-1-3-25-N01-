@@ -1,10 +1,20 @@
 package com.shop.clothingstore.entity.base;
 
+import java.math.BigDecimal;
+
+/**
+ * Interface common to all product variant types.
+ * getPrice() uses BigDecimal for financial precision — never Double for money.
+ */
 public interface ItemVariant {
 
-    String getIdentifier();  // Tổng quát hóa: có thể là "S-Red" cho quần áo, hoặc "Session1" cho khóa học
-    Double getPrice();
+    String getIdentifier();
+
+    BigDecimal getPrice();
+
     Integer getStock();
+
     Integer getSold();
-    SellableItem getItem();  // Quan hệ ngược về Item chung
+
+    SellableItem getItem();
 }

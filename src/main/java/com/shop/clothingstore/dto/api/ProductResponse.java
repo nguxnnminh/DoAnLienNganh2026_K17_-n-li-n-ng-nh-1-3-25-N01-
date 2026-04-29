@@ -1,5 +1,6 @@
 package com.shop.clothingstore.dto.api;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.shop.clothingstore.entity.Product;
@@ -16,7 +17,7 @@ public class ProductResponse {
     private String slug;
     private String description;
     private boolean active;
-    private Double minPrice;
+    private BigDecimal minPrice;
     private Integer totalStock;
     private Integer totalSold;
     private String categoryName;
@@ -31,7 +32,7 @@ public class ProductResponse {
         private Long id;
         private String size;
         private String color;
-        private Double price;
+        private BigDecimal price;
         private Integer stock;
     }
 
@@ -80,7 +81,6 @@ public class ProductResponse {
         );
     }
 
-    // Phiên bản rút gọn cho danh sách
     public static ProductResponse summary(Product p) {
 
         String primaryImg = p.getImages().stream()

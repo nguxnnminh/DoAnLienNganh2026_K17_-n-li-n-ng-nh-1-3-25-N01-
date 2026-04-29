@@ -1,5 +1,7 @@
 package com.shop.clothingstore.dto;
 
+import java.math.BigDecimal;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class VariantDTO {
 
-    private Long id;   // ⭐ thêm dòng này
+    private Long id;
 
     @NotBlank
     private String size;
@@ -22,7 +24,7 @@ public class VariantDTO {
 
     @NotNull
     @Positive
-    private Double price;
+    private BigDecimal price;
 
     @NotNull
     @Positive

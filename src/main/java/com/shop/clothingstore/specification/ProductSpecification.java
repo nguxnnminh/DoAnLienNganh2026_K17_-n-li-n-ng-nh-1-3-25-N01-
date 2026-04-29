@@ -1,5 +1,6 @@
 package com.shop.clothingstore.specification;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +25,9 @@ public class ProductSpecification {
             Join<Product, ProductVariant> variantJoin = null;
 
             // ==================================================
-            // SEARCH BY NAME
+            // SEARCH BY NAME — parameterized, no SQL injection
             // ==================================================
             if (filter.getKeyword() != null && !filter.getKeyword().isBlank()) {
-
                 predicates.add(
                         cb.like(
                                 cb.lower(root.get("name")),
@@ -40,12 +40,9 @@ public class ProductSpecification {
             // FILTER CATEGORY
             // ==================================================
             if (filter.getCategoryId() != null) {
-
                 predicates.add(
                         cb.equal(
-                                root.get("subCategory")
-                                        .get("category")
-                                        .get("id"),
+                                root.get("subCategory").get("category").get("id"),
                                 filter.getCategoryId()
                         )
                 );
@@ -55,7 +52,6 @@ public class ProductSpecification {
             // FILTER SUB CATEGORY
             // ==================================================
             if (filter.getSubCategoryId() != null) {
-
                 predicates.add(
                         cb.equal(
                                 root.get("subCategory").get("id"),
@@ -65,27 +61,25 @@ public class ProductSpecification {
             }
 
             // ==================================================
-            // FILTER PRICE (JOIN ONLY WHEN NEEDED)
+            // FILTER PRICE — BigDecimal comparison (no precision loss)
             // ==================================================
             if (filter.getMinPrice() != null || filter.getMaxPrice() != null) {
 
                 variantJoin = root.join("productVariants", JoinType.LEFT);
 
                 if (filter.getMinPrice() != null) {
-
                     predicates.add(
                             cb.greaterThanOrEqualTo(
-                                    variantJoin.get("price"),
+                                    variantJoin.<BigDecimal>get("price"),
                                     filter.getMinPrice()
                             )
                     );
                 }
 
                 if (filter.getMaxPrice() != null) {
-
                     predicates.add(
                             cb.lessThanOrEqualTo(
-                                    variantJoin.get("price"),
+                                    variantJoin.<BigDecimal>get("price"),
                                     filter.getMaxPrice()
                             )
                     );
@@ -97,7 +91,7 @@ public class ProductSpecification {
             }
 
             // ==================================================
-            // ONLY ACTIVE PRODUCT
+            // ONLY ACTIVE PRODUCTS
             // ==================================================
             predicates.add(cb.isTrue(root.get("active")));
 

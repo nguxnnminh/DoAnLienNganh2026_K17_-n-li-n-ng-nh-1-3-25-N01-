@@ -25,7 +25,11 @@ public class GlobalModelAttribute {
     }
 
     @ModelAttribute("cartTotalQty")
-    public int cartTotalQty() {
+    public int cartTotalQty(HttpServletRequest request) {
+        // API requests are stateless — skip the cart lookup to avoid forcing session creation
+        if (request.getRequestURI().startsWith("/api/")) {
+            return 0;
+        }
         List<CartItemDTO> cart = cartService.getCart();
         return cart.stream().mapToInt(CartItemDTO::getQuantity).sum();
     }

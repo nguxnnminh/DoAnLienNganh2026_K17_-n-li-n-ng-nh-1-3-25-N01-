@@ -3,194 +3,190 @@
 
 <div th:fragment="content">
 
+    <!-- BACK + HEADER -->
+    <div style="margin-bottom:24px;">
+        <a th:href="@{/admin/orders}"
+            style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#9ca3af; text-decoration:none; margin-bottom:12px;">
+            ← Quay lại danh sách đơn hàng
+        </a>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">
+                    Đơn hàng <span style="font-family:'DM Mono',monospace;" th:text="'#' + ${order.id}"></span>
+                </h1>
+                <p style="font-size:13px; color:#9ca3af; margin:0;"
+                    th:text="'Đặt lúc ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></p>
+            </div>
+            <span class="badge" style="font-size:13px; padding:6px 16px;" th:classappend="${order.status?.name() == 'PENDING' ? ' badge-yellow' :
+                                   order.status?.name() == 'PROCESSING' ? ' badge-blue' :
+                                   order.status?.name() == 'SHIPPING' ? ' badge-indigo' :
+                                   order.status?.name() == 'COMPLETED' ? ' badge-green' : ' badge-red'}"
+                th:text="${order.status}"></span>
+        </div>
+    </div>
+
+    <!-- ERROR -->
     <div th:if="${error}"
-        class="glass border border-red-500/30 text-red-700 dark:text-red-400 px-5 py-4 rounded-2xl mb-6">
-        <strong>Lỗi:</strong>
-        <span th:text="${error}"></span>
+        style="background:#fee2e2;border:1px solid #fecaca;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#991b1b;">
+        <strong>Lỗi:</strong> <span th:text="${error}"></span>
     </div>
 
-
-    <!-- Back -->
-    <a th:href="@{/admin/orders}"
-        class="text-sm text-zinc-500 hover:text-zinc-900 underline mb-6 inline-block transition">
-        ← Quay lại danh sách đơn hàng
-    </a>
-
-
-    <!-- TITLE -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-
-        <h1 class="text-2xl font-semibold tracking-tight">
-            Chi tiết đơn hàng #<span th:text="${order.id}"></span>
-        </h1>
-
-
-        <!-- STATUS -->
-        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium tracking-tight"
-            th:classappend="${
-        order.status.name() == 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' :
-        order.status.name() == 'PROCESSING' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' :
-        order.status.name() == 'SHIPPING' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300' :
-        order.status.name() == 'COMPLETED' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
-        'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-      }">
-
-            <span th:text="${order.status}"></span>
-
-        </span>
-
+    <!-- STATUS TIMELINE -->
+    <div class="card" style="padding:24px; margin-bottom:20px;">
+        <div class="section-title">Tiến trình đơn hàng</div>
+        <div style="display:flex; align-items:center; gap:0; overflow-x:auto; padding-bottom:4px;">
+            <th:block th:each="s, i : ${statuses}">
+                <div style="display:flex; align-items:center; flex-shrink:0;">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:80px;">
+                        <div style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; border:2px solid;"
+                            th:style="${order.status == s} ? 'background:#2563eb;color:white;border-color:#2563eb;' :
+                                        (${order.status?.ordinal() > s.ordinal()} ? 'background:#dcfce7;color:#166534;border-color:#86efac;' : 'background:#f9fafb;color:#9ca3af;border-color:#e5e7eb;')">
+                            <svg th:if="${order.status?.ordinal() > s.ordinal()}" width="14" height="14"
+                                fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span th:unless="${order.status?.ordinal() > s.ordinal()}" th:text="${i.index + 1}"></span>
+                        </div>
+                        <div style="font-size:11px; font-weight:500; text-align:center; white-space:nowrap;"
+                            th:style="${order.status == s} ? 'color:#2563eb;' : 'color:#9ca3af;'" th:text="${s}"></div>
+                    </div>
+                    <div th:unless="${i.last}"
+                        style="flex:1; height:2px; min-width:32px; margin:0 4px; margin-bottom:18px;"
+                        th:style="${order.status?.ordinal() > s.ordinal()} ? 'background:#86efac;' : 'background:#e5e7eb;'">
+                    </div>
+                </div>
+            </th:block>
+        </div>
     </div>
 
+    <!-- MAIN GRID -->
+    <div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- LEFT: ITEMS -->
+        <div style="display:flex; flex-direction:column; gap:20px;">
 
-
-        <!-- LEFT -->
-        <div class="lg:col-span-8 glass rounded-2xl p-6">
-
-            <h3 class="text-lg font-semibold tracking-tight mb-5">
-                Sản phẩm trong đơn hàng
-            </h3>
-
-
-            <div th:each="item : ${order.items}"
-                class="flex flex-col sm:flex-row justify-between border-b border-zinc-200 dark:border-zinc-800 py-5 last:border-b-0">
-
-                <div class="flex-1">
-
-                    <p class="font-semibold tracking-tight" th:text="${item.productName}">
-                    </p>
-
-                    <p class="text-sm text-zinc-500 mt-1">
-                        Size: <span th:text="${item.size}"></span> ·
-                        Màu: <span th:text="${item.color}"></span>
-                    </p>
-
-                    <p class="text-sm text-zinc-500 mt-1">
-                        Số lượng: <strong th:text="${item.quantity}"></strong>
-                    </p>
-
+            <div class="card">
+                <div class="card-header">
+                    <span style="font-size:14px; font-weight:600;">
+                        Sản phẩm trong đơn (<span th:text="${order.items?.size() ?: 0}"></span> mục)
+                    </span>
                 </div>
+                <div>
+                    <div th:each="item : ${order.items}"
+                        style="display:flex; justify-content:space-between; align-items:flex-start; padding:16px 20px; border-bottom:1px solid #f9fafb;">
+                        <div style="flex:1;">
+                            <div style="font-weight:500; margin-bottom:4px;" th:text="${item.productName}"></div>
+                            <div style="font-size:12px; color:#9ca3af;">
+                                <span class="badge badge-gray" style="margin-right:4px;"
+                                    th:text="'Size: ' + ${item.size}"></span>
+                                <span class="badge badge-gray" th:text="'Màu: ' + ${item.color}"></span>
+                            </div>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0; margin-left:16px;">
+                            <div style="font-weight:600;">
+                                <span
+                                    th:text="${item.price != null ? #numbers.formatDecimal(item.price,0,'POINT',0,'COMMA') : '—'}"></span>₫
+                            </div>
+                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;"
+                                th:text="'x' + ${item.quantity}"></div>
+                        </div>
+                    </div>
 
-
-                <!-- PRICE -->
-                <div class="text-lg font-semibold tracking-tight mt-3 sm:mt-0">
-
-                    <span th:text="${
-    item.price != null
-    ? #numbers.formatDecimal(item.price,0,'POINT',0,'COMMA')
-    : '-'
-}"></span> ₫
-
+                    <!-- TOTAL -->
+                    <div
+                        style="padding:16px 20px; background:#f9fafb; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:14px; font-weight:600;">Tổng cộng</span>
+                        <span style="font-size:20px; font-weight:700; letter-spacing:-0.5px;">
+                            <span
+                                th:text="${order.total != null ? #numbers.formatDecimal(order.total,0,'POINT',0,'COMMA') : '—'}"></span>₫
+                        </span>
+                    </div>
                 </div>
-
-            </div>
-
-
-            <!-- TOTAL -->
-            <div class="mt-6 flex justify-between items-center border-t border-zinc-200 dark:border-zinc-800 pt-5">
-
-                <span class="text-lg font-semibold tracking-tight">
-                    Tổng cộng
-                </span>
-
-                <span class="text-2xl font-semibold tracking-tight">
-
-                    <span th:text="${
-    order.total != null
-    ? #numbers.formatDecimal(order.total,0,'POINT',0,'COMMA')
-    : '-'
-}"></span> ₫
-
-                </span>
-
-            </div>
-
-
-            <div class="mt-4 text-sm text-zinc-500">
-                Ngày tạo:
-                <span th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}"></span>
             </div>
 
         </div>
 
+        <!-- RIGHT: INFO + STATUS UPDATE -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
 
-        <!-- RIGHT -->
-        <div class="lg:col-span-4 glass rounded-2xl p-6">
-
-            <h3 class="text-lg font-semibold tracking-tight mb-5">
-                Thông tin đơn hàng
-            </h3>
-
-            <div class="space-y-4">
-
-                <div>
-                    <span class="text-sm text-zinc-500">Khách hàng:</span>
-                    <p class="font-semibold tracking-tight" th:text="${order.customerName}">
-                    </p>
+            <!-- THÔNG TIN KHÁCH HÀNG -->
+            <div class="card" style="padding:20px;">
+                <div class="section-title">Thông tin đặt hàng</div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                        <span style="font-size:12px; color:#9ca3af; flex-shrink:0;">Khách hàng</span>
+                        <span style="font-size:13px; font-weight:500; text-align:right;"
+                            th:text="${order.customerName ?: (order.actor?.fullName ?: 'Khách vãng lai')}"></span>
+                    </div>
+                    <div th:if="${order.actor != null}"
+                        style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                        <span style="font-size:12px; color:#9ca3af; flex-shrink:0;">Email</span>
+                        <span style="font-size:13px; text-align:right;" th:text="${order.actor?.email}"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                        <span style="font-size:12px; color:#9ca3af; flex-shrink:0;">SĐT</span>
+                        <span style="font-size:13px; font-weight:500;" th:text="${order.phone ?: '—'}"></span>
+                    </div>
+                    <div class="divider" style="margin:4px 0;"></div>
+                    <div>
+                        <span style="font-size:12px; color:#9ca3af; display:block; margin-bottom:4px;">Địa chỉ giao
+                            hàng</span>
+                        <span style="font-size:13px; line-height:1.5;" th:text="${order.address ?: '—'}"></span>
+                    </div>
+                    <div th:if="${order.note != null and !order.note.isEmpty()}">
+                        <span style="font-size:12px; color:#9ca3af; display:block; margin-bottom:4px;">Ghi chú</span>
+                        <span style="font-size:13px; color:#6b7280; font-style:italic;" th:text="${order.note}"></span>
+                    </div>
                 </div>
-
-                <div>
-                    <span class="text-sm text-zinc-500">SĐT:</span>
-                    <p class="font-semibold tracking-tight" th:text="${order.phone}">
-                    </p>
-                </div>
-
-                <div>
-                    <span class="text-sm text-zinc-500">Địa chỉ:</span>
-                    <p class="font-semibold tracking-tight" th:text="${order.address}">
-                    </p>
-                </div>
-
-                <div>
-                    <span class="text-sm text-zinc-500">User:</span>
-                    <p class="font-semibold tracking-tight"
-                        th:text="${order.actor != null ? order.actor.email : 'Khách vãng lai'}">
-                    </p>
-                </div>
-
             </div>
 
+            <!-- CẬP NHẬT TRẠNG THÁI -->
+            <div class="card" style="padding:20px;"
+                th:if="${order.status?.name() != 'COMPLETED' and order.status?.name() != 'CANCELLED'}">
+                <div class="section-title">Cập nhật trạng thái</div>
 
-            <!-- UPDATE STATUS -->
-            <div class="mt-8">
+                <form th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-                <h4 class="text-base font-medium tracking-tight mb-3">
-                    Cập nhật trạng thái
-                </h4>
+                    <div style="margin-bottom:12px;">
+                        <label class="form-label">Trạng thái mới</label>
+                        <select name="status" class="form-control">
+                            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"
+                                th:selected="${s == order.status}" th:disabled="${
+                                        (order.status?.name() == 'SHIPPING' and !(s.name() == 'SHIPPING' or s.name() == 'COMPLETED')) or
+                                        (order.status?.name() == 'PROCESSING' and !(s.name() == 'PROCESSING' or s.name() == 'SHIPPING')) or
+                                        (order.status?.name() == 'PENDING' and !(s.name() == 'PENDING' or s.name() == 'PROCESSING'))
+                                    }"></option>
+                        </select>
+                    </div>
 
-                <form th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post" class="space-y-4">
-
-                    <select name="status"
-                            class="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2.5">
-
-                        <option th:each="s : ${statuses}"
-                                th:value="${s}"
-                                th:selected="${s == order.status}"
-
-                                th:disabled="${
-                                    (order.status.name() == 'COMPLETED' and s.name() != 'COMPLETED') or
-                                    (order.status.name() == 'SHIPPING' and !(s.name() == 'SHIPPING' or s.name() == 'COMPLETED')) or
-                                    (order.status.name() == 'PROCESSING' and !(s.name() == 'PROCESSING' or s.name() == 'SHIPPING')) or
-                                    (order.status.name() == 'PENDING' and !(s.name() == 'PENDING' or s.name() == 'PROCESSING'))
-                                }"
-
-                                th:text="${s}">
-                        </option>
-
-                    </select>
-
-                    <button type="submit"
-                        class="w-full bg-black dark:bg-zinc-800 text-white py-3 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-700 transition font-medium">
+                    <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
                         Cập nhật trạng thái
                     </button>
-
                 </form>
+            </div>
 
+            <!-- TRẠNG THÁI HOÀN THÀNH / HỦY -->
+            <div th:if="${order.status?.name() == 'COMPLETED'}"
+                style="padding:16px; border-radius:10px; background:#f0fdf4; border:1px solid #bbf7d0; display:flex; align-items:center; gap:10px;">
+                <svg width="18" height="18" fill="none" stroke="#16a34a" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span style="font-size:13px; font-weight:500; color:#15803d;">Đơn hàng đã hoàn thành</span>
+            </div>
+            <div th:if="${order.status?.name() == 'CANCELLED'}"
+                style="padding:16px; border-radius:10px; background:#fff1f2; border:1px solid #fecdd3; display:flex; align-items:center; gap:10px;">
+                <svg width="18" height="18" fill="none" stroke="#e11d48" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span style="font-size:13px; font-weight:500; color:#be123c;">Đơn hàng đã bị hủy</span>
             </div>
 
         </div>
-
     </div>
 
 </div>

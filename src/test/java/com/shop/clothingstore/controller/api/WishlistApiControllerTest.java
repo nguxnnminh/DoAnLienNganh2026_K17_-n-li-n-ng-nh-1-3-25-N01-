@@ -48,15 +48,6 @@ class WishlistApiControllerTest {
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
-    private User mockUser() {
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("user@test.com");
-        user.setFullName("Test User");
-        user.setRole(Role.USER);
-        return user;
-    }
-
     // =============================================================
     // GET /api/wishlist
     // =============================================================
@@ -65,11 +56,11 @@ class WishlistApiControllerTest {
     void getWishlist_Authenticated_ReturnsItems() throws Exception {
         User user = mockUser();
         Product product = new Product();
-        product.setId(10L);
+        injectId(product, 10L);
         product.setName("Essential Tee");
 
         WishlistItem item = new WishlistItem();
-        item.setId(100L);
+        injectId(item, 100L);
         item.setUser(user);
         item.setProduct(product);
 
@@ -134,5 +125,35 @@ class WishlistApiControllerTest {
     void removeFromWishlist_NoAuth_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(delete("/api/wishlist/10"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // =============================================================
+    // Helpers
+    // =============================================================
+
+    /** Build a mock user. setId() is protected in BaseEntity — use reflection. */
+    private User mockUser() {
+        User user = new User();
+        injectId(user, 1L);
+        user.setEmail("user@test.com");
+        user.setFullName("Test User");
+        user.setRole(Role.USER);
+        return user;
+    }
+
+    /**
+     * Inject an ID into a BaseEntity via reflection.
+     * Required because setId() is protected in BaseEntity and the test class
+     * is in a different package (not a subclass of BaseEntity).
+     */
+    private static void injectId(Object entity, Long id) {
+        try {
+            java.lang.reflect.Field field =
+                    com.shop.clothingstore.entity.base.BaseEntity.class.getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(entity, id);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to inject ID in test", e);
+        }
     }
 }

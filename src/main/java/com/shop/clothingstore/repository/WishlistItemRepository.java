@@ -19,5 +19,7 @@ public interface WishlistItemRepository extends BaseRepository<WishlistItem, Lon
 
     boolean existsByUserAndProduct(User user, Product product);
 
+    boolean existsByUserAndProductId(User user, Long productId);
+
     void deleteByUserAndProduct(User user, Product product);
 }

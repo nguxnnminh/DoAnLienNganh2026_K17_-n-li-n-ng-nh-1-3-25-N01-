@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la c:\\\\\\\\Users\\\\\\\\ADMIN\\\\\\\\Desktop\\\\\\\\clothingstore\\\\\\\\src\\\\\\\\main\\\\\\\\java\\\\\\\\com\\\\\\\\shop\\\\\\\\clothingstore\\\\\\\\controller\\\\\\\\admin\\\\\\\\)"
+    ]
+  }
+}

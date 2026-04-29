@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title} + ' | NOVA Admin'">NOVA Admin</title>
+    <title th:text="${title} + ' — NOVA Admin'">NOVA Admin</title>
 
-    <meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="csrf-token" th:content="${_csrf.token}" />
+    <meta name="csrf-header" th:content="${_csrf.headerName}" />
 
-    <!-- Tailwind -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
@@ -17,14 +18,9 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    animation: {
-                        fadeIn: 'fadeIn 0.6s ease forwards'
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            'from': { opacity: '0' },
-                            'to': { opacity: '1' }
-                        }
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace'],
                     }
                 }
             }
@@ -32,258 +28,612 @@
     </script>
 
     <style>
+        :root {
+            --sidebar-w: 260px;
+            --header-h: 60px;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            opacity: 0;
-            animation: fadeInBody 0.8s ease forwards;
+            font-family: 'DM Sans', sans-serif;
+            background: #f5f5f4;
+            color: #1c1c1c;
+            margin: 0;
         }
 
-        @keyframes fadeInBody {
-            to { opacity: 1; }
+        .dark body { background: #0f0f0f; color: #e8e8e8; }
+
+        /* ======= SIDEBAR ======= */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-w);
+            background: #fff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            z-index: 40;
+            transition: transform 0.3s ease;
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        .dark .sidebar {
+            background: #161616;
+            border-right-color: #262626;
         }
 
-        .dark .glass {
-            background: rgba(31, 41, 55, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .sidebar-logo {
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #111;
+            text-decoration: none;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .dark .sidebar-logo { border-bottom-color: #262626; color: #f5f5f5; }
+
+        .sidebar-logo span {
+            display: inline-block;
+            width: 8px; height: 8px;
+            background: #2563eb;
+            border-radius: 50%;
+            margin-left: 4px;
+            margin-bottom: 10px;
         }
 
-        .animate-slideIn {
-            animation: slideIn 0.4s ease forwards;
+        /* NAV GROUPS */
+        .nav-group-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            padding: 20px 24px 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 16px;
+            margin: 1px 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            color: #6b7280;
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: #f3f4f6;
+            color: #111;
+        }
+
+        .dark .nav-item:hover { background: #262626; color: #f5f5f5; }
+
+        .nav-item.active {
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .dark .nav-item.active { background: #1e3a5f; color: #93c5fd; }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            opacity: 0.7;
+        }
+
+        .nav-item.active .nav-icon,
+        .nav-item:hover .nav-icon { opacity: 1; }
+
+        /* SIDEBAR FOOTER */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .dark .sidebar-footer { border-top-color: #262626; }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f9fafb;
+            margin-bottom: 8px;
+        }
+
+        .dark .user-card { background: #1f1f1f; }
+
+        .avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* ======= MAIN AREA ======= */
+        .main-wrap {
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ======= TOPBAR ======= */
+        .topbar {
+            height: var(--header-h);
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            padding: 0 32px;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        .dark .topbar { background: #161616; border-bottom-color: #262626; }
+
+        .topbar-breadcrumb {
+            font-size: 13px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .topbar-breadcrumb strong { color: #374151; font-weight: 500; }
+        .dark .topbar-breadcrumb strong { color: #e5e7eb; }
+
+        /* ======= CONTENT ======= */
+        .content {
+            flex: 1;
+            padding: 32px;
+        }
+
+        /* ======= CARDS ======= */
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .dark .card { background: #1a1a1a; border-color: #2a2a2a; }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dark .card-header { border-bottom-color: #262626; }
+
+        /* ======= KPI CARDS ======= */
+        .kpi-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dark .kpi-card { background: #1a1a1a; border-color: #2a2a2a; }
+
+        .kpi-label { font-size: 12px; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+        .kpi-value { font-size: 28px; font-weight: 600; margin-top: 8px; letter-spacing: -0.5px; }
+        .kpi-sub { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+
+        /* ======= TABLES ======= */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .data-table thead tr { border-bottom: 1px solid #f3f4f6; }
+        .dark .data-table thead tr { border-bottom-color: #2a2a2a; }
+        .data-table th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; white-space: nowrap; }
+        .data-table td { padding: 14px 20px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+        .dark .data-table td { border-bottom-color: #1f1f1f; }
+        .data-table tbody tr:hover td { background: #f9fafb; }
+        .dark .data-table tbody tr:hover td { background: #1f1f1f; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        /* ======= BADGES ======= */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-yellow { background: #fef9c3; color: #854d0e; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-indigo { background: #e0e7ff; color: #3730a3; }
+        .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-gray { background: #f3f4f6; color: #4b5563; }
+
+        .dark .badge-green { background: #14532d; color: #86efac; }
+        .dark .badge-red { background: #7f1d1d; color: #fca5a5; }
+        .dark .badge-yellow { background: #713f12; color: #fde68a; }
+        .dark .badge-blue { background: #1e3a5f; color: #93c5fd; }
+        .dark .badge-indigo { background: #312e81; color: #a5b4fc; }
+        .dark .badge-purple { background: #581c87; color: #d8b4fe; }
+        .dark .badge-gray { background: #262626; color: #9ca3af; }
+
+        /* ======= BUTTONS ======= */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; white-space: nowrap; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .btn-danger { background: #fee2e2; color: #991b1b; }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-success { background: #dcfce7; color: #166534; }
+        .btn-success:hover { background: #bbf7d0; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .btn-icon { padding: 7px; border-radius: 6px; }
+
+        .dark .btn-secondary { background: #262626; color: #e5e7eb; border-color: #404040; }
+        .dark .btn-secondary:hover { background: #333; }
+        .dark .btn-danger { background: #7f1d1d; color: #fca5a5; }
+        .dark .btn-danger:hover { background: #991b1b; }
+
+        /* ======= FORM ======= */
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+        .dark .form-label { color: #d1d5db; }
+        .form-hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+        .form-control {
+            width: 100%;
+            padding: 9px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            background: #fff;
+            color: #111;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .dark .form-control { background: #1f1f1f; border-color: #374151; color: #e5e7eb; }
+        .dark .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .form-control[readonly] { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+        .dark .form-control[readonly] { background: #111; color: #6b7280; }
+
+        /* ======= TOAST ======= */
+        .toast {
+            position: fixed;
+            top: 20px; right: 20px;
+            z-index: 9999;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            animation: slideInRight 0.3s ease;
+            max-width: 380px;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .toast-success { background: #fff; border: 1px solid #bbf7d0; color: #166534; }
+        .toast-error { background: #fff; border: 1px solid #fecaca; color: #991b1b; }
+        .dark .toast-success { background: #1a1a1a; border-color: #14532d; color: #86efac; }
+        .dark .toast-error { background: #1a1a1a; border-color: #7f1d1d; color: #fca5a5; }
+
+        /* ======= MODAL ======= */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 28px;
+            width: 420px;
+            max-width: calc(100vw - 40px);
+            transform: scale(0.95);
+            transition: transform 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+        .dark .modal-box { background: #1a1a1a; border-color: #2a2a2a; }
+        .modal-overlay.open .modal-box { transform: scale(1); }
+        .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+        .modal-body { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.5; }
+
+        /* ======= PAGINATION ======= */
+        .pagination { display: flex; align-items: center; gap: 4px; }
+        .page-btn {
+            min-width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .page-btn:hover { background: #f3f4f6; }
+        .page-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .dark .page-btn { background: #1a1a1a; border-color: #2a2a2a; color: #e5e7eb; }
+        .dark .page-btn:hover { background: #262626; }
+
+        /* ======= MISC ======= */
+        .section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+        .text-muted { color: #9ca3af; }
+        .divider { height: 1px; background: #f3f4f6; margin: 20px 0; }
+        .dark .divider { background: #262626; }
+
+        /* ======= MOBILE ======= */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.2); }
+            .main-wrap { margin-left: 0; }
         }
     </style>
 </head>
 
-<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans">
+<body>
 
-<!-- MOBILE MENU -->
-<div id="mobileOverlay" class="fixed inset-0 bg-black/60 z-50 hidden lg:hidden"></div>
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="closeSidebar()"></div>
 
-<div id="mobileMenu"
-     class="fixed top-0 right-0 bottom-0 w-80 bg-white dark:bg-zinc-900 shadow-2xl translate-x-full transition-transform duration-300 z-50 lg:hidden">
+<!-- ======= SIDEBAR ======= -->
+<aside class="sidebar" id="sidebar">
+    <a href="/admin" class="sidebar-logo">NOVA<span></span></a>
 
-    <div class="p-6">
-        <button id="mobileClose" class="text-3xl float-right">&times;</button>
+    <nav class="flex-1 py-4 overflow-y-auto">
+        <!-- TỔNG QUAN -->
+        <div class="nav-group-label">Tổng quan</div>
 
-        <div class="mt-10 space-y-6">
-            <a th:href="@{/admin}" class="block py-2 text-lg font-medium">Bảng điều khiển</a>
-            <a th:href="@{/admin/orders}" class="block py-2 text-lg font-medium">Đơn hàng</a>
-            <a th:href="@{/admin/products}" class="block py-2 text-lg font-medium">Sản phẩm</a>
-            <a th:href="@{/admin/users}" class="block py-2 text-lg font-medium">Người dùng</a>
-
-            <form th:action="@{/logout}" method="post">
-                <button type="submit"
-                        class="block py-2 text-red-600 font-medium w-full text-left">
-                    Đăng xuất
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="min-h-screen flex flex-col lg:flex-row w-full">
-
-    <!-- SIDEBAR -->
-    <aside class="hidden lg:flex lg:w-72 flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
-        <a th:href="@{/admin}" class="h-16 flex items-center px-8 border-b border-zinc-200 dark:border-zinc-800">
-            <span class="text-2xl font-light">NOVA</span>
+        <a th:href="@{/admin}"
+           th:classappend="${currentPage == 'dashboard'} ? ' active' : ''"
+           class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Bảng điều khiển
         </a>
 
-        <nav class="flex-1 px-4 py-6">
-            <ul class="space-y-1">
-                <li><a th:href="@{/admin}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Bảng điều khiển</a></li>
-                <li><a th:href="@{/admin/orders}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Đơn hàng</a></li>
-                <li><a th:href="@{/admin/products}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Sản phẩm</a></li>
-                <li><a th:href="@{/admin/users}" class="flex px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800">Người dùng</a></li>
-            </ul>
-        </nav>
+        <!-- QUẢN LÝ -->
+        <div class="nav-group-label">Quản lý shop</div>
 
-        <div class="p-4 border-t border-zinc-200 dark:border-zinc-800">
-            <div class="flex items-center gap-3 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl">
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">A</div>
-                <div>
-                    <div class="font-medium">Admin</div>
-                    <div class="text-xs text-zinc-500">Quản trị viên</div>
-                </div>
+        <a th:href="@{/admin/products}"
+           th:classappend="${currentPage == 'products'} ? ' active' : ''"
+           class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            Sản phẩm
+        </a>
+
+        <a th:href="@{/admin/orders}"
+           th:classappend="${currentPage == 'orders'} ? ' active' : ''"
+           class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+            Đơn hàng
+            <!-- Badge pending orders -->
+            <span th:if="${pendingCount != null and pendingCount > 0}"
+                  class="ml-auto badge badge-yellow text-xs px-2 py-0.5"
+                  th:text="${pendingCount}"></span>
+        </a>
+
+        <a th:href="@{/admin/users}"
+           th:classappend="${currentPage == 'users'} ? ' active' : ''"
+           class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            Khách hàng
+        </a>
+
+        <!-- DANH MỤC / COUPON -->
+        <div class="nav-group-label">Cài đặt</div>
+
+        <a th:href="@{/admin/categories}"
+           th:classappend="${currentPage == 'categories'} ? ' active' : ''"
+           class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            Danh mục
+        </a>
+
+        <a th:href="@{/admin/coupons}"
+           th:classappend="${currentPage == 'coupons'} ? ' active' : ''"
+           class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+            Mã giảm giá
+        </a>
+
+        <!-- LINK VỀ SHOP -->
+        <div class="nav-group-label">Liên kết</div>
+        <a href="/" target="_blank" class="nav-item">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            Xem trang shop
+        </a>
+    </nav>
+
+    <!-- USER FOOTER -->
+    <div class="sidebar-footer">
+        <div class="user-card">
+            <div class="avatar">A</div>
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:500; color:#111; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" th:text="${#authentication?.name ?: 'Admin'}">Admin</div>
+                <div style="font-size:11px; color:#9ca3af;">Quản trị viên</div>
             </div>
-
-            <form th:action="@{/logout}" method="post">
-                <button type="submit"
-                        class="block mt-4 text-red-600 text-sm font-medium px-4 py-2 w-full text-left hover:bg-red-50 rounded-xl transition">
-                    Đăng xuất
-                </button>
-            </form>
         </div>
-    </aside>
 
-    <!-- MAIN -->
-    <div class="flex-1 flex flex-col w-full min-w-0">
-
-        <header class="h-16 border-b bg-white dark:bg-zinc-900 flex items-center px-6">
-            <button id="hamburger" class="lg:hidden text-2xl">☰</button>
-        </header>
-
-        <main class="flex-1 w-full min-w-0 overflow-x-auto p-6 lg:p-10 relative">
-
-            <!-- TOAST -->
-            <div th:if="${success}" id="toastSuccess"
-                 class="fixed top-6 right-6 z-50 bg-white dark:bg-zinc-900 border border-green-400
-                        text-green-600 dark:text-green-400 px-6 py-4 rounded-2xl shadow-xl animate-slideIn">
-                <div class="flex items-center gap-3">
-                    <span th:text="${success}"></span>
-                </div>
-            </div>
-
-            <div th:if="${error}" id="toastError"
-                 class="fixed top-6 right-6 z-50 bg-white dark:bg-zinc-900 border border-red-400
-                        text-red-600 dark:text-red-400 px-6 py-4 rounded-2xl shadow-xl animate-slideIn">
-                <div class="flex items-center gap-3">
-                    <span th:text="${error}"></span>
-                </div>
-            </div>
-
-            <div th:insert="~{::content}"></div>
-        </main>
-
-        <footer class="border-t py-8 px-10 text-sm text-zinc-500 text-center">
-            © 2026 NOVA Fashion
-        </footer>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="btn btn-secondary" style="width:100%; justify-content:center; font-size:13px;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Đăng xuất
+            </button>
+        </form>
     </div>
+</aside>
+
+<!-- ======= MAIN ======= -->
+<div class="main-wrap">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <!-- Mobile hamburger -->
+        <button class="lg:hidden" onclick="openSidebar()" style="padding:4px; background:none; border:none; cursor:pointer; color:#6b7280;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+
+        <!-- BREADCRUMB -->
+        <div class="topbar-breadcrumb">
+            <a href="/admin" style="color:#9ca3af; text-decoration:none; hover:text-gray-600;">NOVA</a>
+            <span>/</span>
+            <strong th:text="${title ?: 'Dashboard'}">Dashboard</strong>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="display:flex; align-items:center; gap:12px;">
+            <!-- Dark mode toggle -->
+            <button id="darkToggle" onclick="toggleDark()"
+                    style="width:34px; height:34px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6b7280; transition:all 0.15s;">
+                <svg id="sunIcon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            </button>
+
+            <!-- Notifications -->
+            <a th:href="@{/admin/orders}" style="position:relative; width:34px; height:34px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6b7280; text-decoration:none;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                <span th:if="${pendingCount != null and pendingCount > 0}"
+                      style="position:absolute; top:-4px; right:-4px; width:16px; height:16px; background:#ef4444; color:white; border-radius:50%; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center;"
+                      th:text="${pendingCount}"></span>
+            </a>
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- SUCCESS TOAST -->
+        <div th:if="${success}" id="toastSuccess" class="toast toast-success">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span th:text="${success}"></span>
+        </div>
+
+        <!-- ERROR TOAST -->
+        <div th:if="${error}" id="toastError" class="toast toast-error">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div th:insert="~{::content}"></div>
+
+    </main>
+
+    <footer style="padding:20px 32px; border-top:1px solid #f3f4f6; font-size:12px; color:#9ca3af; text-align:center;">
+        © 2026 NOVA Fashion — Admin Panel
+    </footer>
 </div>
 
 <!-- CONFIRM MODAL -->
-<div id="confirmModal"
-     class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center
-            opacity-0 pointer-events-none transition duration-300 z-[100]">
-
-    <div id="confirmBox"
-         class="glass bg-white dark:bg-zinc-900 rounded-2xl p-8 w-[400px]
-                transform scale-95 transition duration-300">
-
-        <h2 class="text-lg font-semibold mb-4">Xác nhận hành động</h2>
-
-        <p id="confirmMessage"
-           class="text-sm text-zinc-500 mb-6">
-            Bạn có chắc chắn muốn thực hiện hành động này?
-        </p>
-
-        <div class="flex justify-end gap-3">
-            <button id="cancelConfirm"
-                    class="px-5 py-2 rounded-xl border hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
-                Hủy
-            </button>
-
-            <button id="acceptConfirm"
-                    class="px-5 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition">
-                Xác nhận
-            </button>
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-title">Xác nhận hành động</div>
+        <div class="modal-body" id="confirmMessage">Bạn có chắc muốn thực hiện hành động này?</div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-secondary" onclick="closeModal()">Hủy</button>
+            <button class="btn btn-danger" id="confirmBtn">Xác nhận</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Toast auto hide
-    document.addEventListener("DOMContentLoaded", function () {
-        const toastSuccess = document.getElementById("toastSuccess");
-        const toastError = document.getElementById("toastError");
+    // ===== DARK MODE =====
+    (function(){
+        if(localStorage.getItem('nova-dark') === '1') document.documentElement.classList.add('dark');
+    })();
 
-        function autoHide(toast) {
-            if (toast) {
-                setTimeout(() => {
-                    toast.style.opacity = "0";
-                    toast.style.transform = "translateX(40px)";
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
-            }
-        }
+    function toggleDark(){
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('nova-dark', isDark ? '1' : '0');
+    }
 
-        autoHide(toastSuccess);
-        autoHide(toastError);
+    // ===== SIDEBAR MOBILE =====
+    function openSidebar(){
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sidebarOverlay').classList.remove('hidden');
+    }
+    function closeSidebar(){
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+    }
+
+    // ===== TOAST =====
+    document.addEventListener('DOMContentLoaded', function(){
+        ['toastSuccess','toastError'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(20px)';
+                el.style.transition = 'all 0.3s';
+                setTimeout(() => el.remove(), 300);
+            }, 3500);
+        });
     });
 
-    // Confirm Modal
-    const modal = document.getElementById('confirmModal');
-    const confirmBox = document.getElementById('confirmBox');
-    const confirmMessage = document.getElementById('confirmMessage');
-    const cancelBtn = document.getElementById('cancelConfirm');
-    const acceptBtn = document.getElementById('acceptConfirm');
+    // ===== CONFIRM MODAL =====
+    let _pendingForm = null;
 
-    let currentForm = null;
-
-    function openConfirm(message, form) {
-        currentForm = form;
-        confirmMessage.textContent = message;
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-        confirmBox.classList.remove('scale-95');
+    function openModal(message, form){
+        _pendingForm = form;
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('confirmModal').classList.add('open');
+    }
+    function closeModal(){
+        document.getElementById('confirmModal').classList.remove('open');
+        _pendingForm = null;
     }
 
-    function closeConfirm() {
-        modal.classList.add('opacity-0', 'pointer-events-none');
-        confirmBox.classList.add('scale-95');
-        currentForm = null;
-    }
-
-    cancelBtn.onclick = closeConfirm;
-
-    acceptBtn.onclick = function () {
-        if (currentForm) currentForm.submit();
+    document.getElementById('confirmBtn').onclick = function(){
+        if(_pendingForm) _pendingForm.submit();
+        closeModal();
     };
 
-    document.addEventListener('click', function (e) {
+    document.getElementById('confirmModal').addEventListener('click', function(e){
+        if(e.target === this) closeModal();
+    });
+
+    document.addEventListener('click', function(e){
         const trigger = e.target.closest('[data-confirm]');
-        if (trigger) {
+        if(trigger){
             e.preventDefault();
-            const message = trigger.getAttribute('data-confirm');
             const form = trigger.closest('form');
-            openConfirm(message, form);
+            openModal(trigger.getAttribute('data-confirm'), form);
         }
     });
-
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeConfirm();
-    });
-
-    const hamburger = document.getElementById('hamburger');
-    const mobileMenu = document.getElementById('mobileMenu');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    const mobileClose = document.getElementById('mobileClose');
-
-    if (hamburger) {
-        hamburger.onclick = () => {
-            mobileMenu.classList.remove('translate-x-full');
-            mobileOverlay.classList.remove('hidden');
-        }
-    }
-
-    if (mobileClose) {
-        mobileClose.onclick = () => {
-            mobileMenu.classList.add('translate-x-full');
-            mobileOverlay.classList.add('hidden');
-        }
-    }
-
-    if (mobileOverlay) {
-        mobileOverlay.onclick = () => {
-            mobileMenu.classList.add('translate-x-full');
-            mobileOverlay.classList.add('hidden');
-        }
-    }
 </script>
 
 </body>

@@ -88,10 +88,10 @@ public class CartApiController {
     // DELETE /api/cart
     // =====================================================
     @DeleteMapping
-    public ResponseEntity<Map<String, String>> clearCart() {
+    public ResponseEntity<Map<String, Object>> clearCart() {
 
         cartService.clear();
 
-        return ResponseEntity.ok(Map.of("message", "Cart đã được xóa"));
+        return getCart();
     }
 }

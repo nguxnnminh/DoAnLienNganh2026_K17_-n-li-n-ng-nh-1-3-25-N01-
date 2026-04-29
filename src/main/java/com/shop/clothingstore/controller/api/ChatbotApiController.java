@@ -8,27 +8,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.shop.clothingstore.service.ChatbotService;
+import com.shop.clothingstore.service.AiChatbotService;
+import com.shop.clothingstore.dto.api.ChatbotResponse;
 
 @RestController
 @RequestMapping("/api/chatbot")
 public class ChatbotApiController {
 
-    private final ChatbotService chatbotService;
+    private final AiChatbotService chatbotService;
 
-    public ChatbotApiController(ChatbotService chatbotService) {
+    public ChatbotApiController(AiChatbotService chatbotService) {
         this.chatbotService = chatbotService;
     }
 
     // POST /api/chatbot
     // Body: { "message": "tôi muốn áo màu đen dưới 500k" }
     @PostMapping
-    public ResponseEntity<ChatbotService.ChatbotResponse> chat(
+    public ResponseEntity<ChatbotResponse> chat(
             @RequestBody Map<String, String> request) {
 
         String message = request.getOrDefault("message", "");
 
-        ChatbotService.ChatbotResponse response = chatbotService.processMessage(message);
+        if (!chatbotService.isEnabledAndConfigured()) {
+            return ResponseEntity.ok(ChatbotResponse.text(
+                    "Chatbot AI chưa được bật/cấu hình. Bạn hãy bật Ollama và set CHATBOT_AI_ENABLED=true rồi restart backend."
+            ));
+        }
+
+        ChatbotResponse response = chatbotService.processMessage(message);
 
         return ResponseEntity.ok(response);
     }

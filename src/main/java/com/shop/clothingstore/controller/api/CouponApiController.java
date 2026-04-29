@@ -1,6 +1,7 @@
 package com.shop.clothingstore.controller.api;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,10 +34,8 @@ public class CouponApiController {
 
     // =====================================================
     // POST /api/coupons/validate
-    // Body: { "code": "SUMMER20", "orderTotal": 500000 }
-    // FIX: dùng POST thay GET để tránh lộ code trong URL/log
-    // FIX: delegate qua CouponService thay inject repo trực tiếp
-    // FIX: validate coupon.isValid() trước khi trả về
+    // Read-only preview — does NOT increment usageCount.
+    // Uses BigDecimal for all monetary values.
     // =====================================================
     @PostMapping("/validate")
     public ResponseEntity<CouponValidationResponse> validateCoupon(
@@ -48,50 +47,38 @@ public class CouponApiController {
 
         if (coupon == null) {
             return ResponseEntity.ok(new CouponValidationResponse(
-                    false,
-                    "Mã giảm giá không hợp lệ hoặc đã hết hạn",
-                    null,
-                    null,
-                    null
-            ));
+                    false, "Ma giam gia khong hop le hoac da het han", null, null, null));
         }
 
-        Double discountedTotal = coupon.applyDiscount(request.getOrderTotal());
-        Double savedAmount = request.getOrderTotal() - discountedTotal;
+        BigDecimal discountedTotal = coupon.applyDiscount(request.getOrderTotal());
+        BigDecimal savedAmount = request.getOrderTotal().subtract(discountedTotal)
+                .setScale(0, RoundingMode.HALF_UP);
 
         return ResponseEntity.ok(new CouponValidationResponse(
                 true,
-                "Mã giảm giá hợp lệ",
+                "Ma giam gia hop le",
                 coupon.getDiscountValue(),
-                BigDecimal.valueOf(discountedTotal).setScale(0, java.math.RoundingMode.HALF_UP).doubleValue(),
-                BigDecimal.valueOf(savedAmount).setScale(0, java.math.RoundingMode.HALF_UP).doubleValue()
+                discountedTotal,
+                savedAmount
         ));
     }
 
-    // =====================================================
-    // Request DTO
-    // =====================================================
     @Data
     public static class ValidateRequest {
 
-        @NotBlank(message = "Mã coupon không được trống")
+        @NotBlank(message = "Ma coupon khong duoc trong")
         private String code;
 
-        @NotNull(message = "Tổng tiền không được null")
+        @NotNull(message = "Tong tien khong duoc null")
         @PositiveOrZero
-        private Double orderTotal;
+        private BigDecimal orderTotal;
     }
 
-    // =====================================================
-    // Response DTO
-    // =====================================================
     public record CouponValidationResponse(
             boolean valid,
             String message,
-            Double discountValue,
-            Double discountedTotal,
-            Double savedAmount
-            ) {
-
+            BigDecimal discountValue,
+            BigDecimal discountedTotal,
+            BigDecimal savedAmount) {
     }
 }

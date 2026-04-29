@@ -1,5 +1,6 @@
 package com.shop.clothingstore.controller;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,6 +31,8 @@ import com.shop.clothingstore.service.ProductService;
 import com.shop.clothingstore.service.RecommendationService;
 import com.shop.clothingstore.service.ReviewService;
 import com.shop.clothingstore.service.SubCategoryService;
+import com.shop.clothingstore.service.UserService;
+import com.shop.clothingstore.service.WishlistService;
 
 @Controller
 public class ShopController {
@@ -39,17 +42,23 @@ public class ShopController {
     private final SubCategoryService subCategoryService;
     private final ReviewService reviewService;
     private final RecommendationService recommendationService;
+    private final WishlistService wishlistService;
+    private final UserService userService;
 
     public ShopController(ProductService productService,
             CategoryService categoryService,
             SubCategoryService subCategoryService,
             ReviewService reviewService,
-            RecommendationService recommendationService) {
+            RecommendationService recommendationService,
+            WishlistService wishlistService,
+            UserService userService) {
         this.productService = productService;
         this.categoryService = categoryService;
         this.subCategoryService = subCategoryService;
         this.reviewService = reviewService;
         this.recommendationService = recommendationService;
+        this.wishlistService = wishlistService;
+        this.userService = userService;
     }
 
     // =====================================================
@@ -58,28 +67,38 @@ public class ShopController {
     @GetMapping("/")
     public String home(Model model) {
         List<Product> homeProducts = new ArrayList<>();
-        homeProducts.addAll(productService.findTopByCategorySlug("top", PageRequest.of(0, 4)).getContent());
-        homeProducts.addAll(productService.findTopByCategorySlug("bottom", PageRequest.of(0, 2)).getContent());
-        homeProducts.addAll(productService.findTopByCategorySlug("accessories", PageRequest.of(0, 2)).getContent());
+        homeProducts.addAll(productService.findTopByCategorySlug("top", PageRequest.of(0, 1)).getContent());
+        homeProducts.addAll(productService.findTopByCategorySlug("bottom", PageRequest.of(0, 1)).getContent());
+        homeProducts.addAll(productService.findTopByCategorySlug("accessories", PageRequest.of(0, 1)).getContent());
         model.addAttribute("homeProducts", homeProducts);
+        model.addAttribute("bestSellers", homeProducts);
         return "shop/home";
     }
 
     // =====================================================
-    // HELPER SORT METHOD
+    // SORT HELPER
+    // price_asc / price_desc sort on the denormalized minPrice column
+    // (computed from variants and stored on the product row).
+    // best_seller sorts by totalSold which is also a computed helper —
+    // for proper DB-level sorting a denormalized column would be needed;
+    // fall back to newest for now.
     // =====================================================
     private Pageable buildPageable(int page, String sort) {
-        Sort sortObj = Sort.by("id").descending();
-        if (sort != null) {
+        Sort sortObj;
+        if (sort == null) {
+            sortObj = Sort.by("id").descending();
+        } else {
             switch (sort) {
                 case "price_asc":
-                    sortObj = Sort.by("productVariants.price").ascending();
+                    sortObj = Sort.by("minPrice").ascending();
                     break;
                 case "price_desc":
-                    sortObj = Sort.by("productVariants.price").descending();
+                    sortObj = Sort.by("minPrice").descending();
                     break;
                 case "best_seller":
-                    sortObj = Sort.by("productVariants.sold").descending();
+                    // totalSold is computed from variants; minPrice is the only
+                    // reliable denormalized sortable column. Use it as proxy.
+                    sortObj = Sort.by("id").descending();
                     break;
                 case "newest":
                 default:
@@ -95,8 +114,8 @@ public class ShopController {
     // =====================================================
     @GetMapping("/products")
     public String products(
-            @RequestParam(value = "minPrice", required = false) Double minPrice,
-            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sort", required = false) String sort,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -124,8 +143,8 @@ public class ShopController {
     @GetMapping("/products/{categorySlug}")
     public String productsByCategory(
             @PathVariable String categorySlug,
-            @RequestParam(value = "minPrice", required = false) Double minPrice,
-            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sort", required = false) String sort,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -133,7 +152,7 @@ public class ShopController {
 
         Category category = categoryService.getCategoryBySlug(categorySlug)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Danh mục không tồn tại: " + categorySlug));
+                HttpStatus.NOT_FOUND, "Category not found: " + categorySlug));
 
         ProductFilterDTO filter = new ProductFilterDTO();
         filter.setCategoryId(category.getId());
@@ -161,8 +180,8 @@ public class ShopController {
     public String productsBySubCategory(
             @PathVariable String categorySlug,
             @PathVariable String subSlug,
-            @RequestParam(value = "minPrice", required = false) Double minPrice,
-            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sort", required = false) String sort,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -170,14 +189,14 @@ public class ShopController {
 
         Category category = categoryService.getCategoryBySlug(categorySlug)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Danh mục không tồn tại: " + categorySlug));
+                HttpStatus.NOT_FOUND, "Category not found: " + categorySlug));
 
         SubCategory subCategory = subCategoryService.getBySlug(subSlug)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Danh mục phụ không tồn tại: " + subSlug));
+                HttpStatus.NOT_FOUND, "SubCategory not found: " + subSlug));
 
         if (!subCategory.getCategory().getId().equals(category.getId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Danh mục phụ không thuộc danh mục này");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "SubCategory does not belong to this category");
         }
 
         ProductFilterDTO filter = new ProductFilterDTO();
@@ -202,7 +221,7 @@ public class ShopController {
     }
 
     // =====================================================
-    // PRODUCT DETAIL BY SLUG (for chatbot direct links)
+    // PRODUCT DETAIL BY SLUG
     // =====================================================
     @GetMapping("/product/{slug}")
     public String productDetailBySlug(
@@ -211,12 +230,11 @@ public class ShopController {
             Authentication authentication) {
 
         Product product = productService.findBySlug(slug);
-
-        return renderProductDetail(product, model);
+        return renderProductDetail(product, model, authentication);
     }
 
     // =====================================================
-    // PRODUCT DETAIL BY CATEGORY/SUB/ID (original URL)
+    // PRODUCT DETAIL BY CATEGORY/SUB/ID
     // =====================================================
     @GetMapping("/products/{categorySlug}/{subSlug}/{id}")
     public String productDetail(
@@ -228,25 +246,23 @@ public class ShopController {
 
         Product product = productService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Sản phẩm không tồn tại"));
+                HttpStatus.NOT_FOUND, "Product not found"));
 
-        return renderProductDetail(product, model);
+        return renderProductDetail(product, model, authentication);
     }
 
     // =====================================================
     // SHARED RENDER LOGIC
     // =====================================================
-    private String renderProductDetail(Product product, Model model) {
+    private String renderProductDetail(Product product, Model model, Authentication authentication) {
         Long id = product.getId();
 
-        Set<String> sizes = product.getProductVariants()
-                .stream()
+        Set<String> sizes = product.getProductVariants().stream()
                 .map(v -> v.getSize())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Set<String> colors = product.getProductVariants()
-                .stream()
+        Set<String> colors = product.getProductVariants().stream()
                 .map(v -> v.getColor())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -261,8 +277,7 @@ public class ShopController {
         model.addAttribute("reviewCount", reviewCount);
         model.addAttribute("reviews", reviewService.getReviewsByItem(id));
 
-        var variantDTOs = product.getProductVariants()
-                .stream()
+        var variantDTOs = product.getProductVariants().stream()
                 .map(v -> new VariantDTO(v.getId(), v.getSize(), v.getColor(), v.getPrice(), v.getStock()))
                 .toList();
 
@@ -270,6 +285,14 @@ public class ShopController {
 
         List<Product> relatedProducts = recommendationService.getSimilarProducts(id, 4);
         model.addAttribute("relatedProducts", relatedProducts);
+
+        boolean isInWishlist = false;
+        if (authentication != null && authentication.isAuthenticated()) {
+            isInWishlist = userService.findByEmail(authentication.getName())
+                    .map(user -> wishlistService.isInWishlist(user, id))
+                    .orElse(false);
+        }
+        model.addAttribute("isInWishlist", isInWishlist);
 
         return "shop/product-detail";
     }

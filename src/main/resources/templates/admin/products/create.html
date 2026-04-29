@@ -3,337 +3,224 @@
 
 <div th:fragment="content">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <h1 class="text-2xl font-semibold tracking-tight">
-            Thêm sản phẩm mới
-        </h1>
-
-        <a th:href="@{/admin/products}"
-            class="text-sm font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition">
-            ← Quay lại danh sách
+    <!-- HEADER -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+        <div>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Thêm sản phẩm mới</h1>
+            <p style="font-size:13px; color:#9ca3af; margin:0;">Điền đầy đủ thông tin sản phẩm</p>
+        </div>
+        <a th:href="@{/admin/products}" class="btn btn-secondary">
+            ← Quay lại
         </a>
     </div>
 
-    <div th:if="${error}" class="mb-6 px-6 py-4 rounded-2xl text-sm font-medium
-bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-        <span th:text="${error}"></span>
+    <!-- ERROR -->
+    <div th:if="${error}" style="background:#fee2e2; border:1px solid #fecaca; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:14px; color:#991b1b;">
+        <strong>Lỗi:</strong> <span th:text="${error}"></span>
     </div>
 
+    <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-    <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data"
-        class="glass rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 space-y-8">
+        <div style="display:grid; grid-template-columns:1fr 360px; gap:20px; align-items:start;">
 
+            <!-- LEFT COLUMN -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
 
-        <!-- CATEGORY -->
-        <div>
+                <!-- THÔNG TIN CƠ BẢN -->
+                <div class="card" style="padding:24px;">
+                    <div class="section-title">Thông tin cơ bản</div>
 
-            <label class="block text-sm font-medium text-zinc-500 mb-2">
-                Danh mục chính <span class="text-red-500">*</span>
-            </label>
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Tên sản phẩm <span style="color:#ef4444;">*</span></label>
+                        <input type="text" name="name" required class="form-control"
+                               th:value="${productDTO?.name}" placeholder="VD: Áo sơ mi trắng basic">
+                    </div>
 
-            <select id="categorySelect" name="categoryId" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
+                    <div>
+                        <label class="form-label">Mô tả sản phẩm</label>
+                        <textarea name="description" rows="4" class="form-control"
+                                  placeholder="Mô tả chi tiết về sản phẩm..."
+                                  th:text="${productDTO?.description}"></textarea>
+                    </div>
+                </div>
 
-                <option value="">Chọn danh mục</option>
+                <!-- BIẾN THỂ -->
+                <div class="card" style="padding:24px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                        <div class="section-title" style="margin-bottom:0;">Biến thể sản phẩm</div>
+                        <button type="button" id="addVariant" class="btn btn-sm btn-secondary">
+                            + Thêm biến thể
+                        </button>
+                    </div>
 
-                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">
-                </option>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1.2fr 1fr auto; gap:8px; margin-bottom:8px; padding:0 2px;">
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Size</div>
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Màu sắc</div>
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Giá (₫)</div>
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Tồn kho</div>
+                        <div></div>
+                    </div>
 
-            </select>
+                    <div id="variantsContainer" style="display:flex; flex-direction:column; gap:8px;">
+                        <div class="variant-row" style="display:grid; grid-template-columns:1fr 1fr 1.2fr 1fr 36px; gap:8px; align-items:center;">
+                            <input type="text" name="variants[0].size" placeholder="S, M, L..." class="form-control">
+                            <input type="text" name="variants[0].color" placeholder="Trắng, Đen..." class="form-control">
+                            <input type="text" name="variants[0].price" placeholder="250.000" class="form-control price-input">
+                            <input type="number" name="variants[0].stock" placeholder="0" min="0" class="form-control">
+                            <button type="button" class="btn btn-icon btn-danger remove-variant" title="Xóa biến thể">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
 
-        </div>
-
-
-
-        <!-- SUB CATEGORY -->
-        <div>
-
-            <label class="block text-sm font-medium text-zinc-500 mb-2">
-                Danh mục phụ <span class="text-red-500">*</span>
-            </label>
-
-            <select name="subCategoryId" id="subCategorySelect" disabled class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
-
-                <option value="">Chọn danh mục chính trước</option>
-
-            </select>
-
-        </div>
-
-
-
-        <!-- NAME -->
-        <div>
-
-            <label class="block text-sm font-medium text-zinc-500 mb-2">
-                Tên sản phẩm <span class="text-red-500">*</span>
-            </label>
-
-            <input type="text" name="name" required class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition">
-
-        </div>
-
-
-
-        <!-- DESCRIPTION -->
-        <div>
-
-            <label class="block text-sm font-medium text-zinc-500 mb-2">
-                Mô tả
-            </label>
-
-            <textarea name="description" rows="4" class="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700
-bg-white dark:bg-zinc-900 focus:ring-2 focus:ring-black outline-none transition"></textarea>
-
-        </div>
-
-
-
-        <!-- VARIANTS -->
-        <div>
-
-            <label class="block text-sm font-medium text-zinc-500 mb-4">
-                Biến thể (Size - Màu - Giá - Tồn kho)
-            </label>
-
-            <div id="variants-container" class="space-y-4">
-
-
-                <div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-
-                    <input type="text" name="variants[0].size" placeholder="Size"
-                        class="px-4 py-3 rounded-xl border border-zinc-300">
-
-                    <input type="text" name="variants[0].color" placeholder="Màu"
-                        class="px-4 py-3 rounded-xl border border-zinc-300">
-
-                    <input type="text" name="variants[0].price" placeholder="Giá"
-                        class="price-input px-4 py-3 rounded-xl border border-zinc-300">
-
-                    <input type="number" name="variants[0].stock" placeholder="Tồn kho"
-                        class="px-4 py-3 rounded-xl border border-zinc-300">
-
-                    <button type="button" class="remove-variant px-4 py-3 rounded-xl text-sm bg-red-50 text-red-600">
-
-                        Xóa
-
-                    </button>
-
+                    <p class="form-hint" style="margin-top:12px;">Nhập giá dạng số, VD: 250000 hoặc 250.000</p>
                 </div>
 
             </div>
 
+            <!-- RIGHT COLUMN -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
 
-            <button type="button" id="add-variant" class="mt-4 text-sm font-medium text-indigo-600 hover:underline">
+                <!-- PHÂN LOẠI -->
+                <div class="card" style="padding:24px;">
+                    <div class="section-title">Phân loại</div>
 
-                + Thêm biến thể
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label">Danh mục chính <span style="color:#ef4444;">*</span></label>
+                        <select id="categorySelect" class="form-control">
+                            <option value="">Chọn danh mục</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}"
+                                    th:text="${cat.name}"></option>
+                        </select>
+                    </div>
 
-            </button>
+                    <div>
+                        <label class="form-label">Danh mục phụ <span style="color:#ef4444;">*</span></label>
+                        <select name="subCategoryId" id="subCategorySelect" disabled class="form-control">
+                            <option value="">Chọn danh mục chính trước</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ẢNH SẢN PHẨM -->
+                <div class="card" style="padding:24px;">
+                    <div class="section-title">Ảnh sản phẩm</div>
+
+                    <label style="display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed #d1d5db; border-radius:10px; padding:28px; cursor:pointer; transition:border-color 0.15s; gap:8px;"
+                           id="uploadLabel" for="imageInput">
+                        <svg width="28" height="28" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span style="font-size:13px; color:#6b7280; font-weight:500;">Chọn ảnh sản phẩm</span>
+                        <span style="font-size:11px; color:#9ca3af;">PNG, JPG tối đa 10MB</span>
+                    </label>
+                    <input type="file" name="images" id="imageInput" multiple accept="image/*" style="display:none;" onchange="previewImages(this)">
+
+                    <div id="imagePreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div>
+                </div>
+
+                <!-- HIỂN THỊ -->
+                <div class="card" style="padding:20px 24px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:14px; font-weight:500;">Hiển thị sản phẩm</div>
+                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Sản phẩm sẽ xuất hiện trong shop</div>
+                        </div>
+                        <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
+                            <input type="checkbox" name="active" checked style="opacity:0; width:0; height:0;">
+                            <span id="toggleSwitch" onclick="toggleSwitch(this)" style="position:absolute;top:0;left:0;right:0;bottom:0;background:#2563eb;border-radius:24px;transition:0.3s;">
+                                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.3s;transform:translateX(20px);"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBMIT -->
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Tạo sản phẩm
+                </button>
+            </div>
 
         </div>
-
-
-
-        <!-- IMAGE -->
-        <div>
-
-            <label class="block text-sm font-medium text-zinc-500 mb-2">
-                Ảnh sản phẩm
-            </label>
-
-            <input type="file" name="images" multiple accept="image/*"
-                class="w-full px-4 py-3 rounded-xl border border-zinc-300">
-
-        </div>
-
-
-
-        <!-- ACTIVE -->
-        <div class="flex items-center gap-3">
-
-            <input type="checkbox" name="active" checked class="w-5 h-5">
-
-            <label class="text-sm text-zinc-600 dark:text-zinc-400">
-                Hiển thị sản phẩm
-            </label>
-
-        </div>
-
-
-
-        <!-- SUBMIT -->
-        <div class="flex justify-end pt-6">
-
-            <button type="submit" class="px-8 py-3 rounded-xl font-medium text-sm
-bg-black text-white hover:bg-zinc-800 transition">
-
-                Tạo sản phẩm
-
-            </button>
-
-        </div>
-
     </form>
 
-
-
     <script>
+        // ===== CATEGORY -> SUBCATEGORY =====
+        const catSel = document.getElementById('categorySelect');
+        const subSel = document.getElementById('subCategorySelect');
 
-        /* CATEGORY -> SUBCATEGORY */
+        catSel.addEventListener('change', async function(){
+            const id = this.value;
+            if(!id){ subSel.innerHTML='<option value="">Chọn danh mục chính trước</option>'; subSel.disabled=true; return; }
+            subSel.innerHTML='<option>Đang tải...</option>';
+            try {
+                const res = await fetch(`/api/subcategories/by-category/${id}`);
+                const subs = await res.json();
+                subSel.innerHTML='<option value="">Chọn danh mục phụ</option>';
+                subs.forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    subSel.appendChild(o);
+                });
+                subSel.disabled = false;
+            } catch(e){ subSel.innerHTML='<option>Lỗi tải dữ liệu</option>'; }
+        });
 
-        const categorySelect = document.getElementById("categorySelect")
-        const subCategorySelect = document.getElementById("subCategorySelect")
+        // ===== ADD VARIANT =====
+        let vIdx = 1;
+        document.getElementById('addVariant').addEventListener('click', function(){
+            const row = document.createElement('div');
+            row.className = 'variant-row';
+            row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1.2fr 1fr 36px; gap:8px; align-items:center;';
+            row.innerHTML = `
+                <input type="text" name="variants[${vIdx}].size" placeholder="S, M, L..." class="form-control">
+                <input type="text" name="variants[${vIdx}].color" placeholder="Trắng, Đen..." class="form-control">
+                <input type="text" name="variants[${vIdx}].price" placeholder="250.000" class="form-control price-input">
+                <input type="number" name="variants[${vIdx}].stock" placeholder="0" min="0" class="form-control">
+                <button type="button" class="btn btn-icon btn-danger remove-variant" title="Xóa">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>`;
+            document.getElementById('variantsContainer').appendChild(row);
+            vIdx++;
+        });
 
-        categorySelect.addEventListener("change", async function () {
-
-            const categoryId = this.value
-
-            if (!categoryId) {
-
-                subCategorySelect.innerHTML = '<option value="">Chọn danh mục chính trước</option>'
-                subCategorySelect.disabled = true
-                return
-
+        document.addEventListener('click', function(e){
+            if(e.target.closest('.remove-variant')){
+                const rows = document.querySelectorAll('.variant-row');
+                if(rows.length > 1) e.target.closest('.variant-row').remove();
             }
+        });
 
-            subCategorySelect.innerHTML = '<option>Đang tải...</option>'
-
-            const res = await fetch(`/api/subcategories/by-category/${categoryId}`)
-            const subs = await res.json()
-
-            subCategorySelect.innerHTML = '<option value="">Chọn danh mục phụ</option>'
-
-            subs.forEach(sub => {
-
-                const opt = document.createElement("option")
-                opt.value = sub.id
-                opt.textContent = sub.name
-
-                subCategorySelect.appendChild(opt)
-
-            })
-
-            subCategorySelect.disabled = false
-
-        })
-
-
-
-        /* ADD VARIANT */
-
-        let variantIndex = 1
-
-        const container = document.getElementById("variants-container")
-
-        document.getElementById("add-variant").addEventListener("click", function () {
-
-            const html = `
-
-<div class="variant-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-
-<input type="text" name="variants[${variantIndex}].size" placeholder="Size" class="px-4 py-3 rounded-xl border">
-
-<input type="text" name="variants[${variantIndex}].color" placeholder="Màu" class="px-4 py-3 rounded-xl border">
-
-<input type="text" name="variants[${variantIndex}].price" placeholder="Giá" class="price-input px-4 py-3 rounded-xl border">
-
-<input type="number" name="variants[${variantIndex}].stock" placeholder="Tồn kho" class="px-4 py-3 rounded-xl border">
-
-<button type="button" class="remove-variant px-4 py-3 rounded-xl bg-red-50 text-red-600">Xóa</button>
-
-</div>
-
-`
-
-            container.insertAdjacentHTML("beforeend", html)
-
-            variantIndex++
-
-        })
-
-
-
-        /* REMOVE VARIANT */
-
-        document.addEventListener("click", function (e) {
-
-            if (e.target.classList.contains("remove-variant")) {
-
-                e.target.closest(".variant-row").remove()
-
+        // ===== PRICE FORMAT =====
+        document.addEventListener('input', function(e){
+            if(e.target.classList.contains('price-input')){
+                const raw = e.target.value.replace(/\D/g,'');
+                e.target.value = raw ? Number(raw).toLocaleString('vi-VN') : '';
             }
+        });
 
-        })
+        document.querySelector('form').addEventListener('submit', function(){
+            document.querySelectorAll('.price-input').forEach(i => { i.value = i.value.replace(/\./g,''); });
+        });
 
-
-
-        /* FORMAT PRICE */
-
-        function formatPrice(input) {
-
-            let value = input.value.replace(/\D/g, "")
-
-            if (value === "") {
-
-                input.value = ""
-                return
-
-            }
-
-            input.value = Number(value).toLocaleString("vi-VN")
-
+        // ===== IMAGE PREVIEW =====
+        function previewImages(input){
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e){
+                    const div = document.createElement('div');
+                    div.style.cssText = 'position:relative; width:80px; height:80px;';
+                    div.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;">`;
+                    preview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+            document.getElementById('uploadLabel').style.borderColor = '#2563eb';
         }
-
-
-
-        document.addEventListener("input", function (e) {
-
-            if (e.target.classList.contains("price-input")) {
-
-                formatPrice(e.target)
-
-            }
-
-        })
-
-
-
-        /* SUBMIT FIX */
-
-        document.addEventListener("submit", function () {
-
-            document.querySelectorAll(".price-input").forEach(input => {
-
-                input.value = input.value.replace(/\./g, "")
-
-            })
-
-        })
-
-
-
-        /* FORMAT ON LOAD */
-
-        window.addEventListener("load", function () {
-
-            document.querySelectorAll(".price-input").forEach(input => {
-
-                let value = input.value.replace(/[^\d]/g, "")
-
-                if (value) {
-
-                    input.value = Number(value).toLocaleString("vi-VN")
-
-                }
-
-            })
-
-        })
-
     </script>
 
 </div>
-
 </html>

@@ -32,12 +32,12 @@ public abstract class BaseEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // ===== GETTER & SETTER =====
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {   // 👈 QUAN TRỌNG
+    // Protected: JPA manages the ID lifecycle; external code must not set it
+    protected void setId(Long id) {
         this.id = id;
     }
 
@@ -45,7 +45,6 @@ public abstract class BaseEntity {
         return createdAt;
     }
 
-    // Protected setter — chỉ dùng nội bộ/test. updatable=false nên không nên set từ bên ngoài.
     protected void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }

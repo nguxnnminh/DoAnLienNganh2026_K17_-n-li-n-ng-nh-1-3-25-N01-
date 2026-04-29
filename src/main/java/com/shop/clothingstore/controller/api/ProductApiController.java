@@ -1,5 +1,6 @@
 package com.shop.clothingstore.controller.api;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class ProductApiController {
     }
 
     // =====================================================
-    // GET /api/products?page=0&size=12&sort=newest&keyword=...
+    // GET /api/products
     // =====================================================
     @GetMapping
     public ResponseEntity<Map<String, Object>> getProducts(
@@ -46,8 +47,8 @@ public class ProductApiController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long subCategoryId,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice) {
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice) {
 
         ProductFilterDTO filter = new ProductFilterDTO();
         filter.setKeyword(keyword);
@@ -57,7 +58,6 @@ public class ProductApiController {
         filter.setMaxPrice(maxPrice);
 
         Pageable pageable = buildPageable(page, size, sort);
-
         Page<Product> products = productService.findWithFilter(filter, pageable);
 
         List<ProductResponse> content = products.getContent().stream()
@@ -79,15 +79,13 @@ public class ProductApiController {
     // =====================================================
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-
         Product product = productService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
-
         return ResponseEntity.ok(ProductResponse.from(product));
     }
 
     // =====================================================
-    // GET /api/products/{id}/similar?limit=6
+    // GET /api/products/{id}/similar
     // =====================================================
     @GetMapping("/{id}/similar")
     public ResponseEntity<List<ProductResponse>> getSimilarProducts(
@@ -102,13 +100,8 @@ public class ProductApiController {
         return ResponseEntity.ok(result);
     }
 
-    // =====================================================
-    // HELPER
-    // =====================================================
     private Pageable buildPageable(int page, int size, String sort) {
-
         Sort sortObj;
-
         if (sort == null) {
             sortObj = Sort.by("id").descending();
         } else {
@@ -122,13 +115,18 @@ public class ProductApiController {
                 case "name_desc":
                     sortObj = Sort.by("name").descending();
                     break;
+                case "price_asc":
+                    sortObj = Sort.by("minPrice").ascending();
+                    break;
+                case "price_desc":
+                    sortObj = Sort.by("minPrice").descending();
+                    break;
                 case "newest":
                 default:
                     sortObj = Sort.by("id").descending();
                     break;
             }
         }
-
         return PageRequest.of(page, Math.min(size, 50), sortObj);
     }
 }

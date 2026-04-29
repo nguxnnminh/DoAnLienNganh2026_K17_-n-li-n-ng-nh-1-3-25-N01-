@@ -2,15 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'Checkout — Nova')}">
 <div th:fragment="content">
   <style>
-    /* Shared field style — same as profile */
     .n-field {
-      width:100%;background:transparent;border:none;border-bottom:1px solid #2e2e2e;
+      width:100%;background:transparent;border:none;border-bottom:1px solid #353535;
       color:#e8e8e4;padding:13px 0;font-family:'DM Sans',sans-serif;font-size:.9rem;
       outline:none;transition:border-color .2s;letter-spacing:.03em;
     }
-    .n-field:focus { border-bottom-color:#555; }
-    .n-field::placeholder { color:#383838;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase; }
-    .n-label { font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#555;display:block;margin-bottom:8px; }
+    .n-field:focus { border-bottom-color:#777; }
+    .n-field::placeholder { color:#555;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase; }
+    .n-label { font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#888;display:block;margin-bottom:8px; }
+    textarea.n-field { overflow:hidden; line-height:1.6; resize:none; }
+    #couponMsg.ok  { color:#6dbf6d; }
+    #couponMsg.err { color:#bf6d6d; }
   </style>
 
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
@@ -21,29 +23,40 @@
       <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Checkout</h1>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 md:gap-16 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 md:gap-16 items-start">
 
       <!-- FORM -->
       <div>
         <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-8 md:mb-10">Delivery Information</p>
         <form th:action="@{/checkout}" method="post" class="flex flex-col gap-8 md:gap-9">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <!-- couponCode is populated by JS before submit -->
+          <input type="hidden" id="couponCodeHidden" name="couponCode" />
 
           <div>
             <label class="n-label">Full Name</label>
             <input class="n-field" type="text" name="customerName"
-                   th:value="${user!=null?user.fullName:''}" required placeholder="Your name" />
+                   th:value="${user!=null?user.fullName:''}" required
+                   maxlength="100" placeholder="Your name" />
           </div>
           <div>
             <label class="n-label">Phone</label>
-            <input class="n-field" type="text" name="phone"
-                   th:value="${user!=null?user.phone:''}" required placeholder="0900 000 000" />
+            <input class="n-field" type="tel" name="phone"
+                   th:value="${user!=null?user.phone:''}" required
+                   pattern="^(\+84|0)(3|5|7|8|9)\d{8}$"
+                   placeholder="0900 000 000" />
           </div>
           <div>
             <label class="n-label">Delivery Address</label>
-            <textarea class="n-field" name="address" rows="3" style="resize:none" required
-                      placeholder="Street, District, City"
+            <textarea class="n-field" name="address" rows="1" required
+                      maxlength="500" placeholder="Street, District, City"
                       th:text="${user!=null?user.address:''}"></textarea>
+          </div>
+
+          <div>
+            <label class="n-label">Order Note <span style="color:#555; font-size:.65rem;">(optional)</span></label>
+            <textarea class="n-field" name="note" rows="1"
+                      maxlength="500" placeholder="Special instructions, gift message..."></textarea>
           </div>
 
           <div th:if="${error}"
@@ -63,6 +76,7 @@
       <div class="lg:sticky lg:top-24 border border-zinc-800/60 p-6 md:p-8">
         <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-6">Order Summary</p>
 
+        <!-- ITEMS -->
         <div class="flex flex-col gap-4 mb-6 pb-6 border-b border-zinc-900">
           <div th:each="item : ${cartItems}" class="flex justify-between items-start gap-3">
             <div class="flex-1">
@@ -78,12 +92,38 @@
           </div>
         </div>
 
-        <div class="flex flex-col gap-4 mb-6">
+        <!-- COUPON INPUT -->
+        <div class="mb-6 pb-6 border-b border-zinc-900">
+          <label class="n-label mb-3 block">Discount Code</label>
+          <div class="flex gap-2">
+            <input id="couponInput" type="text"
+                   class="n-field flex-1"
+                   placeholder="ENTER CODE"
+                   style="text-transform:uppercase;letter-spacing:.1em" />
+            <button type="button" id="applyCouponBtn"
+                    class="h-[46px] px-4 bg-transparent border border-zinc-700 text-zinc-500
+                           text-xs tracking-widest uppercase cursor-pointer shrink-0
+                           transition-all hover:border-zinc-500 hover:text-[#c0c0bc]">
+              Apply
+            </button>
+          </div>
+          <p id="couponMsg" class="mt-2 text-xs tracking-wide"></p>
+        </div>
+
+        <!-- TOTALS -->
+        <div class="flex flex-col gap-3 mb-6">
           <div class="flex justify-between">
             <span class="text-xs tracking-widest uppercase text-zinc-500">Subtotal</span>
-            <span class="text-xs text-zinc-400"
+            <span id="subtotalDisplay" class="text-xs text-zinc-400"
                   th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}+' ₫'"></span>
           </div>
+
+          <!-- Discount row — hidden until a valid coupon is applied -->
+          <div id="discountRow" class="flex justify-between" style="display:none!important">
+            <span class="text-xs tracking-widest uppercase text-[#6dbf6d]">Discount</span>
+            <span id="discountAmount" class="text-xs text-[#6dbf6d]"></span>
+          </div>
+
           <div class="flex justify-between">
             <span class="text-xs tracking-widest uppercase text-zinc-500">Shipping</span>
             <span class="text-xs text-[#6dbf6d]">Free</span>
@@ -91,14 +131,99 @@
         </div>
 
         <div class="h-px bg-zinc-900 mb-6"></div>
+
         <div class="flex justify-between">
           <span class="text-xs tracking-widest uppercase text-[#c0c0bc]">Total</span>
-          <span class="text-base text-[#f5f5f3]"
+          <span id="totalDisplay" class="text-base text-[#f5f5f3]"
                 th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}+' ₫'"></span>
         </div>
       </div>
 
     </div>
   </div>
+
+  <!-- Embed subtotal for JS (BigDecimal serializes as plain number in Thymeleaf inline) -->
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const SUBTOTAL = /*[[${total}]]*/ 0;
+    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
+    const CSRF_TOKEN  = /*[[${_csrf.token}]]*/ '';
+    /*]]>*/
+
+    const couponInput     = document.getElementById('couponInput');
+    const applyCouponBtn  = document.getElementById('applyCouponBtn');
+    const couponMsg       = document.getElementById('couponMsg');
+    const couponCodeHidden = document.getElementById('couponCodeHidden');
+    const discountRow     = document.getElementById('discountRow');
+    const discountAmount  = document.getElementById('discountAmount');
+    const totalDisplay    = document.getElementById('totalDisplay');
+
+    function formatVND(amount) {
+      return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
+    }
+
+    function resetCoupon() {
+      couponCodeHidden.value = '';
+      discountRow.style.setProperty('display', 'none', 'important');
+      discountAmount.textContent = '';
+      totalDisplay.textContent = formatVND(SUBTOTAL);
+    }
+
+    applyCouponBtn.addEventListener('click', async () => {
+      const code = couponInput.value.trim().toUpperCase();
+      if (!code) {
+        couponMsg.textContent = 'Please enter a discount code.';
+        couponMsg.className = 'mt-2 text-xs tracking-wide err';
+        return;
+      }
+
+      applyCouponBtn.disabled = true;
+      applyCouponBtn.textContent = '...';
+
+      try {
+        const res = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: code, orderTotal: SUBTOTAL })
+        });
+
+        const data = await res.json();
+
+        if (data.valid) {
+          couponCodeHidden.value = code;
+          couponMsg.textContent  = 'Code applied — saving ' + formatVND(data.savedAmount);
+          couponMsg.className    = 'mt-2 text-xs tracking-wide ok';
+          // Show discount row
+          discountRow.style.removeProperty('display');
+          discountAmount.textContent = '− ' + formatVND(data.savedAmount);
+          totalDisplay.textContent   = formatVND(data.discountedTotal);
+        } else {
+          resetCoupon();
+          couponMsg.textContent = data.message || 'Invalid or expired code.';
+          couponMsg.className   = 'mt-2 text-xs tracking-wide err';
+        }
+      } catch (_) {
+        resetCoupon();
+        couponMsg.textContent = 'Could not validate code. Please try again.';
+        couponMsg.className   = 'mt-2 text-xs tracking-wide err';
+      } finally {
+        applyCouponBtn.disabled = false;
+        applyCouponBtn.textContent = 'Apply';
+      }
+    });
+
+    // Clear coupon state if the user edits the code field
+    couponInput.addEventListener('input', resetCoupon);
+
+    // Auto-resize textareas
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+    document.querySelectorAll('textarea.n-field').forEach(ta => {
+      autoResize(ta);
+      ta.addEventListener('input', () => autoResize(ta));
+    });
+  </script>
 </div>
 </html>

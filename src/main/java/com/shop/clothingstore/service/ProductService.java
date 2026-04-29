@@ -5,12 +5,16 @@ import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.shop.clothingstore.dto.ProductCreateDTO;
@@ -27,10 +31,7 @@ import com.shop.clothingstore.service.base.GenericServiceBase;
 import com.shop.clothingstore.service.storage.FileStorageService;
 import com.shop.clothingstore.specification.ProductSpecification;
 
-import jakarta.transaction.Transactional;
-
 @Service
-@SuppressWarnings("null")
 public class ProductService extends GenericServiceBase<Product, Long> {
 
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);
@@ -42,90 +43,91 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     public ProductService(ProductRepository productRepository,
             SubCategoryRepository subCategoryRepository,
             FileStorageService fileStorageService) {
-
         super(productRepository);
         this.productRepository = productRepository;
         this.subCategoryRepository = subCategoryRepository;
         this.fileStorageService = fileStorageService;
     }
 
-    /*
-     * =====================================================
-     * CREATE PRODUCT
-     * =====================================================
-     */
+    // =====================================================
+    // CREATE PRODUCT
+    // =====================================================
     @Transactional
     public Product createProduct(ProductCreateDTO dto) throws IOException {
 
         log.info("Creating product: {}", dto.getName());
 
-        if (dto.getSubCategoryId() == null) {
-            throw new RuntimeException("SubCategoryId không được null");
+        Long subCatId = dto.getSubCategoryId();
+        if (subCatId == null) {
+            throw new IllegalArgumentException("SubCategoryId is required");
         }
 
         SubCategory subCategory = subCategoryRepository
-                .findById(dto.getSubCategoryId())
-                .orElseThrow(() -> new RuntimeException("SubCategory không tồn tại"));
+                .findById(subCatId)
+                .orElseThrow(() -> new IllegalArgumentException("SubCategory not found"));
 
         Product product = new Product();
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setSubCategory(subCategory);
-        product.setActive(dto.getActive() != null ? dto.getActive() : true);
+        // null → true (default active), false → false, true → true — no unboxing
+        product.setActive(!Boolean.FALSE.equals(dto.getActive()));
         product.setSlug(generateUniqueSlug(dto.getName()));
 
         if (dto.getVariants() != null) {
-
             for (VariantDTO v : dto.getVariants()) {
-
                 if (v.getSize() == null || v.getSize().isBlank()) {
                     continue;
                 }
-
                 ProductVariant variant = new ProductVariant();
                 variant.setSize(v.getSize());
                 variant.setColor(v.getColor());
                 variant.setPrice(v.getPrice());
                 variant.setStock(v.getStock());
                 variant.setSold(0);
-
                 product.addVariant(variant);
             }
         }
+
+        product.refreshMinPrice();
 
         if (dto.getImages() != null && !dto.getImages().isEmpty()) {
             saveImages(product, dto.getImages(), dto.getPrimaryImageIndex());
         }
 
-        Product saved = save(product);
-
-        log.info("Product created | id={} | name={} | slug={}",
-                saved.getId(), saved.getName(), saved.getSlug());
-
-        return saved;
+        try {
+            Product saved = save(product);
+            log.info("Product created | id={} | name={} | slug={}",
+                    saved.getId(), saved.getName(), saved.getSlug());
+            return saved;
+        } catch (DataIntegrityViolationException ex) {
+            // Slug collision from concurrent creation — append timestamp and retry once
+            product.setSlug(product.getSlug() + "-" + System.currentTimeMillis());
+            Product saved = save(product);
+            log.warn("Slug collision resolved | final slug={}", saved.getSlug());
+            return saved;
+        }
     }
 
-    /*
-     * =====================================================
-     * UPDATE PRODUCT
-     * =====================================================
-     */
+    // =====================================================
+    // UPDATE PRODUCT
+    // =====================================================
     @Transactional
     public Product updateProduct(Long id, ProductUpdateDTO dto) throws IOException {
 
         Product product = productRepository.findProductForEdit(id)
-                .orElseThrow(() -> new RuntimeException("Product không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
-        if (dto.getSubCategoryId() == null) {
-            throw new RuntimeException("SubCategoryId không được null");
+        Long subCatId = dto.getSubCategoryId();
+        if (subCatId == null) {
+            throw new IllegalArgumentException("SubCategoryId is required");
         }
 
         SubCategory subCategory = subCategoryRepository
-                .findById(dto.getSubCategoryId())
-                .orElseThrow(() -> new RuntimeException("SubCategory không tồn tại"));
+                .findById(subCatId)
+                .orElseThrow(() -> new IllegalArgumentException("SubCategory not found"));
 
         String newSlug = toSlug(dto.getName());
-
         if (!product.getSlug().equals(newSlug)) {
             product.setSlug(generateUniqueSlug(dto.getName()));
         }
@@ -136,46 +138,49 @@ public class ProductService extends GenericServiceBase<Product, Long> {
         product.setActive(dto.getActive());
 
         updateVariants(product, dto.getVariants());
+        product.refreshMinPrice();
 
+        // BUG-01 FIX: use removeImagesByIds() which operates on the backing Set,
+        // not getImages() which returns an unmodifiable copy.
         if (dto.getImagesToDelete() != null && !dto.getImagesToDelete().isEmpty()) {
-
-            product.getImages().removeIf(img
-                    -> dto.getImagesToDelete().contains(img.getId()));
+            product.removeImagesByIds(dto.getImagesToDelete());
         }
 
         if (dto.getNewImages() != null && !dto.getNewImages().isEmpty()) {
-
+            // Reset primary flag on all existing images
             product.getImages().forEach(img -> img.setPrimaryImage(false));
-
             saveImages(product, dto.getNewImages(), dto.getPrimaryImageIndex());
         }
+
         return save(product);
     }
 
-    /*
-     * =====================================================
-     * UPDATE VARIANTS
-     * =====================================================
-     */
+    // =====================================================
+    // UPDATE VARIANTS — BUG-02 FIX
+    // For existing variants: update in-place (do NOT call addVariant again).
+    // For new variants: create and add via addVariant.
+    // =====================================================
     private void updateVariants(Product product, List<VariantDTO> variantDTOs) {
-
-        Map<Long, ProductVariant> existing = new HashMap<>();
-
-        for (ProductVariant v : product.getProductVariants()) {
-            existing.put(v.getId(), v);
-        }
 
         if (variantDTOs == null) {
             return;
         }
 
-        // IDs từ DTO
-        java.util.Set<Long> dtoIds = variantDTOs.stream()
-                .map(VariantDTO::getId)
-                .filter(java.util.Objects::nonNull)
-                .collect(java.util.stream.Collectors.toSet());
+        // Build lookup map of currently persisted variants
+        Map<Long, ProductVariant> existing = new HashMap<>();
+        for (ProductVariant v : product.getProductVariants()) {
+            if (v.getId() != null) {
+                existing.put(v.getId(), v);
+            }
+        }
 
-        // Xóa variant không còn trong DTO
+        // IDs present in the DTO submission
+        Set<Long> dtoIds = variantDTOs.stream()
+                .map(VariantDTO::getId)
+                .filter(idVal -> idVal != null)
+                .collect(Collectors.toSet());
+
+        // Remove variants no longer in the DTO
         product.getProductVariants().removeIf(v -> !dtoIds.contains(v.getId()));
 
         for (VariantDTO dto : variantDTOs) {
@@ -184,56 +189,44 @@ public class ProductService extends GenericServiceBase<Product, Long> {
                 continue;
             }
 
-            ProductVariant variant;
-
             if (dto.getId() != null && existing.containsKey(dto.getId())) {
-
-                // update variant cũ
-                variant = existing.get(dto.getId());
-
+                // UPDATE EXISTING — modify in-place, never call addVariant again
+                ProductVariant variant = existing.get(dto.getId());
+                variant.setSize(dto.getSize());
+                variant.setColor(dto.getColor());
+                variant.setPrice(dto.getPrice());
+                variant.setStock(dto.getStock());
+                // sold is intentionally not reset
             } else {
-
-                // tạo variant mới
-                variant = new ProductVariant();
+                // NEW VARIANT — create and add
+                ProductVariant variant = new ProductVariant();
                 variant.setSold(0);
+                variant.setSize(dto.getSize());
+                variant.setColor(dto.getColor());
+                variant.setPrice(dto.getPrice());
+                variant.setStock(dto.getStock());
+                product.addVariant(variant);
             }
-
-            variant.setSize(dto.getSize());
-            variant.setColor(dto.getColor());
-            variant.setPrice(dto.getPrice());
-            variant.setStock(dto.getStock());
-
-            product.addVariant(variant);
         }
     }
 
-    /*
-     * =====================================================
-     * DELETE PRODUCT
-     * =====================================================
-     */
+    // =====================================================
+    // DELETE PRODUCT
+    // =====================================================
     @Transactional
     public void deleteProduct(Long id) {
         log.info("Deleting product | id={}", id);
         delete(id);
     }
 
-    /*
-     * =====================================================
-     * GET PRODUCT FOR EDIT
-     * =====================================================
-     */
     public Product getProductForEdit(Long id) {
-
         return productRepository.findProductForEdit(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
     }
 
-    /*
-     * =====================================================
-     * SAVE IMAGES (delegate to FileStorageService)
-     * =====================================================
-     */
+    // =====================================================
+    // SAVE IMAGES
+    // =====================================================
     private void saveImages(Product product,
             List<MultipartFile> files,
             Integer primaryIndex) throws IOException {
@@ -243,78 +236,55 @@ public class ProductService extends GenericServiceBase<Product, Long> {
         }
 
         for (int i = 0; i < files.size(); i++) {
-
             MultipartFile file = files.get(i);
-
             if (file.isEmpty()) {
                 continue;
             }
-
-            // Delegate upload cho FileStorageService
             String imageUrl = fileStorageService.upload(file, "products");
-
             ProductImage image = new ProductImage();
             image.setImageUrl(imageUrl);
             image.setPrimaryImage(primaryIndex != null && i == primaryIndex);
-
             product.addImage(image);
         }
     }
 
-    /*
-     * =====================================================
-     * SLUG GENERATOR
-     * =====================================================
-     */
+    // =====================================================
+    // SLUG GENERATION — race condition handled by catching
+    // DataIntegrityViolationException at save time.
+    // =====================================================
     private String generateUniqueSlug(String name) {
-
         String baseSlug = toSlug(name);
         String slug = baseSlug;
         int i = 1;
-
         while (productRepository.findBySlug(slug).isPresent()) {
-
             slug = baseSlug + "-" + i++;
         }
-
         return slug;
     }
 
     private String toSlug(String input) {
-
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
-
         String slug = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-
         slug = slug.toLowerCase();
         slug = slug.replaceAll("[^a-z0-9\\s-]", "");
         slug = slug.replaceAll("\\s+", "-");
-
         return slug;
     }
 
-    /*
-     * =====================================================
-     * FIND BY SLUG
-     * =====================================================
-     */
+    // =====================================================
+    // QUERY METHODS
+    // =====================================================
     public Product findBySlug(String slug) {
         return productRepository.findBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + slug));
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + slug));
     }
 
-    /*
-     * =====================================================
-     * QUERY METHODS
-     * =====================================================
-     */
     public Page<Product> findTopByCategorySlug(String slug, Pageable pageable) {
-
         return productRepository.findTopByCategorySlug(slug, pageable);
     }
 
     public Page<Product> findWithFilter(ProductFilterDTO filter, Pageable pageable) {
-
+        java.util.Objects.requireNonNull(pageable, "Pageable must not be null");
         return productRepository.findAll(
                 ProductSpecification.filter(filter),
                 pageable

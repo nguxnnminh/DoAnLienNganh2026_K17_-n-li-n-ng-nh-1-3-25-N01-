@@ -50,14 +50,15 @@ public class AuthApiController {
     // =====================================================
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
 
-        if (userService.existsByEmail(request.getEmail())) {
-            throw new IllegalStateException("Email đã được sử dụng: " + request.getEmail());
+        if (userService.existsByEmail(normalizedEmail)) {
+            throw new IllegalStateException("Email đã được sử dụng: " + normalizedEmail);
         }
 
         // Tạo user object, set tất cả field rồi save 1 lần duy nhất
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
 
@@ -81,11 +82,12 @@ public class AuthApiController {
     // =====================================================
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
+                            normalizedEmail,
                             request.getPassword()
                     )
             );
@@ -93,7 +95,7 @@ public class AuthApiController {
             throw new BadCredentialsException("Email hoặc mật khẩu không đúng");
         }
 
-        User user = userService.findByEmail(request.getEmail())
+        User user = userService.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());

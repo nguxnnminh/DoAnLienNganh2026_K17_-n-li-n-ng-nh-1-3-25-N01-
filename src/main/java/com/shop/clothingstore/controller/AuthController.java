@@ -3,6 +3,7 @@ package com.shop.clothingstore.controller;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,6 +28,9 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetService passwordResetService;
     private final EmailService emailService;
+
+    @Value("${app.public-base-url:http://localhost:8080}")
+    private String publicBaseUrl;
 
     public AuthController(
             UserService userService,
@@ -125,13 +129,8 @@ public class AuthController {
             PasswordResetToken token
                     = passwordResetService.createTokenForUser(user);
 
-            // Build base URL dynamically — không hardcode localhost
-            String baseUrl = request.getScheme() + "://"
-                    + request.getServerName()
-                    + (request.getServerPort() != 80 && request.getServerPort() != 443
-                    ? ":" + request.getServerPort() : "");
-
-            String resetLink = baseUrl + "/reset-password?token=" + token.getToken();
+            // Use trusted config base URL (prevents host header attacks)
+            String resetLink = publicBaseUrl + "/reset-password?token=" + token.getToken();
 
             emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
         }

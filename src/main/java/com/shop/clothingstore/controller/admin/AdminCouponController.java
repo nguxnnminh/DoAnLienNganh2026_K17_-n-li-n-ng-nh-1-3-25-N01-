@@ -1,0 +1,207 @@
+package com.shop.clothingstore.controller.admin;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.shop.clothingstore.dto.CouponFormDTO;
+import com.shop.clothingstore.entity.Coupon;
+import com.shop.clothingstore.service.CouponService;
+
+@Controller
+@RequestMapping("/admin/coupons")
+public class AdminCouponController extends AdminBaseController {
+
+    private final CouponService couponService;
+
+    public AdminCouponController(CouponService couponService) {
+        this.couponService = couponService;
+    }
+
+    // ── LIST ────────────────────────────────────────────
+    @GetMapping
+    public String list(@RequestParam(required = false) String search,
+                       @RequestParam(required = false) String status,
+                       Model model) {
+        model.addAttribute("title", "Mã giảm giá");
+        model.addAttribute("currentPage", "coupons");
+
+        List<Coupon> coupons = couponService.findAll();
+
+        // Filter by search keyword
+        if (search != null && !search.isBlank()) {
+            String kw = search.trim().toUpperCase();
+            coupons = coupons.stream()
+                    .filter(c -> c.getCode().contains(kw))
+                    .toList();
+        }
+        // Filter by status
+        if ("active".equals(status)) {
+            coupons = coupons.stream().filter(Coupon::isActive).toList();
+        } else if ("inactive".equals(status)) {
+            coupons = coupons.stream().filter(c -> !c.isActive()).toList();
+        }
+
+        model.addAttribute("coupons", coupons);
+        model.addAttribute("search", search);
+        model.addAttribute("status", status);
+        model.addAttribute("discountTypes", Coupon.DiscountType.values());
+        return "admin/coupons/index";
+    }
+
+    // ── CREATE FORM ──────────────────────────────────────
+    @GetMapping("/create")
+    public String createForm(Model model) {
+        model.addAttribute("title", "Tạo mã giảm giá");
+        model.addAttribute("currentPage", "coupons");
+        if (!model.containsAttribute("couponDTO")) {
+            model.addAttribute("couponDTO", new CouponFormDTO());
+        }
+        model.addAttribute("discountTypes", Coupon.DiscountType.values());
+        return "admin/coupons/create";
+    }
+
+    // ── CREATE POST ──────────────────────────────────────
+    @PostMapping("/create")
+    public String create(CouponFormDTO dto, RedirectAttributes ra) {
+        String code = dto.getCode() == null ? "" : dto.getCode().trim().toUpperCase();
+        if (code.isBlank()) {
+            ra.addFlashAttribute("error", "Mã coupon không được để trống.");
+            ra.addFlashAttribute("couponDTO", dto);
+            return "redirect:/admin/coupons/create";
+        }
+        if (couponService.existsByCode(code)) {
+            ra.addFlashAttribute("error", "Mã '" + code + "' đã tồn tại.");
+            ra.addFlashAttribute("couponDTO", dto);
+            return "redirect:/admin/coupons/create";
+        }
+        try {
+            Coupon coupon = mapFromDTO(new Coupon(), dto);
+            coupon.setCode(code);
+            couponService.save(coupon);
+            ra.addFlashAttribute("success", "Tạo mã giảm giá '" + code + "' thành công!");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("couponDTO", dto);
+            return "redirect:/admin/coupons/create";
+        }
+        return "redirect:/admin/coupons";
+    }
+
+    // ── EDIT FORM ─────────────────────────────────────────
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        return couponService.findById(id).map(coupon -> {
+            model.addAttribute("title", "Sửa mã giảm giá");
+            model.addAttribute("currentPage", "coupons");
+            model.addAttribute("coupon", coupon);
+            if (!model.containsAttribute("couponDTO")) {
+                model.addAttribute("couponDTO", mapToDTO(coupon));
+            }
+            model.addAttribute("discountTypes", Coupon.DiscountType.values());
+            return "admin/coupons/edit";
+        }).orElseGet(() -> {
+            ra.addFlashAttribute("error", "Không tìm thấy mã giảm giá.");
+            return "redirect:/admin/coupons";
+        });
+    }
+
+    // ── UPDATE POST ──────────────────────────────────────
+    @PostMapping("/{id}")
+    public String update(@PathVariable Long id, CouponFormDTO dto, RedirectAttributes ra) {
+        Coupon existing = couponService.findById(id).orElse(null);
+        if (existing == null) {
+            ra.addFlashAttribute("error", "Không tìm thấy mã giảm giá.");
+            return "redirect:/admin/coupons";
+        }
+        String code = dto.getCode() == null ? "" : dto.getCode().trim().toUpperCase();
+        if (code.isBlank()) {
+            ra.addFlashAttribute("error", "Mã coupon không được để trống.");
+            return "redirect:/admin/coupons/" + id + "/edit";
+        }
+        // Check code uniqueness only if changed
+        if (!code.equals(existing.getCode()) && couponService.existsByCode(code)) {
+            ra.addFlashAttribute("error", "Mã '" + code + "' đã tồn tại.");
+            return "redirect:/admin/coupons/" + id + "/edit";
+        }
+        try {
+            existing.setCode(code);
+            mapFromDTO(existing, dto);
+            couponService.save(existing);
+            ra.addFlashAttribute("success", "Cập nhật mã giảm giá thành công!");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "redirect:/admin/coupons";
+    }
+
+    // ── TOGGLE ACTIVE ────────────────────────────────────
+    @PostMapping("/{id}/toggle")
+    public String toggle(@PathVariable Long id, RedirectAttributes ra) {
+        couponService.findById(id).ifPresentOrElse(coupon -> {
+            coupon.setActive(!coupon.isActive());
+            couponService.save(coupon);
+            ra.addFlashAttribute("success",
+                    coupon.isActive() ? "Đã kích hoạt mã coupon." : "Đã vô hiệu hóa mã coupon.");
+        }, () -> ra.addFlashAttribute("error", "Không tìm thấy mã giảm giá."));
+        return "redirect:/admin/coupons";
+    }
+
+    // ── DELETE POST ──────────────────────────────────────
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            couponService.delete(id);
+            ra.addFlashAttribute("success", "Đã xóa mã giảm giá.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Không thể xóa mã giảm giá.");
+        }
+        return "redirect:/admin/coupons";
+    }
+
+    // ── MAPPING HELPERS ──────────────────────────────────
+    private Coupon mapFromDTO(Coupon coupon, CouponFormDTO dto) {
+        coupon.setDiscountType(dto.getDiscountType());
+        coupon.setDiscountValue(dto.getDiscountValue() != null
+                ? dto.getDiscountValue() : BigDecimal.ZERO);
+        coupon.setMinOrderAmount(dto.getMinOrderAmount());
+        coupon.setUsageLimit(dto.getUsageLimit());
+        coupon.setActive(dto.isActive());
+
+        if (dto.getExpiryDate() != null && !dto.getExpiryDate().isBlank()) {
+            try {
+                coupon.setExpiryDate(LocalDateTime.parse(dto.getExpiryDate()));
+            } catch (Exception ignored) {
+                coupon.setExpiryDate(null);
+            }
+        } else {
+            coupon.setExpiryDate(null);
+        }
+        return coupon;
+    }
+
+    private CouponFormDTO mapToDTO(Coupon coupon) {
+        CouponFormDTO dto = new CouponFormDTO();
+        dto.setCode(coupon.getCode());
+        dto.setDiscountType(coupon.getDiscountType());
+        dto.setDiscountValue(coupon.getDiscountValue());
+        dto.setMinOrderAmount(coupon.getMinOrderAmount());
+        dto.setUsageLimit(coupon.getUsageLimit());
+        dto.setActive(coupon.isActive());
+        if (coupon.getExpiryDate() != null) {
+            // Format for datetime-local input: "yyyy-MM-ddTHH:mm"
+            dto.setExpiryDate(coupon.getExpiryDate()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));
+        }
+        return dto;
+    }
+}

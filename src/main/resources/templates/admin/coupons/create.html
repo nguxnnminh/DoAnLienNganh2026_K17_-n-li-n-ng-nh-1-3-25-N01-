@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
+<div th:fragment="content">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+        <div>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Tạo mã giảm giá</h1>
+            <p style="font-size:13px; color:#9ca3af; margin:0;">Coupon sẽ áp dụng tại trang thanh toán</p>
+        </div>
+        <a th:href="@{/admin/coupons}" class="btn btn-secondary">← Quay lại</a>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; max-width:960px;">
+
+        <!-- MAIN FORM -->
+        <div class="card" style="padding:28px;">
+            <form th:action="@{/admin/coupons/create}" method="post" th:object="${couponDTO}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div style="display:flex; flex-direction:column; gap:20px;">
+
+                    <div>
+                        <label class="form-label">Mã coupon <span style="color:#ef4444;">*</span></label>
+                        <input type="text" name="code" class="form-control"
+                               th:value="*{code}"
+                               placeholder="VD: SUMMER10, FLASH50K..."
+                               style="font-family:monospace; text-transform:uppercase; letter-spacing:0.08em;"
+                               oninput="this.value=this.value.toUpperCase()" required maxlength="50">
+                        <p class="form-hint">Mã sẽ tự động chuyển thành chữ hoa. Không dùng dấu cách.</p>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div>
+                            <label class="form-label">Loại giảm giá <span style="color:#ef4444;">*</span></label>
+                            <select name="discountType" class="form-control" onchange="updateHint(this.value)" required>
+                                <option value="">-- Chọn loại --</option>
+                                <option th:each="dt : ${discountTypes}"
+                                        th:value="${dt}" th:text="${dt}"
+                                        th:selected="${couponDTO.discountType == dt}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Giá trị giảm <span style="color:#ef4444;">*</span></label>
+                            <input type="number" name="discountValue" class="form-control"
+                                   th:value="*{discountValue}"
+                                   placeholder="10" min="0.01" step="0.01" required>
+                            <p class="form-hint" id="valueHint">Nhập % hoặc số tiền</p>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div>
+                            <label class="form-label">Đơn hàng tối thiểu (₫)</label>
+                            <input type="number" name="minOrderAmount" class="form-control"
+                                   th:value="*{minOrderAmount}"
+                                   placeholder="0" min="0" step="1000">
+                            <p class="form-hint">Để trống = áp dụng mọi đơn hàng</p>
+                        </div>
+                        <div>
+                            <label class="form-label">Giới hạn lượt dùng</label>
+                            <input type="number" name="usageLimit" class="form-control"
+                                   th:value="*{usageLimit}"
+                                   placeholder="100" min="1">
+                            <p class="form-hint">Để trống = không giới hạn</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Ngày hết hạn</label>
+                        <input type="datetime-local" name="expiryDate" class="form-control"
+                               th:value="*{expiryDate}">
+                        <p class="form-hint">Để trống = không có ngày hết hạn</p>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:#f9fafb; padding:14px 16px; border-radius:8px; border:1px solid #e5e7eb;">
+                        <div>
+                            <div style="font-size:14px; font-weight:500;">Kích hoạt ngay</div>
+                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Coupon có hiệu lực khi tạo</div>
+                        </div>
+                        <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
+                            <input type="checkbox" name="active" value="true" checked id="activeCheck"
+                                   style="opacity:0; width:0; height:0;">
+                            <span id="toggleTrack"
+                                  style="position:absolute;top:0;left:0;right:0;bottom:0;background:#2563eb;border-radius:24px;transition:0.25s;">
+                                <span id="toggleThumb"
+                                      style="position:absolute;height:18px;width:18px;left:23px;bottom:3px;background:white;border-radius:50%;transition:0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px;">
+                        <a th:href="@{/admin/coupons}" class="btn btn-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Tạo mã giảm giá
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- HELP PANEL -->
+        <div class="card" style="padding:20px;">
+            <div class="section-title">Hướng dẫn</div>
+            <div style="font-size:13px; color:#6b7280; line-height:1.7;">
+                <p style="margin:0 0 10px;"><strong style="color:#374151;">PERCENTAGE</strong><br>
+                Giảm theo %. Ví dụ: value=10 → giảm 10% tổng đơn.</p>
+                <p style="margin:0 0 10px;"><strong style="color:#374151;">FIXED</strong><br>
+                Giảm số tiền cố định. Ví dụ: value=50000 → giảm 50,000₫.</p>
+                <p style="margin:0 0 10px;"><strong style="color:#374151;">Đơn tối thiểu</strong><br>
+                Coupon chỉ áp dụng khi đơn hàng đạt giá trị này.</p>
+                <p style="margin:0;"><strong style="color:#374151;">Giới hạn</strong><br>
+                Sau khi đạt giới hạn lượt dùng, coupon tự động vô hiệu.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateHint(type) {
+            const hint = document.getElementById('valueHint');
+            if (type === 'PERCENTAGE') hint.textContent = 'Nhập % (VD: 10 = giảm 10%)';
+            else if (type === 'FIXED') hint.textContent = 'Nhập số tiền VND (VD: 50000)';
+            else hint.textContent = 'Nhập % hoặc số tiền';
+        }
+        document.getElementById('activeCheck').addEventListener('change', function() {
+            const track = document.getElementById('toggleTrack');
+            const thumb = document.getElementById('toggleThumb');
+            track.style.background = this.checked ? '#2563eb' : '#d1d5db';
+            thumb.style.left = this.checked ? '23px' : '3px';
+        });
+    </script>
+
+</div>
+</html>

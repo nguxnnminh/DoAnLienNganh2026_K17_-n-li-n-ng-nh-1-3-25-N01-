@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
+<div th:fragment="content">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+        <div>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Thêm danh mục chính</h1>
+            <p style="font-size:13px; color:#9ca3af; margin:0;">Tạo danh mục mới cho sản phẩm</p>
+        </div>
+        <a th:href="@{/admin/categories}" class="btn btn-secondary">← Quay lại</a>
+    </div>
+
+    <div style="max-width:560px;">
+        <div class="card" style="padding:28px;">
+            <form th:action="@{/admin/categories/create}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div style="display:flex; flex-direction:column; gap:18px;">
+
+                    <div>
+                        <label class="form-label">Tên danh mục <span style="color:#ef4444;">*</span></label>
+                        <input type="text" name="name" id="nameInput" class="form-control"
+                               placeholder="VD: Top, Bottom, Accessories..."
+                               maxlength="100" oninput="autoSlug(this.value)" required>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Slug</label>
+                        <input type="text" name="slug" id="slugInput" class="form-control"
+                               placeholder="tu-dong-tao-tu-ten"
+                               style="font-family:monospace; font-size:13px;">
+                        <p class="form-hint">Để trống để tự động tạo từ tên. Chỉ dùng chữ thường, số và dấu gạch ngang.</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px;">
+                        <a th:href="@{/admin/categories}" class="btn btn-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Tạo danh mục
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function autoSlug(name) {
+            const slugField = document.getElementById('slugInput');
+            if (slugField.dataset.manual) return;
+            let slug = name.toLowerCase()
+                .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                .replace(/[đĐ]/g, 'd')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+            slugField.value = slug;
+        }
+        document.getElementById('slugInput').addEventListener('input', function() {
+            this.dataset.manual = 'true';
+        });
+    </script>
+
+</div>
+</html>

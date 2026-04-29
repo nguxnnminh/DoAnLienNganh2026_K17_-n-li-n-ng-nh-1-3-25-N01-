@@ -1,6 +1,7 @@
 package com.shop.clothingstore.controller;
 
 import java.security.Principal;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,7 +14,6 @@ import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.service.CartService;
 import com.shop.clothingstore.service.CheckoutService;
-import com.shop.clothingstore.service.CouponService;
 import com.shop.clothingstore.service.OrderService;
 import com.shop.clothingstore.service.UserService;
 
@@ -22,101 +22,109 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class CheckoutController {
 
+    // Vietnam phone: 10 digits starting with 0, or +84 prefix
+    private static final Pattern PHONE_PATTERN =
+            Pattern.compile("^(\\+84|0)(3|5|7|8|9)\\d{8}$");
+
     private final CheckoutService checkoutService;
     private final CartService cartService;
     private final UserService userService;
     private final OrderService orderService;
-    private final CouponService couponService;
 
     public CheckoutController(
             CheckoutService checkoutService,
             CartService cartService,
             UserService userService,
-            OrderService orderService,
-            CouponService couponService
-    ) {
+            OrderService orderService) {
         this.checkoutService = checkoutService;
         this.cartService = cartService;
         this.userService = userService;
         this.orderService = orderService;
-        this.couponService = couponService;
     }
 
-    // ===============================
-    // GET CHECKOUT PAGE
-    // ===============================
     @GetMapping("/checkout")
     public String checkoutPage(Model model, Principal principal) {
         loadCartData(model);
-
         User user = getCurrentUser(principal);
         if (user != null) {
             model.addAttribute("user", user);
         }
-
         return "shop/checkout";
     }
 
-    // ===============================
-    // POST CHECKOUT (PRG: Post → Redirect → Get)
-    // FIX: thêm couponCode param, truyền vào CheckoutService
-    // ===============================
     @PostMapping("/checkout")
     public String processCheckout(
             @RequestParam String customerName,
             @RequestParam String phone,
             @RequestParam String address,
             @RequestParam(required = false) String couponCode,
+            @RequestParam(required = false) String note,
             HttpSession session,
             Principal principal,
-            RedirectAttributes redirectAttributes
-    ) {
+            RedirectAttributes redirectAttributes) {
+
+        // Server-side validation — HTML 'required' alone is not sufficient
+        if (customerName == null || customerName.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Ho ten khong duoc de trong.");
+            return "redirect:/checkout";
+        }
+        if (customerName.length() > 100) {
+            redirectAttributes.addFlashAttribute("error", "Ho ten khong duoc vuot qua 100 ky tu.");
+            return "redirect:/checkout";
+        }
+        if (phone == null || phone.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "So dien thoai khong duoc de trong.");
+            return "redirect:/checkout";
+        }
+        if (!PHONE_PATTERN.matcher(phone.trim()).matches()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "So dien thoai khong hop le. Vui long nhap so dien thoai Viet Nam (VD: 0901234567).");
+            return "redirect:/checkout";
+        }
+        if (address == null || address.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Dia chi giao hang khong duoc de trong.");
+            return "redirect:/checkout";
+        }
+        if (address.length() > 500) {
+            redirectAttributes.addFlashAttribute("error", "Dia chi khong duoc vuot qua 500 ky tu.");
+            return "redirect:/checkout";
+        }
+
         User user = getCurrentUser(principal);
 
         try {
-            var order = checkoutService.checkout(
-                    customerName,
-                    phone,
-                    address,
+            Order order = checkoutService.checkout(
+                    customerName.trim(),
+                    phone.trim(),
+                    address.trim(),
                     cartService.getCart(),
                     user,
-                    couponCode
+                    couponCode,
+                    note
             );
-
             cartService.clear();
-
             redirectAttributes.addFlashAttribute("orderId", order.getId());
             return "redirect:/checkout/success";
-
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/checkout";
         }
     }
 
-    // ===============================
-    // GET CHECKOUT SUCCESS (PRG)
-    // ===============================
     @GetMapping("/checkout/success")
     public String checkoutSuccess(Model model) {
         Long orderId = (Long) model.asMap().get("orderId");
-
         if (orderId == null) {
             return "redirect:/";
         }
-
         Order order = orderService.findById(orderId).orElse(null);
         if (order == null) {
             return "redirect:/";
         }
-
         model.addAttribute("order", order);
         return "shop/checkout-success";
     }
 
-    // ===============================
-    // PRIVATE HELPERS
-    // ===============================
     private void loadCartData(Model model) {
         model.addAttribute("cartItems", cartService.getCart());
         model.addAttribute("total", cartService.getTotal());

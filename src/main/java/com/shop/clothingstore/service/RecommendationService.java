@@ -1,5 +1,6 @@
 package com.shop.clothingstore.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ public class RecommendationService {
     }
 
     // =====================================================
-    // 1. CONTENT-BASED: sản phẩm tương tự (cùng category, price range)
+    // 1. CONTENT-BASED: similar products (same category, ±30% price range)
     // =====================================================
     public List<Product> getSimilarProducts(Long productId, int limit) {
 
@@ -50,17 +51,17 @@ public class RecommendationService {
 
         Long subCategoryId = product.getSubCategory().getId();
         Long categoryId = product.getSubCategory().getCategory().getId();
-        Double minPrice = product.getMinPrice();
 
-        // Khoảng giá ±30%
-        double priceLow = minPrice * 0.7;
-        double priceHigh = minPrice * 1.3;
+        // getMinPrice() returns BigDecimal — no Double anywhere in this method
+        BigDecimal minPrice = product.getMinPrice();
 
-        // Tìm sản phẩm cùng subcategory trước
+        // Price range ±30% using BigDecimal arithmetic — no * operator
+        BigDecimal priceLow  = minPrice.multiply(new BigDecimal("0.7"));
+        BigDecimal priceHigh = minPrice.multiply(new BigDecimal("1.3"));
+
         List<Product> sameSub = productRepository.findSimilarBySubCategory(
                 subCategoryId, productId, PageRequest.of(0, limit * 2));
 
-        // Nếu chưa đủ, mở rộng ra cùng category
         if (sameSub.size() < limit) {
             List<Product> sameCat = productRepository.findSimilarByCategory(
                     categoryId, productId, PageRequest.of(0, limit * 2));
@@ -75,11 +76,15 @@ public class RecommendationService {
             }
         }
 
-        // Filter theo khoảng giá ±30%
+        // Filter by price range using BigDecimal.compareTo() — no >= or <= on BigDecimal
         List<Product> filtered = sameSub.stream()
                 .filter(p -> {
-                    double pMin = p.getMinPrice() != null ? p.getMinPrice() : 0.0;
-                    return pMin >= priceLow && pMin <= priceHigh;
+                    BigDecimal pMin = p.getMinPrice();
+                    if (pMin == null) {
+                        pMin = BigDecimal.ZERO;
+                    }
+                    return pMin.compareTo(priceLow)  >= 0
+                        && pMin.compareTo(priceHigh) <= 0;
                 })
                 .limit(limit)
                 .toList();
@@ -90,7 +95,7 @@ public class RecommendationService {
     }
 
     // =====================================================
-    // 2. COLLABORATIVE: user đã mua → user khác cũng mua → gợi ý
+    // 2. COLLABORATIVE: users who bought this also bought
     // =====================================================
     public List<Product> getCollaborativeRecommendations(User user, int limit) {
 
@@ -98,7 +103,6 @@ public class RecommendationService {
             return List.of();
         }
 
-        // Bước 1: Lấy product IDs user đã mua (từ order items → variantId → product)
         List<Order> userOrders = orderRepository.findByActor(user);
         Set<Long> userVariantIds = new HashSet<>();
 
@@ -116,10 +120,9 @@ public class RecommendationService {
             return List.of();
         }
 
-        // Bước 2: Tìm user khác đã mua cùng variant (chỉ trong 90 ngày gần nhất)
         LocalDateTime since = LocalDateTime.now().minusDays(90);
         List<Order> allOrders = orderRepository.findByStatusSince(OrderStatus.COMPLETED, since);
-        Map<Long, Set<Long>> otherUserVariants = new HashMap<>(); // userId → variantIds
+        Map<Long, Set<Long>> otherUserVariants = new HashMap<>();
 
         for (Order order : allOrders) {
             if (order.getActor() == null || order.getActor().getId().equals(user.getId())) {
@@ -140,19 +143,16 @@ public class RecommendationService {
             }
         }
 
-        // Bước 3: Tìm user tương tự (có ít nhất 1 variant chung)
         Set<Long> recommendedVariantIds = new LinkedHashSet<>();
 
         for (Map.Entry<Long, Set<Long>> entry : otherUserVariants.entrySet()) {
             Set<Long> otherVariants = entry.getValue();
 
-            // Đếm overlap
             long overlap = otherVariants.stream()
                     .filter(userVariantIds::contains)
                     .count();
 
             if (overlap > 0) {
-                // Thêm variants mà user CHƯA mua
                 for (Long variantId : otherVariants) {
                     if (variantId != null && !userVariantIds.contains(variantId)) {
                         recommendedVariantIds.add(variantId);
@@ -165,7 +165,6 @@ public class RecommendationService {
             return List.of();
         }
 
-        // Bước 4: Load products từ variantIds
         List<Product> result = new ArrayList<>();
         Set<Long> addedProductIds = new HashSet<>();
 
@@ -174,10 +173,10 @@ public class RecommendationService {
                 break;
             }
 
-            productRepository.findByVariantId(variantId).ifPresent(product -> {
-                if (!addedProductIds.contains(product.getId()) && product.isActive()) {
-                    result.add(product);
-                    addedProductIds.add(product.getId());
+            productRepository.findByVariantId(variantId).ifPresent(p -> {
+                if (!addedProductIds.contains(p.getId()) && p.isActive()) {
+                    result.add(p);
+                    addedProductIds.add(p.getId());
                 }
             });
         }
@@ -188,28 +187,23 @@ public class RecommendationService {
     }
 
     // =====================================================
-    // 3. HYBRID: combine content-based + collaborative + best sellers
+    // 3. HYBRID: collaborative + best sellers fallback
     // =====================================================
     public List<Product> getRecommendations(User user, int limit) {
 
         Set<Long> addedIds = new LinkedHashSet<>();
         List<Product> result = new ArrayList<>();
 
-        // Ưu tiên 1: Collaborative (nếu có user)
         if (user != null) {
-            List<Product> collaborative = getCollaborativeRecommendations(user, limit);
-            for (Product p : collaborative) {
+            for (Product p : getCollaborativeRecommendations(user, limit)) {
                 if (addedIds.add(p.getId())) {
                     result.add(p);
                 }
             }
         }
 
-        // Ưu tiên 2: Best sellers (fallback)
         if (result.size() < limit) {
-            List<Product> bestSellers = productRepository.findBestSellers(
-                    PageRequest.of(0, limit));
-            for (Product p : bestSellers) {
+            for (Product p : productRepository.findBestSellers(PageRequest.of(0, limit))) {
                 if (addedIds.add(p.getId())) {
                     result.add(p);
                 }

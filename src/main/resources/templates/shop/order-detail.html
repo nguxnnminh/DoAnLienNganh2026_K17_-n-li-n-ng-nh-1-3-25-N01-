@@ -10,16 +10,16 @@
     .status-COMPLETED      { border-color:#1a4a2a; color:#6dbf6d; }
     .status-CANCELLED      { border-color:#4a1a1a; color:#bf6d6d; }
 
-    .star { font-size:1.2rem; cursor:pointer; color:#2a2a2a; transition:color .2s; }
+    .star { font-size:1.2rem; cursor:pointer; color:#444; transition:color .2s; }
     .star.lit { color:#f5f5f3; }
 
     .review-input {
-      width:100%; background:transparent; border:1px solid #2a2a2a; color:#f5f5f3;
+      width:100%; background:transparent; border:1px solid #303030; color:#f5f5f3;
       padding:12px 14px; font-family:'DM Sans',sans-serif; font-size:.75rem; resize:none; outline:none;
       transition:border-color .2s;
     }
-    .review-input:focus { border-color:#555; }
-    .review-input::placeholder { color:#333; font-size:.65rem; letter-spacing:.08em; }
+    .review-input:focus { border-color:#777; }
+    .review-input::placeholder { color:#555; font-size:.65rem; letter-spacing:.08em; }
   </style>
 
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
@@ -81,7 +81,7 @@
               </button>
 
               <form th:id="'rf-' + ${item.id}" th:action="@{/reviews/{id}(id=${item.id})}" method="post"
-                class="hidden mt-4 p-5 border border-zinc-900 bg-[#0f0f0f]">
+                class="hidden mt-4 p-5 border border-zinc-800 bg-[#161616]">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                 <div class="starSelect flex gap-1.5 mb-4" th:data-item-id="${item.id}">

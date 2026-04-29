@@ -1,7 +1,8 @@
 package com.shop.clothingstore.service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,43 @@ public class CouponService {
     }
 
     // =====================================================
-    // VALIDATE COUPON (read-only, no side effects)
+    // ADMIN CRUD
     // =====================================================
-    public Coupon validateCoupon(String code, Double orderTotal) {
+    public List<Coupon> findAll() {
+        return couponRepository.findAll();
+    }
+
+    public Optional<Coupon> findById(Long id) {
+        return couponRepository.findById(id);
+    }
+
+    @SuppressWarnings("null")
+    public Coupon save(Coupon coupon) {
+        return couponRepository.save(coupon);
+    }
+
+    @SuppressWarnings("null")
+    public void delete(Long id) {
+        couponRepository.deleteById(id);
+    }
+
+    public boolean existsByCode(String code) {
+        return couponRepository.findByCodeAndActiveTrue(code.trim().toUpperCase()).isPresent()
+                || couponRepository.findAll().stream()
+                        .anyMatch(c -> c.getCode().equalsIgnoreCase(code.trim()));
+    }
+
+    // =====================================================
+    // VALIDATE COUPON (read-only, no side effects, no lock)
+    // Used by the UI preview endpoint only.
+    // =====================================================
+    public Coupon validateCoupon(String code, BigDecimal orderTotal) {
         if (code == null || code.isBlank()) {
             return null;
         }
-        Coupon coupon = couponRepository.findByCodeAndActiveTrue(code.trim().toUpperCase()).orElse(null);
+        Coupon coupon = couponRepository
+                .findByCodeAndActiveTrue(code.trim().toUpperCase())
+                .orElse(null);
         if (coupon == null) {
             return null;
         }
@@ -37,8 +68,13 @@ public class CouponService {
     }
 
     // =====================================================
-    // APPLY COUPON — trừ discount + tăng usageCount
-    // Gọi trong cùng transaction với checkout
+    // APPLY COUPON — pessimistic lock + increment usageCount.
+    // MUST be called inside the same @Transactional as checkout.
+    //
+    // FIX: throws IllegalStateException if coupon is invalid at
+    // apply-time instead of silently returning full price.
+    // This prevents the user being charged without knowing the
+    // discount was not applied (race condition or expiry window).
     // =====================================================
     @Transactional
     public BigDecimal applyCoupon(String code, BigDecimal orderTotal) {
@@ -46,18 +82,21 @@ public class CouponService {
             return orderTotal;
         }
 
+        // PESSIMISTIC LOCK — blocks concurrent transactions until this one commits
         Coupon coupon = couponRepository
-                .findByCodeAndActiveTrue(code.trim().toUpperCase())
-                .orElse(null);
+                .findByCodeForUpdate(code.trim().toUpperCase())
+                .orElseThrow(() -> new IllegalStateException(
+                "Ma giam gia '" + code.trim().toUpperCase() + "' khong hop le."));
 
-        if (coupon == null || !coupon.isValid(orderTotal.doubleValue())) {
-            log.warn("Coupon invalid or expired at apply time | code={}", code);
-            return orderTotal;
+        if (!coupon.isValid(orderTotal)) {
+            log.warn("Coupon invalid at apply time | code={} | orderTotal={}", code, orderTotal);
+            throw new IllegalStateException(
+                    "Ma giam gia '" + code.trim().toUpperCase()
+                    + "' da het han hoac khong dap ung dieu kien don hang. "
+                    + "Vui long xoa ma va thu lai.");
         }
 
-        BigDecimal discounted = BigDecimal.valueOf(
-                coupon.applyDiscount(orderTotal.doubleValue())
-        ).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal discounted = coupon.applyDiscount(orderTotal);
 
         coupon.setUsageCount(coupon.getUsageCount() + 1);
         couponRepository.save(coupon);

@@ -1,6 +1,9 @@
 package com.shop.clothingstore.controller;
 
+import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Controller;
@@ -14,6 +17,7 @@ import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.service.CartService;
 import com.shop.clothingstore.service.CheckoutService;
+import com.shop.clothingstore.service.CouponService;
 import com.shop.clothingstore.service.OrderService;
 import com.shop.clothingstore.service.UserService;
 
@@ -30,16 +34,19 @@ public class CheckoutController {
     private final CartService cartService;
     private final UserService userService;
     private final OrderService orderService;
+    private final CouponService couponService;
 
     public CheckoutController(
             CheckoutService checkoutService,
             CartService cartService,
             UserService userService,
-            OrderService orderService) {
+            OrderService orderService,
+            CouponService couponService) {
         this.checkoutService = checkoutService;
         this.cartService = cartService;
         this.userService = userService;
         this.orderService = orderService;
+        this.couponService = couponService;
     }
 
     @GetMapping("/checkout")
@@ -48,7 +55,15 @@ public class CheckoutController {
         User user = getCurrentUser(principal);
         if (user != null) {
             model.addAttribute("user", user);
+            // Load available coupons for this user and order total
+            BigDecimal total = cartService.getTotal();
+            List<CouponService.CouponDisplayDTO> availableCoupons =
+                    couponService.getAvailableCouponsForUser(user, total);
+            model.addAttribute("availableCoupons", availableCoupons);
+        } else {
+            model.addAttribute("availableCoupons", Collections.emptyList());
         }
+        model.addAttribute("isLoggedIn", user != null);
         return "shop/checkout";
     }
 

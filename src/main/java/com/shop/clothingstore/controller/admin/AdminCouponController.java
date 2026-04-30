@@ -87,6 +87,8 @@ public class AdminCouponController extends AdminBaseController {
         try {
             Coupon coupon = mapFromDTO(new Coupon(), dto);
             coupon.setCode(code);
+            // Admin-created coupons are public by default (visible to all users)
+            coupon.setUserSpecific(false);
             couponService.save(coupon);
             ra.addFlashAttribute("success", "Tạo mã giảm giá '" + code + "' thành công!");
         } catch (Exception e) {
@@ -170,6 +172,7 @@ public class AdminCouponController extends AdminBaseController {
 
     // ── MAPPING HELPERS ──────────────────────────────────
     private Coupon mapFromDTO(Coupon coupon, CouponFormDTO dto) {
+        coupon.setDescription(dto.getDescription());
         coupon.setDiscountType(dto.getDiscountType());
         coupon.setDiscountValue(dto.getDiscountValue() != null
                 ? dto.getDiscountValue() : BigDecimal.ZERO);
@@ -177,6 +180,18 @@ public class AdminCouponController extends AdminBaseController {
         coupon.setUsageLimit(dto.getUsageLimit());
         coupon.setActive(dto.isActive());
 
+        // Parse startDate
+        if (dto.getStartDate() != null && !dto.getStartDate().isBlank()) {
+            try {
+                coupon.setStartDate(LocalDateTime.parse(dto.getStartDate()));
+            } catch (Exception ignored) {
+                coupon.setStartDate(null);
+            }
+        } else {
+            coupon.setStartDate(null);
+        }
+
+        // Parse expiryDate
         if (dto.getExpiryDate() != null && !dto.getExpiryDate().isBlank()) {
             try {
                 coupon.setExpiryDate(LocalDateTime.parse(dto.getExpiryDate()));
@@ -192,15 +207,19 @@ public class AdminCouponController extends AdminBaseController {
     private CouponFormDTO mapToDTO(Coupon coupon) {
         CouponFormDTO dto = new CouponFormDTO();
         dto.setCode(coupon.getCode());
+        dto.setDescription(coupon.getDescription());
         dto.setDiscountType(coupon.getDiscountType());
         dto.setDiscountValue(coupon.getDiscountValue());
         dto.setMinOrderAmount(coupon.getMinOrderAmount());
         dto.setUsageLimit(coupon.getUsageLimit());
         dto.setActive(coupon.isActive());
+        java.time.format.DateTimeFormatter fmt =
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        if (coupon.getStartDate() != null) {
+            dto.setStartDate(coupon.getStartDate().format(fmt));
+        }
         if (coupon.getExpiryDate() != null) {
-            // Format for datetime-local input: "yyyy-MM-ddTHH:mm"
-            dto.setExpiryDate(coupon.getExpiryDate()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));
+            dto.setExpiryDate(coupon.getExpiryDate().format(fmt));
         }
         return dto;
     }

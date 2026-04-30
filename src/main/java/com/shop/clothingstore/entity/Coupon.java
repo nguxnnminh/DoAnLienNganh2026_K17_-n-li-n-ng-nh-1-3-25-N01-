@@ -25,6 +25,9 @@ public class Coupon extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String code;
 
+    @Column(length = 255)
+    private String description;
+
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
 
@@ -38,6 +41,8 @@ public class Coupon extends BaseEntity {
     @Column(precision = 19, scale = 2)
     private BigDecimal minOrderAmount;
 
+    private LocalDateTime startDate;
+
     private LocalDateTime expiryDate;
 
     private Integer usageLimit;
@@ -45,6 +50,13 @@ public class Coupon extends BaseEntity {
     private Integer usageCount = 0;
 
     private boolean active = true;
+
+    /**
+     * If true, this coupon is only visible/usable by users who have a
+     * corresponding UserCoupon record (e.g., welcome coupon for new users).
+     * If false, all authenticated users can see and use it.
+     */
+    private boolean userSpecific = false;
 
     public enum DiscountType {
         PERCENTAGE,
@@ -55,6 +67,9 @@ public class Coupon extends BaseEntity {
         if (!active) {
             return false;
         }
+        if (startDate != null && startDate.isAfter(LocalDateTime.now())) {
+            return false;
+        }
         if (expiryDate != null && expiryDate.isBefore(LocalDateTime.now())) {
             return false;
         }
@@ -62,6 +77,40 @@ public class Coupon extends BaseEntity {
             return false;
         }
         return minOrderAmount == null || orderTotal.compareTo(minOrderAmount) >= 0;
+    }
+
+    /**
+     * Check if coupon has expired (for display purposes).
+     */
+    public boolean isExpired() {
+        return expiryDate != null && expiryDate.isBefore(LocalDateTime.now());
+    }
+
+    /**
+     * Check if coupon has started (for display purposes).
+     */
+    public boolean isStarted() {
+        return startDate == null || !startDate.isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * Check if usage limit has been reached.
+     */
+    public boolean isUsageLimitReached() {
+        return usageLimit != null && usageCount >= usageLimit;
+    }
+
+    /**
+     * Calculate the discount amount for display purposes.
+     */
+    public BigDecimal calculateDiscountAmount(BigDecimal orderTotal) {
+        if (discountType == DiscountType.PERCENTAGE) {
+            BigDecimal pct = discountValue.min(BigDecimal.valueOf(100));
+            return orderTotal.multiply(pct)
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+        } else {
+            return discountValue.min(orderTotal);
+        }
     }
 
     /**

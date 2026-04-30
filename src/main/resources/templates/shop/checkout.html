@@ -13,6 +13,133 @@
     textarea.n-field { overflow:hidden; line-height:1.6; resize:none; }
     #couponMsg.ok  { color:#6dbf6d; }
     #couponMsg.err { color:#bf6d6d; }
+
+    /* ===== COUPON RADIO CARDS ===== */
+    .coupon-radio-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .coupon-radio-list::-webkit-scrollbar { width: 3px; }
+    .coupon-radio-list::-webkit-scrollbar-thumb { background: #333; }
+
+    .coupon-radio-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid #1e1e1e;
+      background: #0a0a0a;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .coupon-radio-card:hover { border-color: #333; background: #0f0f0f; }
+    .coupon-radio-card.selected {
+      border-color: #555;
+      background: #111;
+    }
+
+    .coupon-radio-card input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border: 1px solid #444;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .coupon-radio-card input[type="radio"]:checked {
+      border-color: #f5f5f3;
+    }
+    .coupon-radio-card input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 6px; height: 6px;
+      background: #f5f5f3;
+      border-radius: 50%;
+    }
+
+    .coupon-radio-info { flex: 1; min-width: 0; }
+
+    .coupon-radio-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .coupon-radio-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      color: #f5f5f3;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .coupon-radio-badge {
+      font-size: 0.45rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid #4a4a2a;
+      color: #d4a843;
+      background: rgba(212, 168, 67, 0.06);
+    }
+
+    .coupon-radio-code {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: #555;
+      font-family: monospace;
+      text-transform: uppercase;
+    }
+
+    .coupon-radio-desc {
+      font-size: 0.6rem;
+      color: #444;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .coupon-radio-meta {
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .coupon-section-toggle {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .coupon-section-toggle:hover { color: #aaa; }
+
+    .manual-input-section {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #1a1a1a;
+    }
   </style>
 
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
@@ -30,7 +157,7 @@
         <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-8 md:mb-10">Delivery Information</p>
         <form th:action="@{/checkout}" method="post" class="flex flex-col gap-8 md:gap-9">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-          <!-- couponCode is populated by JS before submit -->
+          <!-- couponCode is populated by JS when user selects a coupon -->
           <input type="hidden" id="couponCodeHidden" name="couponCode" />
 
           <div>
@@ -92,21 +219,78 @@
           </div>
         </div>
 
-        <!-- COUPON INPUT -->
+        <!-- COUPON SECTION -->
         <div class="mb-6 pb-6 border-b border-zinc-900">
           <label class="n-label mb-3 block">Discount Code</label>
-          <div class="flex gap-2">
-            <input id="couponInput" type="text"
-                   class="n-field flex-1"
-                   placeholder="ENTER CODE"
-                   style="text-transform:uppercase;letter-spacing:.1em" />
-            <button type="button" id="applyCouponBtn"
-                    class="h-[46px] px-4 bg-transparent border border-zinc-700 text-zinc-500
-                           text-xs tracking-widest uppercase cursor-pointer shrink-0
-                           transition-all hover:border-zinc-500 hover:text-[#c0c0bc]">
-              Apply
-            </button>
+
+          <!-- Available coupon cards (only for logged-in users with coupons) -->
+          <div th:if="${isLoggedIn and !#lists.isEmpty(availableCoupons)}">
+            <div class="coupon-radio-list" id="couponRadioList">
+              <label th:each="c, iter : ${availableCoupons}"
+                     class="coupon-radio-card"
+                     th:attr="data-code=${c.code}, data-discount-display=${c.discountDisplay}">
+                <input type="radio" name="couponSelect"
+                       th:value="${c.code}"
+                       th:attr="data-code=${c.code}" />
+                <div class="coupon-radio-info">
+                  <div class="coupon-radio-top">
+                    <span class="coupon-radio-value" th:text="${c.discountDisplay}">100,000₫</span>
+                    <span th:if="${iter.index == 0}" class="coupon-radio-badge">★ Recommended</span>
+                  </div>
+                  <div class="coupon-radio-code" th:text="${c.code}">WELCOME-ABC</div>
+                  <div th:if="${c.description}" class="coupon-radio-desc" th:text="${c.description}"></div>
+                </div>
+                <div class="coupon-radio-meta">
+                  <div th:if="${c.minOrderAmount != null}">
+                    Min <span th:text="${#numbers.formatDecimal(c.minOrderAmount, 0, 'POINT', 0, 'COMMA')}">200,000</span>₫
+                  </div>
+                  <div th:if="${c.expiryDate != null}" th:text="'HSD ' + ${#temporals.format(c.expiryDate, 'dd/MM')}">HSD 01/06</div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Toggle for manual input -->
+            <div class="manual-input-section">
+              <button type="button" id="toggleManualInput" class="coupon-section-toggle">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nhập mã khác
+              </button>
+              <div id="manualInputWrap" style="display:none; margin-top:10px;">
+                <div class="flex gap-2">
+                  <input id="couponInput" type="text" class="n-field flex-1"
+                         placeholder="ENTER CODE"
+                         style="text-transform:uppercase;letter-spacing:.1em" />
+                  <button type="button" id="applyCouponBtn"
+                          class="h-[46px] px-4 bg-transparent border border-zinc-700 text-zinc-500
+                                 text-xs tracking-widest uppercase cursor-pointer shrink-0
+                                 transition-all hover:border-zinc-500 hover:text-[#c0c0bc]">
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Manual input only (for guests or users with no coupons) -->
+          <div th:if="${!isLoggedIn or #lists.isEmpty(availableCoupons)}">
+            <div th:if="${!isLoggedIn}" class="text-[0.6rem] tracking-widest uppercase text-zinc-600 mb-3">
+              <a th:href="@{/login}" class="text-zinc-500 hover:text-[#c0c0bc] transition-colors" style="text-decoration:underline;">Đăng nhập</a> để xem mã giảm giá
+            </div>
+            <div class="flex gap-2">
+              <input id="couponInput" type="text" class="n-field flex-1"
+                     placeholder="ENTER CODE"
+                     style="text-transform:uppercase;letter-spacing:.1em" />
+              <button type="button" id="applyCouponBtn"
+                      class="h-[46px] px-4 bg-transparent border border-zinc-700 text-zinc-500
+                             text-xs tracking-widest uppercase cursor-pointer shrink-0
+                             transition-all hover:border-zinc-500 hover:text-[#c0c0bc]">
+                Apply
+              </button>
+            </div>
+          </div>
+
           <p id="couponMsg" class="mt-2 text-xs tracking-wide"></p>
         </div>
 
@@ -148,6 +332,7 @@
     const SUBTOTAL = /*[[${total}]]*/ 0;
     const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
     const CSRF_TOKEN  = /*[[${_csrf.token}]]*/ '';
+    const HAS_COUPON_CARDS = /*[[${isLoggedIn and !#lists.isEmpty(availableCoupons)}]]*/ false;
     /*]]>*/
 
     const couponInput     = document.getElementById('couponInput');
@@ -167,18 +352,18 @@
       discountRow.style.setProperty('display', 'none', 'important');
       discountAmount.textContent = '';
       totalDisplay.textContent = formatVND(SUBTOTAL);
+      couponMsg.textContent = '';
+      couponMsg.className = 'mt-2 text-xs tracking-wide';
+      // Deselect radio cards
+      document.querySelectorAll('.coupon-radio-card').forEach(card => {
+        card.classList.remove('selected');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = false;
+      });
     }
 
-    applyCouponBtn.addEventListener('click', async () => {
-      const code = couponInput.value.trim().toUpperCase();
-      if (!code) {
-        couponMsg.textContent = 'Please enter a discount code.';
-        couponMsg.className = 'mt-2 text-xs tracking-wide err';
-        return;
-      }
-
-      applyCouponBtn.disabled = true;
-      applyCouponBtn.textContent = '...';
+    async function applyCouponCode(code) {
+      if (!code) return;
 
       try {
         const res = await fetch('/api/coupons/validate', {
@@ -191,29 +376,87 @@
 
         if (data.valid) {
           couponCodeHidden.value = code;
-          couponMsg.textContent  = 'Code applied — saving ' + formatVND(data.savedAmount);
+          couponMsg.textContent  = 'Áp dụng thành công — Tiết kiệm ' + formatVND(data.savedAmount);
           couponMsg.className    = 'mt-2 text-xs tracking-wide ok';
-          // Show discount row
           discountRow.style.removeProperty('display');
           discountAmount.textContent = '− ' + formatVND(data.savedAmount);
           totalDisplay.textContent   = formatVND(data.discountedTotal);
         } else {
           resetCoupon();
-          couponMsg.textContent = data.message || 'Invalid or expired code.';
+          couponMsg.textContent = data.message || 'Mã không hợp lệ hoặc đã hết hạn.';
           couponMsg.className   = 'mt-2 text-xs tracking-wide err';
         }
       } catch (_) {
         resetCoupon();
-        couponMsg.textContent = 'Could not validate code. Please try again.';
+        couponMsg.textContent = 'Không thể kiểm tra mã. Vui lòng thử lại.';
         couponMsg.className   = 'mt-2 text-xs tracking-wide err';
-      } finally {
+      }
+    }
+
+    // ===== COUPON RADIO CARDS =====
+    if (HAS_COUPON_CARDS) {
+      const radioCards = document.querySelectorAll('.coupon-radio-card');
+      radioCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+          // Don't interfere with the radio input's native behavior
+          const radio = this.querySelector('input[type="radio"]');
+          if (e.target !== radio) {
+            radio.checked = true;
+          }
+
+          // Visual feedback
+          radioCards.forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+
+          // Apply coupon
+          const code = radio.value;
+          applyCouponCode(code);
+        });
+      });
+
+      // Toggle manual input
+      const toggleBtn = document.getElementById('toggleManualInput');
+      const manualWrap = document.getElementById('manualInputWrap');
+      if (toggleBtn && manualWrap) {
+        toggleBtn.addEventListener('click', () => {
+          const isHidden = manualWrap.style.display === 'none';
+          manualWrap.style.display = isHidden ? 'block' : 'none';
+          toggleBtn.querySelector('svg').style.transform = isHidden ? 'rotate(45deg)' : '';
+        });
+      }
+    }
+
+    // ===== MANUAL COUPON INPUT =====
+    if (applyCouponBtn) {
+      applyCouponBtn.addEventListener('click', async () => {
+        const code = couponInput.value.trim().toUpperCase();
+        if (!code) {
+          couponMsg.textContent = 'Vui lòng nhập mã giảm giá.';
+          couponMsg.className = 'mt-2 text-xs tracking-wide err';
+          return;
+        }
+
+        // Deselect any radio card
+        document.querySelectorAll('.coupon-radio-card').forEach(card => {
+          card.classList.remove('selected');
+          const radio = card.querySelector('input[type="radio"]');
+          if (radio) radio.checked = false;
+        });
+
+        applyCouponBtn.disabled = true;
+        applyCouponBtn.textContent = '...';
+
+        await applyCouponCode(code);
+
         applyCouponBtn.disabled = false;
         applyCouponBtn.textContent = 'Apply';
-      }
-    });
+      });
+    }
 
-    // Clear coupon state if the user edits the code field
-    couponInput.addEventListener('input', resetCoupon);
+    // Clear coupon state if the user edits the manual code field
+    if (couponInput) {
+      couponInput.addEventListener('input', resetCoupon);
+    }
 
     // Auto-resize textareas
     function autoResize(el) {

@@ -27,6 +27,14 @@
                                oninput="this.value=this.value.toUpperCase()" required maxlength="50">
                     </div>
 
+                    <div>
+                        <label class="form-label">Mô tả</label>
+                        <textarea name="description" class="form-control" rows="2"
+                                  th:text="*{description}"
+                                  placeholder="Mô tả hiển thị cho khách hàng"
+                                  maxlength="255"></textarea>
+                    </div>
+
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div>
                             <label class="form-label">Loại giảm giá <span style="color:#ef4444;">*</span></label>
@@ -60,10 +68,17 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="form-label">Ngày hết hạn</label>
-                        <input type="datetime-local" name="expiryDate" class="form-control"
-                               th:value="*{expiryDate}">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div>
+                            <label class="form-label">Ngày bắt đầu</label>
+                            <input type="datetime-local" name="startDate" class="form-control"
+                                   th:value="*{startDate}">
+                        </div>
+                        <div>
+                            <label class="form-label">Ngày hết hạn</label>
+                            <input type="datetime-local" name="expiryDate" class="form-control"
+                                   th:value="*{expiryDate}">
+                        </div>
                     </div>
 
                     <div style="display:flex; align-items:center; justify-content:space-between; background:#f9fafb; padding:14px 16px; border-radius:8px; border:1px solid #e5e7eb;">

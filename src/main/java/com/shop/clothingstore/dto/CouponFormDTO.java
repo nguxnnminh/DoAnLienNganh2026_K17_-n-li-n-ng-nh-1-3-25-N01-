@@ -15,6 +15,8 @@ public class CouponFormDTO {
     @NotBlank(message = "Mã coupon không được để trống")
     private String code;
 
+    private String description;
+
     @NotNull(message = "Vui lòng chọn loại giảm giá")
     private Coupon.DiscountType discountType;
 
@@ -25,6 +27,7 @@ public class CouponFormDTO {
     private BigDecimal minOrderAmount;
 
     // datetime-local input format: "yyyy-MM-ddTHH:mm" — parsed to LocalDateTime in controller
+    private String startDate;
     private String expiryDate;
 
     private Integer usageLimit;

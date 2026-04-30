@@ -2,11 +2,13 @@ package com.shop.clothingstore.service;
 
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shop.clothingstore.entity.Role;
 import com.shop.clothingstore.entity.User;
+import com.shop.clothingstore.event.UserRegisteredEvent;
 import com.shop.clothingstore.repository.UserRepository;
 import com.shop.clothingstore.service.base.GenericServiceBase;
 
@@ -14,10 +16,13 @@ import com.shop.clothingstore.service.base.GenericServiceBase;
 public class UserService extends GenericServiceBase<User, Long> {
 
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository,
+                       ApplicationEventPublisher eventPublisher) {
         super(userRepository);
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -61,6 +66,11 @@ public class UserService extends GenericServiceBase<User, Long> {
         user.setEmail(email);
         user.setPassword(encodedPassword);
         user.setRole(role);
-        return save(user);
+        user = save(user);
+
+        // Publish event — listeners (e.g., welcome coupon) react asynchronously
+        eventPublisher.publishEvent(new UserRegisteredEvent(this, user));
+
+        return user;
     }
 }

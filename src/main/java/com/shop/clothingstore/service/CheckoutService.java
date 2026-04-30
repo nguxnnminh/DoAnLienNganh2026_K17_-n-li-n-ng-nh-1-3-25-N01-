@@ -121,7 +121,8 @@ public class CheckoutService {
         }
 
         // ---- Apply coupon — throws if coupon invalid at apply-time ----
-        BigDecimal total = couponService.applyCoupon(couponCode, subtotal);
+        // Pass user for user-specific coupon validation
+        BigDecimal total = couponService.applyCoupon(couponCode, subtotal, user);
 
         order.setItems(items);
         order.setTotal(total);

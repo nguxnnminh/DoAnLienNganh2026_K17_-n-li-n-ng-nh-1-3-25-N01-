@@ -1,5 +1,6 @@
 package com.shop.clothingstore.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Lock;
@@ -15,6 +16,9 @@ public interface CouponRepository extends BaseRepository<Coupon, Long> {
 
     // Read-only — for validation UI (no lock needed)
     Optional<Coupon> findByCodeAndActiveTrue(String code);
+
+    // All active public (non-user-specific) coupons
+    List<Coupon> findByActiveTrueAndUserSpecificFalse();
 
     // Pessimistic write lock — use inside @Transactional when applying discount.
     // Prevents two concurrent checkouts from both reading usageCount=N

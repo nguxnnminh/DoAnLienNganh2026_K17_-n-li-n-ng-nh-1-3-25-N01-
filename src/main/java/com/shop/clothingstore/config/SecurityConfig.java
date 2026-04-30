@@ -97,7 +97,7 @@ public class SecurityConfig {
                         "/forgot-password", "/reset-password",
                         "/css/**", "/js/**", "/images/**"
                 ).permitAll()
-                .requestMatchers("/my-orders", "/profile", "/orders/**", "/reviews/**", "/wishlist/**").authenticated()
+                .requestMatchers("/my-orders", "/my-coupons", "/profile", "/orders/**", "/reviews/**", "/wishlist/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
                 .formLogin(form -> form

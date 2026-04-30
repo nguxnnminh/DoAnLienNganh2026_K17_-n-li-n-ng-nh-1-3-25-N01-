@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::content}, 'My Coupons — Nova')}">
+<div th:fragment="content">
+  <style>
+    /* ===== COUPON CARD ===== */
+    .coupon-card {
+      border: 1px solid #1e1e1e;
+      background: #0d0d0d;
+      padding: 0;
+      display: flex;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+      position: relative;
+    }
+    .coupon-card:hover { border-color: #333; transform: translateY(-2px); }
+    .coupon-card.is-used, .coupon-card.is-expired {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .coupon-card.is-used:hover, .coupon-card.is-expired:hover {
+      transform: none;
+      border-color: #1e1e1e;
+    }
+
+    /* Left accent strip */
+    .coupon-accent {
+      width: 6px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #f5f5f3, #888);
+    }
+    .coupon-card.is-used .coupon-accent,
+    .coupon-card.is-expired .coupon-accent {
+      background: #333;
+    }
+    .coupon-card.is-welcome .coupon-accent {
+      background: linear-gradient(180deg, #ffd700, #ff8c00);
+    }
+
+    /* Card body */
+    .coupon-body {
+      flex: 1;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Discount value — big display */
+    .coupon-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      letter-spacing: 0.04em;
+      color: #f5f5f3;
+      line-height: 1;
+    }
+
+    .coupon-code {
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #888;
+      font-family: monospace;
+      background: #161616;
+      display: inline-block;
+      padding: 4px 10px;
+      border: 1px dashed #333;
+    }
+
+    .coupon-desc {
+      font-size: 0.78rem;
+      color: #777;
+      line-height: 1.5;
+    }
+
+    .coupon-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .coupon-meta-item {
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid;
+    }
+    .badge-available { border-color: #2a4a2a; color: #6dbf6d; }
+    .badge-used { border-color: #3a3a2a; color: #999; }
+    .badge-expired { border-color: #4a2a2a; color: #bf6d6d; }
+    .badge-recommended {
+      border-color: #4a4a2a;
+      color: #d4a843;
+      background: rgba(212, 168, 67, 0.08);
+    }
+
+    /* Filter tabs */
+    .filter-tab {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      text-decoration: none;
+      padding: 8px 16px;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      cursor: pointer;
+      background: none;
+    }
+    .filter-tab:hover { color: #aaa; border-color: #333; }
+    .filter-tab.active { color: #f5f5f3; border-color: #555; }
+
+    /* Sort dropdown */
+    .sort-select {
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      outline: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .sort-select:focus { border-color: #555; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      border: 1px dashed #222;
+    }
+    .empty-state-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    .empty-state-text {
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    @media (max-width: 640px) {
+      .coupon-body { padding: 16px; }
+      .coupon-value { font-size: 1.4rem; }
+      .coupon-meta { gap: 10px; }
+    }
+  </style>
+
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
+
+    <!-- HEADER -->
+    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
+      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">My Coupons</h1>
+      <p class="text-xs tracking-wide text-zinc-600 mt-3">
+        <span th:text="${totalAvailable}">0</span> available
+      </p>
+    </div>
+
+    <!-- FILTER & SORT -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div class="flex flex-wrap gap-2">
+        <a th:href="@{/my-coupons(filter='all', sort=${sort})}"
+           class="filter-tab" th:classappend="${filter == 'all'} ? 'active'">All</a>
+        <a th:href="@{/my-coupons(filter='available', sort=${sort})}"
+           class="filter-tab" th:classappend="${filter == 'available'} ? 'active'">Available</a>
+        <a th:href="@{/my-coupons(filter='used', sort=${sort})}"
+           class="filter-tab" th:classappend="${filter == 'used'} ? 'active'">Used</a>
+        <a th:href="@{/my-coupons(filter='expired', sort=${sort})}"
+           class="filter-tab" th:classappend="${filter == 'expired'} ? 'active'">Expired</a>
+      </div>
+
+      <form method="get" th:action="@{/my-coupons}" class="flex items-center gap-2">
+        <input type="hidden" name="filter" th:value="${filter}" />
+        <label class="text-[0.55rem] tracking-widest uppercase text-zinc-600">Sort:</label>
+        <select name="sort" class="sort-select" onchange="this.form.submit()">
+          <option value="best" th:selected="${sort == 'best'}">Best Discount</option>
+          <option value="expiring" th:selected="${sort == 'expiring'}">Expiring Soon</option>
+        </select>
+      </form>
+    </div>
+
+    <!-- COUPON LIST -->
+    <div th:if="${#lists.isEmpty(coupons)}" class="empty-state">
+      <p class="empty-state-text">No coupons yet</p>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(coupons)}" class="flex flex-col gap-3">
+      <div th:each="coupon, iter : ${coupons}"
+           class="coupon-card"
+           th:classappend="${coupon.used ? 'is-used' : ''} + ' ' + ${coupon.expired ? 'is-expired' : ''} + ' ' + ${coupon.userSpecific ? 'is-welcome' : ''}">
+
+        <div class="coupon-accent"></div>
+
+        <div class="coupon-body">
+          <!-- Top row: Value + Badges -->
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="coupon-value" th:text="${coupon.discountDisplay}">100,000₫</span>
+            </div>
+            <div class="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+              <span th:if="${iter.index == 0 and coupon.usable and filter != 'used' and filter != 'expired'}"
+                    class="badge badge-recommended">★ Recommended</span>
+              <span th:if="${coupon.usable}" class="badge badge-available">Available</span>
+              <span th:if="${coupon.used}" class="badge badge-used">Used</span>
+              <span th:if="${coupon.expired and !coupon.used}" class="badge badge-expired">Expired</span>
+            </div>
+          </div>
+
+          <!-- Code -->
+          <div>
+            <span class="coupon-code" th:text="${coupon.code}">WELCOME-ABC123</span>
+          </div>
+
+          <!-- Description -->
+          <p th:if="${coupon.description}" class="coupon-desc" th:text="${coupon.description}"></p>
+
+          <!-- Meta info -->
+          <div class="coupon-meta">
+            <span th:if="${coupon.minOrderAmount != null}" class="coupon-meta-item">
+              Min. order: <span th:text="${#numbers.formatDecimal(coupon.minOrderAmount, 0, 'POINT', 0, 'COMMA')}">200,000</span>₫
+            </span>
+            <span th:if="${coupon.expiryDate != null}" class="coupon-meta-item">
+              Exp: <span th:text="${#temporals.format(coupon.expiryDate, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+            </span>
+            <span th:if="${coupon.startDate != null and !coupon.started}" class="coupon-meta-item">
+              Starts: <span th:text="${#temporals.format(coupon.startDate, 'dd/MM/yyyy')}">01/01/2026</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</html>

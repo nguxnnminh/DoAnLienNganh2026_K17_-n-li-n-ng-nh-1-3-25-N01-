@@ -26,7 +26,9 @@ public class WishlistService {
     }
 
     public List<WishlistItem> getWishlist(User user) {
-        return wishlistItemRepository.findByUser(user);
+        return wishlistItemRepository.findByUser(user).stream()
+                .filter(item -> item.getProduct().isActive())
+                .toList();
     }
 
     public boolean isInWishlist(User user, Long productId) {

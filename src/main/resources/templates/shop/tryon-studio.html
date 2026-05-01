@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="~{layout/base :: layout(~{::content}, 'Try-On Studio — Nova')}">
+<div th:fragment="content">
+  <style>
+    /* ── STUDIO LAYOUT ───────────────────────────────── */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 0;
+      min-height: 80vh;
+    }
+    @media (max-width: 1023px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── GARMENT TABS ────────────────────────────────── */
+    .tab-btn {
+      padding: 10px 0;
+      background: none;
+      border: none;
+      border-bottom: 1px solid transparent;
+      color: #666;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #aaa; }
+    .tab-btn.active { color: #e8e8e4; border-bottom-color: #555; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: grid; }
+
+    /* ── PRODUCT CARD ────────────────────────────────── */
+    .tryon-card {
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .tryon-card:hover { border-color: #333; }
+    .tryon-card.selected { border-color: #f5f5f3; }
+    .tryon-card.selected::after {
+      content: '';
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 8px; height: 8px;
+      background: #f5f5f3;
+      border-radius: 50%;
+    }
+    .tryon-card img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+      background: #111;
+    }
+    .tryon-card-info {
+      padding: 6px 2px;
+    }
+
+    /* ── SELECTED OUTFIT ─────────────────────────────── */
+    .outfit-slot {
+      border: 1px solid #272727;
+      padding: 12px;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .outfit-slot:hover { border-color: #444; }
+    .outfit-slot.filled { border-color: #444; }
+    .outfit-slot img {
+      width: 52px;
+      height: 68px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    /* ── UPLOAD AREA ──────────────────────────────────── */
+    .upload-zone {
+      border: 1px solid #272727;
+      padding: 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      background: #0a0a0a;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover { border-color: #555; }
+  </style>
+
+  <!-- ── PAGE HEADER ──────────────────────────────────── -->
+  <div class="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 border-b border-zinc-900">
+    <div class="flex justify-between items-end pb-6 md:pb-8">
+      <div>
+        <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Nova Store</p>
+        <h1 class="font-display text-4xl md:text-6xl lg:text-7xl tracking-wide leading-none text-[#f5f5f3]">
+          Try-On Studio
+        </h1>
+      </div>
+      <p class="text-[0.65rem] tracking-widest uppercase text-zinc-500">
+        <span th:text="${tryOnProducts.size()}">0</span>&nbsp;Items Available
+      </p>
+    </div>
+    <div class="flex items-center gap-3 pb-5 text-[0.62rem] tracking-widest uppercase flex-wrap">
+      <a th:href="@{/}" class="text-zinc-700 no-underline transition-colors hover:text-[#f5f5f3]">Home</a>
+      <span class="text-zinc-800">&mdash;</span>
+      <span class="text-zinc-500">Try-On Studio</span>
+    </div>
+  </div>
+
+  <!-- ── EMPTY STATE ──────────────────────────────────── -->
+  <div th:if="${tryOnProducts.isEmpty()}" class="text-center py-20 px-4">
+    <p class="font-display text-5xl md:text-6xl tracking-wide text-zinc-900 mb-5">No Items Available</p>
+    <p class="text-[0.72rem] tracking-widest uppercase text-zinc-600 mb-6">
+      Admin hasn't enabled Try-On for any products yet.
+    </p>
+    <a th:href="@{/products}"
+       class="text-[0.7rem] tracking-widest uppercase text-zinc-500 no-underline transition-colors hover:text-[#f5f5f3]"
+       style="border-bottom:1px solid #333; padding-bottom:2px;">
+      Browse Shop
+    </a>
+  </div>
+
+  <!-- ── MAIN STUDIO ──────────────────────────────────── -->
+  <div th:unless="${tryOnProducts.isEmpty()}" class="studio-grid">
+
+    <!-- LEFT: Product Browser -->
+    <div class="border-r border-zinc-900 px-4 md:px-8 lg:px-10 py-8">
+
+      <!-- Tabs -->
+      <div class="flex gap-6 mb-6 border-b border-zinc-900 pb-0">
+        <button class="tab-btn active" onclick="switchTab('upper')">Tops</button>
+        <button class="tab-btn" onclick="switchTab('lower')">Bottoms</button>
+        <button class="tab-btn" onclick="switchTab('full')">Full Body</button>
+        <button class="tab-btn" onclick="switchTab('all')">All</button>
+      </div>
+
+      <!-- Upper Body Panel -->
+      <div id="panel-upper" class="tab-panel active grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div th:each="p : ${upperProducts}" class="tryon-card"
+             th:data-id="${p.id}" th:data-type="${p.garmentType}"
+             th:data-name="${p.name}"
+             th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
+             th:data-price="${p.minPrice}"
+             onclick="selectProduct(this)">
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <div class="tryon-card-info">
+            <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
+            <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
+               th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
+          </div>
+        </div>
+        <p th:if="${upperProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No tops available</p>
+      </div>
+
+      <!-- Lower Body Panel -->
+      <div id="panel-lower" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div th:each="p : ${lowerProducts}" class="tryon-card"
+             th:data-id="${p.id}" th:data-type="${p.garmentType}"
+             th:data-name="${p.name}"
+             th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
+             th:data-price="${p.minPrice}"
+             onclick="selectProduct(this)">
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <div class="tryon-card-info">
+            <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
+            <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
+               th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
+          </div>
+        </div>
+        <p th:if="${lowerProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No bottoms available</p>
+      </div>
+
+      <!-- Full Body Panel -->
+      <div id="panel-full" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div th:each="p : ${fullProducts}" class="tryon-card"
+             th:data-id="${p.id}" th:data-type="${p.garmentType}"
+             th:data-name="${p.name}"
+             th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
+             th:data-price="${p.minPrice}"
+             onclick="selectProduct(this)">
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <div class="tryon-card-info">
+            <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
+            <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
+               th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
+          </div>
+        </div>
+        <p th:if="${fullProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No full body items available</p>
+      </div>
+
+      <!-- All Panel -->
+      <div id="panel-all" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div th:each="p : ${tryOnProducts}" class="tryon-card"
+             th:data-id="${p.id}" th:data-type="${p.garmentType}"
+             th:data-name="${p.name}"
+             th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
+             th:data-price="${p.minPrice}"
+             onclick="selectProduct(this)">
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <div class="tryon-card-info">
+            <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
+            <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
+               th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Outfit Builder Sidebar -->
+    <div class="px-5 py-8 bg-[#0a0a0a] lg:sticky lg:top-[108px] lg:self-start lg:max-h-[calc(100vh-108px)] lg:overflow-y-auto">
+
+      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-5">Your Outfit</p>
+
+      <!-- Person Photo Upload -->
+      <div class="mb-5">
+        <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Photo</p>
+        <div class="upload-zone" id="studioUploadZone" onclick="document.getElementById('studioPersonInput').click()">
+          <img id="studioPersonPreview" style="display:none; max-height:180px; width:auto; object-fit:contain; margin-bottom:10px;" />
+          <label id="studioUploadLabel"
+                 style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#666; cursor:pointer;">
+            Upload full-body photo
+          </label>
+          <input type="file" id="studioPersonInput" accept="image/*" style="display:none;" onchange="handleStudioUpload(this)">
+          <p style="font-size:8px; color:#333; margin:6px 0 0; letter-spacing:0.05em;">Standing pose, simple background</p>
+        </div>
+      </div>
+
+      <!-- Selected Slots -->
+      <div class="mb-5">
+        <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Selected Items</p>
+
+        <div class="outfit-slot mb-2" id="slot-upper" onclick="scrollToTab('upper')">
+          <div id="slot-upper-empty" class="w-full text-center">
+            <p class="text-[0.6rem] tracking-widest uppercase text-zinc-700">Top — select a top</p>
+          </div>
+          <div id="slot-upper-filled" style="display:none;" class="flex items-center gap-3 w-full">
+            <img id="slot-upper-img" src="" alt="" />
+            <div class="flex-1 min-w-0">
+              <p id="slot-upper-name" class="text-[0.65rem] tracking-widest uppercase text-zinc-400 truncate"></p>
+              <p id="slot-upper-price" class="text-[0.58rem] tracking-wide text-zinc-600 mt-0.5"></p>
+            </div>
+            <button onclick="event.stopPropagation(); clearSlot('upper')" class="text-zinc-700 hover:text-zinc-400 transition-colors" style="background:none;border:none;cursor:pointer;">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="outfit-slot mb-2" id="slot-lower" onclick="scrollToTab('lower')">
+          <div id="slot-lower-empty" class="w-full text-center">
+            <p class="text-[0.6rem] tracking-widest uppercase text-zinc-700">Bottom — select a bottom</p>
+          </div>
+          <div id="slot-lower-filled" style="display:none;" class="flex items-center gap-3 w-full">
+            <img id="slot-lower-img" src="" alt="" />
+            <div class="flex-1 min-w-0">
+              <p id="slot-lower-name" class="text-[0.65rem] tracking-widest uppercase text-zinc-400 truncate"></p>
+              <p id="slot-lower-price" class="text-[0.58rem] tracking-wide text-zinc-600 mt-0.5"></p>
+            </div>
+            <button onclick="event.stopPropagation(); clearSlot('lower')" class="text-zinc-700 hover:text-zinc-400 transition-colors" style="background:none;border:none;cursor:pointer;">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generate Button -->
+      <button id="studioGenerateBtn" onclick="generateStudioTryOn()"
+              style="width:100%; padding:14px; background:#f5f5f3; color:#0a0a0a; border:none;
+                     font-family:'DM Sans',sans-serif; font-size:0.7rem; letter-spacing:0.18em;
+                     text-transform:uppercase; font-weight:500; cursor:pointer; transition:all 0.2s;"
+              onmouseover="this.style.background='#d8d8d4'"
+              onmouseout="this.style.background='#f5f5f3'">
+        Generate Try-On
+      </button>
+
+      <!-- Loading -->
+      <div id="studioLoading" style="display:none; text-align:center; padding:20px 0;">
+        <div style="width:28px; height:28px; border:1.5px solid #272727; border-top-color:#888;
+                    border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
+        <p style="font-size:10px; color:#444; letter-spacing:0.1em;">Processing... 30–120 seconds</p>
+      </div>
+
+      <!-- Result -->
+      <div id="studioResult" style="display:none; margin-top:20px;">
+        <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Result</p>
+        <div style="border:1px solid #272727; padding:8px; background:#0f0f0f;">
+          <img id="studioResultImg" style="width:100%; object-fit:contain;" />
+          <p style="font-size:7px; color:#333; margin:6px 0 0; letter-spacing:0.15em; text-transform:uppercase; text-align:center;">AI Generated Preview</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <script>
+    // ── State ──────────────────────────────────────────
+    let studioPersonId = null;
+    const selectedItems = { upper: null, lower: null };
+
+    // ── Tab switching ─────────────────────────────────
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function scrollToTab(tab) {
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      tabBtns.forEach(b => {
+        if (b.textContent.trim().toLowerCase().includes(tab === 'upper' ? 'top' : 'bottom')) {
+          b.click();
+        }
+      });
+    }
+
+    // ── Product selection ─────────────────────────────
+    function selectProduct(card) {
+      const id = card.dataset.id;
+      const type = card.dataset.type;
+      const name = card.dataset.name;
+      const img = card.dataset.img;
+      const price = card.dataset.price;
+
+      let slot;
+      if (type === 'UPPER_BODY') slot = 'upper';
+      else if (type === 'LOWER_BODY') slot = 'lower';
+      else slot = 'upper'; // FULL_BODY defaults to upper slot
+
+      // Deselect previous in this slot
+      if (selectedItems[slot]) {
+        document.querySelectorAll('.tryon-card').forEach(c => {
+          if (c.dataset.id === selectedItems[slot].id) c.classList.remove('selected');
+        });
+      }
+
+      // Select new
+      selectedItems[slot] = { id, name, img, price };
+
+      // Highlight card across all panels
+      document.querySelectorAll('.tryon-card').forEach(c => {
+        if (c.dataset.id === id) c.classList.add('selected');
+      });
+
+      // Update slot UI
+      updateSlot(slot, name, img, price);
+    }
+
+    function updateSlot(slot, name, img, price) {
+      document.getElementById('slot-' + slot + '-empty').style.display = 'none';
+      const filled = document.getElementById('slot-' + slot + '-filled');
+      filled.style.display = 'flex';
+      document.getElementById('slot-' + slot + '-img').src = img;
+      document.getElementById('slot-' + slot + '-name').textContent = name;
+      document.getElementById('slot-' + slot + '-price').textContent =
+        price && parseFloat(price) > 0 ? Number(price).toLocaleString('vi-VN') + ' ₫' : '—';
+      document.getElementById('slot-' + slot).classList.add('filled');
+    }
+
+    function clearSlot(slot) {
+      if (selectedItems[slot]) {
+        const id = selectedItems[slot].id;
+        document.querySelectorAll('.tryon-card').forEach(c => {
+          if (c.dataset.id === id) c.classList.remove('selected');
+        });
+        selectedItems[slot] = null;
+      }
+      document.getElementById('slot-' + slot + '-empty').style.display = 'block';
+      document.getElementById('slot-' + slot + '-filled').style.display = 'none';
+      document.getElementById('slot-' + slot).classList.remove('filled');
+    }
+
+    // ── Person upload ─────────────────────────────────
+    function handleStudioUpload(input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+
+      // Preview
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('studioPersonPreview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        document.getElementById('studioUploadLabel').textContent = 'Change photo';
+      };
+      reader.readAsDataURL(file);
+
+      // Upload
+      const csrf = document.querySelector('meta[name="_csrf"]')?.content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+      const formData = new FormData();
+      formData.append('personImage', file);
+
+      const headers = {};
+      if (csrf && csrfHeader) headers[csrfHeader] = csrf;
+
+      fetch('/api/tryon/upload-person', { method: 'POST', body: formData, headers })
+        .then(r => r.json())
+        .then(data => {
+          if (data.personId) {
+            studioPersonId = data.personId;
+          } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+          }
+        })
+        .catch(err => alert('Upload error: ' + err.message));
+    }
+
+    // ── Generate try-on ───────────────────────────────
+    function generateStudioTryOn() {
+      if (!studioPersonId) {
+        alert('Please upload a full-body photo first.');
+        return;
+      }
+
+      // Collect all selected product IDs (upper first, then lower)
+      const productIds = [];
+      if (selectedItems.upper) productIds.push(selectedItems.upper.id);
+      if (selectedItems.lower) productIds.push(selectedItems.lower.id);
+
+      if (productIds.length === 0) {
+        alert('Please select at least one item to try on.');
+        return;
+      }
+
+      const csrf = document.querySelector('meta[name="_csrf"]')?.content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+      // Show loading
+      document.getElementById('studioLoading').style.display = 'block';
+      document.getElementById('studioResult').style.display = 'none';
+      document.getElementById('studioGenerateBtn').disabled = true;
+      document.getElementById('studioGenerateBtn').style.opacity = '0.4';
+
+      // Use single generate for 1 item, outfit endpoint for multiple
+      const formData = new FormData();
+      formData.append('personId', studioPersonId);
+
+      let endpoint;
+      if (productIds.length === 1) {
+        formData.append('productId', productIds[0]);
+        endpoint = '/api/tryon/generate';
+      } else {
+        productIds.forEach(id => formData.append('productIds', id));
+        endpoint = '/api/tryon/generate-outfit';
+      }
+
+      const headers = {};
+      if (csrf && csrfHeader) headers[csrfHeader] = csrf;
+
+      // Update loading text for multi-garment
+      if (productIds.length > 1) {
+        document.querySelector('#studioLoading p').textContent =
+          'Processing ' + productIds.length + ' garments... 60–240 seconds';
+      } else {
+        document.querySelector('#studioLoading p').textContent =
+          'Processing... 30–120 seconds';
+      }
+
+      fetch(endpoint, { method: 'POST', body: formData, headers })
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('studioLoading').style.display = 'none';
+          document.getElementById('studioGenerateBtn').disabled = false;
+          document.getElementById('studioGenerateBtn').style.opacity = '1';
+
+          if (data.resultUrl) {
+            document.getElementById('studioResultImg').src = data.resultUrl + '?t=' + Date.now();
+            document.getElementById('studioResult').style.display = 'block';
+          } else {
+            alert('Error: ' + (data.error || 'Try-on generation failed'));
+          }
+        })
+        .catch(err => {
+          document.getElementById('studioLoading').style.display = 'none';
+          document.getElementById('studioGenerateBtn').disabled = false;
+          document.getElementById('studioGenerateBtn').style.opacity = '1';
+          alert('Connection error: ' + err.message);
+        });
+    }
+  </script>
+</div>
+</html>

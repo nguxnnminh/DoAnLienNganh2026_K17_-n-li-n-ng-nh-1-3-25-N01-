@@ -19,7 +19,7 @@
         <strong>Lỗi:</strong> <span th:text="${error}"></span>
     </div>
 
-    <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data">
+    <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data" id="productForm" data-validate>
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <div style="display:grid; grid-template-columns:1fr 360px; gap:20px; align-items:start;">
@@ -34,6 +34,7 @@
                     <div style="margin-bottom:16px;">
                         <label class="form-label">Tên sản phẩm <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="name" required class="form-control"
+                               data-required="tên sản phẩm"
                                th:value="${productDTO?.name}" placeholder="VD: Áo sơ mi trắng basic">
                     </div>
 
@@ -98,7 +99,7 @@
 
                     <div>
                         <label class="form-label">Danh mục phụ <span style="color:#ef4444;">*</span></label>
-                        <select name="subCategoryId" id="subCategorySelect" disabled class="form-control">
+                        <select name="subCategoryId" id="subCategorySelect" disabled class="form-control" data-required="danh mục phụ">
                             <option value="">Chọn danh mục chính trước</option>
                         </select>
                     </div>
@@ -119,6 +120,29 @@
                     <div id="imagePreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div>
                 </div>
 
+                <!-- VIRTUAL TRY-ON -->
+                <div class="card" style="padding:24px;">
+                    <div class="section-title" style="margin-bottom:12px;">Virtual Try-On (Tùy chọn)</div>
+                    <p style="font-size:11px; color:#9ca3af; margin-bottom:12px;">
+                        Upload ảnh flat-lay (nền trắng) để bật thử đồ AI cho sản phẩm này.
+                    </p>
+
+                    <div style="margin-bottom:12px;">
+                        <label class="form-label">Ảnh Garment (flat-lay)</label>
+                        <input type="file" name="garmentImage" accept="image/*" class="form-control" id="garmentInput" onchange="previewGarment(this)">
+                        <div id="garmentPreview" style="margin-top:8px;"></div>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Loại sản phẩm</label>
+                        <select name="garmentType" class="form-control">
+                            <option value="UPPER_BODY">Áo (Upper Body)</option>
+                            <option value="LOWER_BODY">Quần (Lower Body)</option>
+                            <option value="FULL_BODY">Đầm/Bộ (Full Body)</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- HIỂN THỊ -->
                 <div class="card" style="padding:20px 24px;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -127,9 +151,9 @@
                             <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Sản phẩm sẽ xuất hiện trong shop</div>
                         </div>
                         <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
-                            <input type="checkbox" name="active" checked style="opacity:0; width:0; height:0;">
-                            <span id="toggleSwitch" onclick="toggleSwitch(this)" style="position:absolute;top:0;left:0;right:0;bottom:0;background:#2563eb;border-radius:24px;transition:0.3s;">
-                                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.3s;transform:translateX(20px);"></span>
+                            <input type="checkbox" name="active" id="activeCheckbox" checked style="opacity:0; width:0; height:0;">
+                            <span id="activeTrack" style="position:absolute;top:0;left:0;right:0;bottom:0;background:#2563eb;border-radius:24px;transition:0.25s;">
+                                <span id="activeThumb" style="position:absolute;height:18px;width:18px;left:23px;bottom:3px;background:white;border-radius:50%;transition:0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
                             </span>
                         </label>
                     </div>
@@ -193,6 +217,7 @@
         });
 
         // ===== PRICE FORMAT =====
+        // Format as user types: show dots for thousands
         document.addEventListener('input', function(e){
             if(e.target.classList.contains('price-input')){
                 const raw = e.target.value.replace(/\D/g,'');
@@ -200,8 +225,11 @@
             }
         });
 
-        document.querySelector('form').addEventListener('submit', function(){
-            document.querySelectorAll('.price-input').forEach(i => { i.value = i.value.replace(/\./g,''); });
+        // ===== PRICE STRIP ON SUBMIT =====
+        document.getElementById('productForm').addEventListener('submit', function(){
+            document.querySelectorAll('.price-input').forEach(i => {
+                i.value = i.value.replace(/\D/g, '');
+            });
         });
 
         // ===== IMAGE PREVIEW =====
@@ -220,6 +248,25 @@
             });
             document.getElementById('uploadLabel').style.borderColor = '#2563eb';
         }
+
+        // ===== GARMENT PREVIEW =====
+        function previewGarment(input){
+            const preview = document.getElementById('garmentPreview');
+            preview.innerHTML = '';
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e){
+                    preview.innerHTML = `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // ===== ACTIVE TOGGLE =====
+        document.getElementById('activeCheckbox').addEventListener('change', function() {
+            document.getElementById('activeTrack').style.background = this.checked ? '#2563eb' : '#d1d5db';
+            document.getElementById('activeThumb').style.left = this.checked ? '23px' : '3px';
+        });
     </script>
 
 </div>

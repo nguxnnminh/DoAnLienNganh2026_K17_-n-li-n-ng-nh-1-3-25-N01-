@@ -172,4 +172,21 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
         return findBestSellers(pageable);
     }
 
+    // =====================================================
+    // VIRTUAL TRY-ON: all try-on-enabled products
+    // =====================================================
+    @EntityGraph(attributePaths = {
+        "subCategory",
+        "subCategory.category",
+        "images"
+    })
+    @Query("""
+        SELECT p FROM Product p
+        WHERE p.tryOnEnabled = true
+          AND p.garmentProcessedUrl IS NOT NULL
+          AND p.active = true
+        ORDER BY p.garmentType, p.name
+    """)
+    List<Product> findAllTryOnEnabled();
+
 }

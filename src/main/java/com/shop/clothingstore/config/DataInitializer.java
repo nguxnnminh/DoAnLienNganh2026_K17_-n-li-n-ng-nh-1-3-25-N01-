@@ -1,7 +1,6 @@
 package com.shop.clothingstore.config;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +23,7 @@ import com.shop.clothingstore.repository.SubCategoryRepository;
 import com.shop.clothingstore.repository.UserRepository;
 
 @Configuration
-@Profile("!production") // Không chạy trên production — tránh overwrite dữ liệu thật
+@Profile("!production")
 @SuppressWarnings("unused")
 public class DataInitializer {
 
@@ -42,145 +41,150 @@ public class DataInitializer {
 
             System.out.println(">>> INIT SAMPLE DATA");
 
-            /* ======================
-             * CATEGORY
-             * ====================== */
-            Category top = categoryRepo.findBySlug("top").orElseGet(() -> {
-                Category c = new Category();
-                c.setName("Top");
-                c.setSlug("top");
-                return categoryRepo.save(c);
-            });
+            /* ── CATEGORIES ─────────────────────────────────── */
+            Category top = findOrCreateCategory(categoryRepo, "Top", "top");
+            Category bottom = findOrCreateCategory(categoryRepo, "Bottom", "bottom");
+            Category accessories = findOrCreateCategory(categoryRepo, "Accessories", "accessories");
 
-            Category bottom = categoryRepo.findBySlug("bottom").orElseGet(() -> {
-                Category c = new Category();
-                c.setName("Bottom");
-                c.setSlug("bottom");
-                return categoryRepo.save(c);
-            });
+            /* ── SUB-CATEGORIES ─────────────────────────────── */
+            SubCategory tee = findOrCreateSubCategory(subCategoryRepo, "Tee", "tee", top);
+            SubCategory hoodie = findOrCreateSubCategory(subCategoryRepo, "Hoodie", "hoodie", top);
+            SubCategory shirt = findOrCreateSubCategory(subCategoryRepo, "Shirt", "shirt", top);
+            SubCategory pants = findOrCreateSubCategory(subCategoryRepo, "Pants", "pants", bottom);
+            SubCategory shorts = findOrCreateSubCategory(subCategoryRepo, "Shorts", "shorts", bottom);
+            SubCategory jeans = findOrCreateSubCategory(subCategoryRepo, "Jeans", "jeans", bottom);
+            SubCategory bag = findOrCreateSubCategory(subCategoryRepo, "Bag", "bag", accessories);
+            SubCategory shoes = findOrCreateSubCategory(subCategoryRepo, "Shoes", "shoes", accessories);
+            SubCategory cap = findOrCreateSubCategory(subCategoryRepo, "Cap", "cap", accessories);
 
-            Category accessories = categoryRepo.findBySlug("accessories").orElseGet(() -> {
-                Category c = new Category();
-                c.setName("Accessories");
-                c.setSlug("accessories");
-                return categoryRepo.save(c);
-            });
-            /* ======================
-            * SUB CATEGORY
-            * ====================== */
+            /* ── PRODUCTS ────────────────────────────────────── */
+            // TEE — 4 sản phẩm, giá phổ thông ~ 120k–220k
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Essential Tee", "Áo thun cotton basic, mặc mọi lúc mọi nơi", tee,
+                    new String[]{"XS", "S", "M", "L", "XL"},
+                    new String[]{"White", "Black", "Gray"},
+                    new BigDecimal("129000"));
 
-            // TOP
-            SubCategory tee = createSubCategory(subCategoryRepo, "Tee", "tee", top);
-            SubCategory hoodie = createSubCategory(subCategoryRepo, "Hoodie", "hoodie", top);
-            SubCategory shirt = createSubCategory(subCategoryRepo, "Shirt", "shirt", top);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Graphic Tee", "Áo thun in họa tiết độc quyền", tee,
+                    new String[]{"S", "M", "L", "XL"},
+                    new String[]{"Black", "Navy"},
+                    new BigDecimal("159000"));
 
-            // BOTTOM
-            SubCategory pants = createSubCategory(subCategoryRepo, "Pants", "pants", bottom);
-            SubCategory shorts = createSubCategory(subCategoryRepo, "Shorts", "shorts", bottom);
-            SubCategory jeans = createSubCategory(subCategoryRepo, "Jeans", "jeans", bottom);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Oversized Tee", "Áo thun form rộng streetwear", tee,
+                    new String[]{"S", "M", "L", "XL", "XXL"},
+                    new String[]{"White", "Black", "Beige", "Olive"},
+                    new BigDecimal("189000"));
 
-            // ACCESSORIES
-            SubCategory bag = createSubCategory(subCategoryRepo, "Bag", "bag", accessories);
-            SubCategory shoes = createSubCategory(subCategoryRepo, "Shoes", "shoes", accessories);
-            SubCategory cap = createSubCategory(subCategoryRepo, "Cap", "cap", accessories);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Vintage Tee", "Áo thun phong cách retro wash", tee,
+                    new String[]{"S", "M", "L"},
+                    new String[]{"Sand", "Washed Black"},
+                    new BigDecimal("219000"));
 
-            /* ======================
-            * PRODUCT
-            * ====================== */
-            // ================== TEE (4 products) ==================
-            Product essentialTee = createProductIfNotExists(productRepo,
-                    "Essential Tee", "Áo thun cotton basic", tee);
+            // HOODIE — 2 sản phẩm, giá mid-range 350k–550k
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Fear Hoodie", "Hoodie oversize streetwear nặng 420gsm", hoodie,
+                    new String[]{"S", "M", "L", "XL", "XXL"},
+                    new String[]{"Black", "Charcoal", "Cream"},
+                    new BigDecimal("459000"));
 
-            Product graphicTee = createProductIfNotExists(productRepo,
-                    "Graphic Tee", "Áo thun in họa tiết", tee);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Minimal Hoodie", "Hoodie basic tối giản, chất cotton fleece", hoodie,
+                    new String[]{"XS", "S", "M", "L", "XL"},
+                    new String[]{"White", "Gray", "Black"},
+                    new BigDecimal("349000"));
 
-            Product oversizedTee = createProductIfNotExists(productRepo,
-                    "Oversized Tee", "Áo thun form rộng", tee);
+            // SHIRT — 2 sản phẩm
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Oxford Shirt", "Áo sơ mi Oxford phong cách preppy", shirt,
+                    new String[]{"S", "M", "L", "XL"},
+                    new String[]{"White", "Light Blue", "Pink"},
+                    new BigDecimal("299000"));
 
-            Product vintageTee = createProductIfNotExists(productRepo,
-                    "Vintage Tee", "Áo thun phong cách retro", tee);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Flannel Shirt", "Áo sơ mi flannel kẻ ô mùa thu", shirt,
+                    new String[]{"S", "M", "L", "XL"},
+                    new String[]{"Red Plaid", "Blue Plaid"},
+                    new BigDecimal("339000"));
 
-            // ================== HOODIE (1 product) ==================
-            Product fearHoodie = createProductIfNotExists(productRepo,
-                    "Fear Hoodie", "Hoodie oversize streetwear", hoodie);
+            // PANTS — 3 sản phẩm, giá 250k–450k
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Cargo Pants", "Quần cargo nhiều túi phong cách street", pants,
+                    new String[]{"28", "30", "32", "34", "36"},
+                    new String[]{"Khaki", "Black", "Olive"},
+                    new BigDecimal("389000"));
 
-            // ================== SHIRT (0 product) ==================
-            // ❗ cố tình không thêm sản phẩm cho shirt
-            // ================== PANTS (3 products) ==================
-            Product cargoPants = createProductIfNotExists(productRepo,
-                    "Cargo Pants", "Quần cargo phong cách street", pants);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Jogger Pants", "Quần jogger thể thao co giãn 4 chiều", pants,
+                    new String[]{"S", "M", "L", "XL"},
+                    new String[]{"Black", "Gray", "Navy"},
+                    new BigDecimal("259000"));
 
-            Product joggerPants = createProductIfNotExists(productRepo,
-                    "Jogger Pants", "Quần jogger thể thao", pants);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Wide Leg Pants", "Quần ống rộng high-waist hiện đại", pants,
+                    new String[]{"XS", "S", "M", "L"},
+                    new String[]{"Black", "Camel", "Brown"},
+                    new BigDecimal("429000"));
 
-            Product widePants = createProductIfNotExists(productRepo,
-                    "Wide Pants", "Quần ống rộng hiện đại", pants);
+            // SHORTS — 2 sản phẩm
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Summer Shorts", "Quần short mùa hè thoáng mát", shorts,
+                    new String[]{"S", "M", "L", "XL"},
+                    new String[]{"White", "Navy", "Khaki", "Black"},
+                    new BigDecimal("189000"));
 
-            // ================== SHORTS (1 product) ==================
-            Product summerShorts = createProductIfNotExists(productRepo,
-                    "Summer Shorts", "Quần short mùa hè", shorts);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Mesh Shorts", "Quần short lưới thể thao", shorts,
+                    new String[]{"S", "M", "L", "XL"},
+                    new String[]{"Black", "Gray"},
+                    new BigDecimal("149000"));
 
-            // ================== JEANS (0 product) ==================
-            // ❗ cố tình không thêm sản phẩm cho jeans
-            // ================== BAG (1 product) ==================
-            Product leatherBag = createProductIfNotExists(productRepo,
-                    "Leather Bag", "Túi da tối giản", bag);
+            // JEANS — 2 sản phẩm, giá premium
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Slim Jeans", "Quần jeans slim fit classic", jeans,
+                    new String[]{"28", "30", "32", "34"},
+                    new String[]{"Indigo", "Black", "Light Wash"},
+                    new BigDecimal("549000"));
 
-            // ================== SHOES (2 products) ==================
-            Product sneaker = createProductIfNotExists(productRepo,
-                    "Street Sneaker", "Giày sneaker street style", shoes);
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Baggy Jeans", "Quần jeans baggy vintage 90s", jeans,
+                    new String[]{"28", "30", "32", "34", "36"},
+                    new String[]{"Light Wash", "Dark Wash"},
+                    new BigDecimal("599000"));
 
-            Product boot = createProductIfNotExists(productRepo,
-                    "Combat Boot", "Boot phong cách quân đội", shoes);
+            // BAG — 1 sản phẩm, giá cao
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Tote Bag", "Túi tote canvas tái chế, bền đẹp", bag,
+                    new String[]{"One Size"},
+                    new String[]{"Natural", "Black", "Army Green"},
+                    new BigDecimal("249000"));
 
-            // ================== CAP (0 product) ==================
-            // ❗ cố tình không thêm sản phẩm cho cap
+            // SHOES — 2 sản phẩm, giá cao nhất
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Street Sneaker", "Giày sneaker chunky street style", shoes,
+                    new String[]{"39", "40", "41", "42", "43", "44"},
+                    new String[]{"White", "Black", "Gray"},
+                    new BigDecimal("890000"));
 
-            /* ======================
-            * AUTO CREATE VARIANTS
-            * ====================== */
-            List<Product> allProducts = productRepo.findAll();
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "Combat Boot", "Boot cổ thấp phong cách quân đội", shoes,
+                    new String[]{"39", "40", "41", "42", "43"},
+                    new String[]{"Black", "Brown"},
+                    new BigDecimal("1190000"));
 
-            for (Product product : allProducts) {
+            // CAP — 1 sản phẩm
+            createProductWithVariants(productRepo, variantRepo, imageRepo,
+                    "5-Panel Cap", "Mũ 5 tấm logo thêu minimal", cap,
+                    new String[]{"One Size"},
+                    new String[]{"Black", "White", "Olive", "Navy"},
+                    new BigDecimal("179000"));
 
-                if (variantRepo.findByProduct(product).isEmpty()) {
-
-                    ProductVariant v = new ProductVariant();
-                    v.setProduct(product);
-                    v.setColor("Black");
-                    v.setSize("M");
-                    v.setPrice(new BigDecimal("120000"));
-                    v.setStock(10);
-                    v.setSold(0);
-
-                    variantRepo.save(v);
-                }
-            }
-
-            /* ======================
-            * AUTO CREATE IMAGES
-            * ====================== */
-            for (Product product : productRepo.findAll()) {
-
-                if (imageRepo.findByProduct(product).isEmpty()) {
-
-                    ProductImage img = new ProductImage();
-                    img.setProduct(product);
-                    img.setImageUrl("/images/sample.jpg");
-                    img.setPrimaryImage(true);
-
-                    imageRepo.save(img);
-                }
-            }
-
-            /* ======================
-             * USERS
-             * ====================== */
+            /* ── USERS ──────────────────────────────────────── */
             if (userRepo.findByEmail("user@test.com").isEmpty()) {
-
                 User u = new User();
                 u.setEmail("user@test.com");
-                // Lấy password từ env var DEV_USER_PASSWORD, fallback là chuỗi mạnh hơn
                 String userPass = System.getenv("DEV_USER_PASSWORD");
                 if (userPass == null || userPass.isBlank()) {
                     userPass = "User@Dev2024!";
@@ -190,12 +194,10 @@ public class DataInitializer {
                 u.setFullName("Test User");
                 u.setPhone("0123456789");
                 u.setAddress("Hà Nội");
-
                 userRepo.save(u);
             }
 
             if (userRepo.findByEmail("admin@test.com").isEmpty()) {
-
                 User a = new User();
                 a.setEmail("admin@test.com");
                 String adminPass = System.getenv("DEV_ADMIN_PASSWORD");
@@ -204,7 +206,6 @@ public class DataInitializer {
                 }
                 a.setPassword(passwordEncoder.encode(adminPass));
                 a.setRole(Role.ADMIN);
-
                 userRepo.save(a);
             }
 
@@ -212,15 +213,18 @@ public class DataInitializer {
         };
     }
 
-    /* ======================
-     * HELPER METHODS
-     * ====================== */
-    private SubCategory createSubCategory(
-            SubCategoryRepository repo,
-            String name,
-            String slug,
-            Category category
-    ) {
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    private Category findOrCreateCategory(CategoryRepository repo, String name, String slug) {
+        return repo.findBySlug(slug).orElseGet(() -> {
+            Category c = new Category();
+            c.setName(name);
+            c.setSlug(slug);
+            return repo.save(c);
+        });
+    }
+
+    private SubCategory findOrCreateSubCategory(SubCategoryRepository repo,
+            String name, String slug, Category category) {
         return repo.findBySlug(slug).orElseGet(() -> {
             SubCategory sc = new SubCategory();
             sc.setName(name);
@@ -230,48 +234,96 @@ public class DataInitializer {
         });
     }
 
-    private Product createProductIfNotExists(
-            ProductRepository repo,
-            String name,
-            String description,
-            SubCategory subCategory
-    ) {
+    /**
+     * Creates a product with all size × color combinations if it doesn't exist
+     * yet. minPrice is set correctly after saving all variants.
+     */
+    private void createProductWithVariants(
+            ProductRepository productRepo,
+            ProductVariantRepository variantRepo,
+            ProductImageRepository imageRepo,
+            String name, String description,
+            SubCategory subCategory,
+            String[] sizes, String[] colors,
+            BigDecimal basePrice) {
+
         String baseSlug = toSlug(name);
+        if (productRepo.findBySlug(baseSlug).isPresent()) {
+            return;
+        }
 
-        return repo.findBySlug(baseSlug).orElseGet(() -> {
+        String slug = generateUniqueSlug(productRepo, baseSlug);
 
-            // ❗ CHỈ generate khi cần tạo mới
-            String uniqueSlug = generateUniqueSlug(repo, baseSlug);
+        Product product = new Product();
+        product.setName(name);
+        product.setSlug(slug);
+        product.setDescription(description);
+        product.setActive(true);
+        product.setSubCategory(subCategory);
+        productRepo.save(product);
 
-            Product p = new Product();
-            p.setName(name);
-            p.setSlug(uniqueSlug);
-            p.setDescription(description);
-            p.setActive(true);
-            p.setSubCategory(subCategory);
+        // Create size × color variants with slight price variation by size
+        int variantCount = 0;
+        BigDecimal minCreated = null;
+        for (String size : sizes) {
+            BigDecimal price = adjustPriceForSize(basePrice, size);
+            if (minCreated == null || price.compareTo(minCreated) < 0) {
+                minCreated = price;
+            }
+            for (String color : colors) {
+                ProductVariant v = new ProductVariant();
+                v.setProduct(product);
+                v.setSize(size);
+                v.setColor(color);
+                v.setPrice(price);
+                v.setStock(10 + variantCount % 5);
+                v.setSold(variantCount % 8);
+                variantRepo.save(v);
+                variantCount++;
+            }
+        }
 
-            return repo.save(p);
-        });
+        // Set denormalized minPrice
+        product.setMinPrice(minCreated != null ? minCreated : basePrice);
+        productRepo.save(product);
+
+        // Sample image
+        if (imageRepo.findByProduct(product).isEmpty()) {
+            ProductImage img = new ProductImage();
+            img.setProduct(product);
+            img.setImageUrl("/images/sample.jpg");
+            img.setPrimaryImage(true);
+            imageRepo.save(img);
+        }
+    }
+
+    /**
+     * XL/XXL/Large numeric sizes carry a small 10k surcharge.
+     */
+    private BigDecimal adjustPriceForSize(BigDecimal base, String size) {
+        String s = size.toUpperCase();
+        if (s.equals("XXL") || s.equals("XXXL")) {
+            return base.add(new BigDecimal("20000"));
+        }
+        if (s.equals("XL")) {
+            return base.add(new BigDecimal("10000"));
+        }
+        return base;
     }
 
     private String toSlug(String input) {
         String normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
         String slug = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-        slug = slug.toLowerCase();
-        slug = slug.replaceAll("[^a-z0-9\\s-]", "");
-        slug = slug.replaceAll("\\s+", "-");
+        slug = slug.toLowerCase().replaceAll("[^a-z0-9\\s-]", "").replaceAll("\\s+", "-");
         return slug;
     }
 
     private String generateUniqueSlug(ProductRepository repo, String baseSlug) {
-
         String slug = baseSlug;
         int index = 1;
-
         while (repo.findBySlug(slug).isPresent()) {
             slug = baseSlug + "-" + index++;
         }
-
         return slug;
     }
 }

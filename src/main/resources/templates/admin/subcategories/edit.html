@@ -13,19 +13,20 @@
     <div style="display:grid; grid-template-columns:1fr 280px; gap:20px; align-items:start; max-width:900px;">
 
         <div class="card" style="padding:28px;">
-            <form th:action="@{/admin/subcategories/{id}(id=${subCategory.id})}" method="post">
+            <form th:action="@{/admin/subcategories/{id}(id=${subCategory.id})}" method="post" data-validate>
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div style="display:flex; flex-direction:column; gap:18px;">
 
                     <div>
                         <label class="form-label">Tên danh mục phụ <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="name" class="form-control"
-                               th:value="${subCategory.name}" maxlength="100" required>
+                               data-required="tên danh mục phụ"
+                               th:value="${subCategory.name}" maxlength="100">
                     </div>
 
                     <div>
                         <label class="form-label">Danh mục chính <span style="color:#ef4444;">*</span></label>
-                        <select name="categoryId" class="form-control" required>
+                        <select name="categoryId" class="form-control" data-required="danh mục chính">
                             <option th:each="cat : ${categories}"
                                     th:value="${cat.id}"
                                     th:text="${cat.name}"

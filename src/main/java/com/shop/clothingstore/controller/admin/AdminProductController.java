@@ -130,7 +130,7 @@ public class AdminProductController extends AdminBaseController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            productService.delete(id);
+            productService.deleteProduct(id);
             redirectAttributes.addFlashAttribute(
                     "success",
                     "Xóa sản phẩm thành công!");
@@ -189,6 +189,7 @@ public class AdminProductController extends AdminBaseController {
             model.addAttribute("subCategories", subCategoryService.getAllSubCategories());
             model.addAttribute("existingImages", product.getImages());
             model.addAttribute("productId", id);
+            model.addAttribute("product", product);
             model.addAttribute("selectedCategoryId",
                     product.getSubCategory().getCategory().getId());
 

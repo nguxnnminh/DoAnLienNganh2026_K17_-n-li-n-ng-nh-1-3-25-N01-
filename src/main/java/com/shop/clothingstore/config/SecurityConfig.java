@@ -64,7 +64,8 @@ public class SecurityConfig {
                         "/api/cart/**",
                         "/api/recommendations/**",
                         "/api/chatbot/**",
-                        "/api/coupons/validate"
+                        "/api/coupons/validate",
+                        "/api/tryon/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/orders/checkout").permitAll()
                 .requestMatchers("/api/analytics/**").hasRole("ADMIN")
@@ -94,6 +95,7 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/", "/login", "/register",
                         "/products/**", "/product/**", "/cart/**", "/checkout/**",
+                        "/tryon-studio",
                         "/forgot-password", "/reset-password",
                         "/css/**", "/js/**", "/images/**"
                 ).permitAll()

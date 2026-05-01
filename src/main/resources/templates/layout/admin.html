@@ -634,6 +634,50 @@
             openModal(trigger.getAttribute('data-confirm'), form);
         }
     });
+
+    // ===== GLOBAL FORM VALIDATION =====
+    // Usage: add data-validate to <form>, and data-required="Label" to required inputs/selects
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.hasAttribute('data-validate')) return;
+
+        const errors = [];
+        form.querySelectorAll('[data-required]').forEach(el => {
+            const label = el.getAttribute('data-required');
+            if (el.tagName === 'SELECT') {
+                if (!el.value) errors.push('Chưa chọn ' + label);
+            } else if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                if (!el.value.trim()) errors.push('Chưa nhập ' + label);
+            }
+        });
+
+        if (errors.length === 0) return;
+
+        e.preventDefault();
+
+        // Remove old banner
+        const old = document.getElementById('_vBanner');
+        if (old) old.remove();
+
+        const banner = document.createElement('div');
+        banner.id = '_vBanner';
+        banner.style.cssText = 'background:#fef3c7; border:1px solid #fcd34d; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:13px; color:#92400e; animation:slideInRight 0.3s;';
+        banner.innerHTML = '<strong style="display:block;margin-bottom:6px;">⚠ Vui lòng kiểm tra lại:</strong>' +
+            errors.map(e => '<div style="margin:3px 0 3px 12px;">• ' + e + '</div>').join('');
+
+        // Highlight fields
+        form.querySelectorAll('[data-required]').forEach(el => {
+            el.style.borderColor = '';
+        });
+        form.querySelectorAll('[data-required]').forEach(el => {
+            const label = el.getAttribute('data-required');
+            const isEmpty = el.tagName === 'SELECT' ? !el.value : !el.value.trim();
+            if (isEmpty) el.style.borderColor = '#f59e0b';
+        });
+
+        form.parentElement.insertBefore(banner, form);
+        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 </script>
 
 </body>

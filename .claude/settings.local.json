@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls -la c:\\\\\\\\Users\\\\\\\\ADMIN\\\\\\\\Desktop\\\\\\\\clothingstore\\\\\\\\src\\\\\\\\main\\\\\\\\java\\\\\\\\com\\\\\\\\shop\\\\\\\\clothingstore\\\\\\\\controller\\\\\\\\admin\\\\\\\\)"
+      "Bash(ls -la c:\\\\\\\\Users\\\\\\\\ADMIN\\\\\\\\Desktop\\\\\\\\clothingstore\\\\\\\\src\\\\\\\\main\\\\\\\\java\\\\\\\\com\\\\\\\\shop\\\\\\\\clothingstore\\\\\\\\controller\\\\\\\\admin\\\\\\\\)",
+      "Bash(dir \"c:\\\\Users\\\\ADMIN\\\\Desktop\\\\clothingstore\\\\src\\\\main\\\\resources\")",
+      "Bash(findstr /i wishlist)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\ADMIN\\\\Desktop\\\\clothingstore\\\\src\\\\main\\\\resources\\\\templates\" -Recurse -Filter \"*.html\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

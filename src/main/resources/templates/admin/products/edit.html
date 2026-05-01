@@ -20,10 +20,17 @@
         <span th:text="${error}"></span>
     </div>
 
+    <!-- SUCCESS BANNER -->
+    <div th:if="${success}"
+         style="background:#dcfce7; border:1px solid #bbf7d0; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:14px; color:#166534; display:flex; align-items:center; gap:8px;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span th:text="${success}"></span>
+    </div>
+
     <form th:action="@{/admin/products/{id}(id=${productId})}"
           th:object="${productDTO}"
           method="post"
-          enctype="multipart/form-data">
+          enctype="multipart/form-data" data-validate>
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <!-- TWO-COLUMN LAYOUT -->
@@ -39,6 +46,7 @@
                     <div style="margin-bottom:16px;">
                         <label class="form-label">Tên sản phẩm <span style="color:#ef4444;">*</span></label>
                         <input type="text" th:field="*{name}" class="form-control"
+                               data-required="tên sản phẩm"
                                placeholder="VD: Essential Tee, Cargo Pants...">
                     </div>
 
@@ -126,7 +134,7 @@
 
                     <div>
                         <label class="form-label">Danh mục phụ <span style="color:#ef4444;">*</span></label>
-                        <select th:field="*{subCategoryId}" id="subCategorySelect" class="form-control">
+                        <select th:field="*{subCategoryId}" id="subCategorySelect" class="form-control" data-required="danh mục phụ">
                             <option value="">Chọn danh mục chính trước</option>
                         </select>
                     </div>
@@ -187,6 +195,79 @@
             </div>
         </div>
     </form>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- TRY-ON CARD — MUST be OUTSIDE the product edit form above    -->
+    <!-- to avoid the nested-form HTML bug.                           -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div style="margin-top:24px;">
+        <div class="card" style="padding:24px;">
+            <div class="section-title" style="margin-bottom:16px;">
+                Virtual Try-On
+            </div>
+
+            <!-- Current status -->
+            <div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; font-size:13px;">
+                <span th:if="${product.tryOnEnabled}"
+                      style="background:#dcfce7; color:#166534; padding:4px 12px; border-radius:20px; font-weight:600;">
+                    Try-On: ON
+                </span>
+                <span th:unless="${product.tryOnEnabled}"
+                      style="background:#f3f4f6; color:#6b7280; padding:4px 12px; border-radius:20px; font-weight:600;">
+                    Try-On: OFF
+                </span>
+                <span th:if="${product.garmentProcessedUrl != null}"
+                      style="color:#6b7280;">
+                    Garment: <a th:href="${product.garmentProcessedUrl}" target="_blank" style="color:#3b82f6;">xem ảnh</a>
+                </span>
+                <span th:if="${product.garmentType != null}"
+                      style="color:#6b7280;" th:text="'Loại: ' + ${product.garmentType}">
+                </span>
+            </div>
+
+            <!-- Enable form -->
+            <form th:action="@{/admin/products/{id}/tryon/enable(id=${productId})}"
+                  method="post" enctype="multipart/form-data"
+                  style="display:flex; flex-direction:column; gap:12px;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end;">
+                    <div>
+                        <label class="form-label">Ảnh Garment (flat-lay, nền trắng)</label>
+                        <input type="file" name="garmentImage" accept="image/*" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Loại</label>
+                        <select name="garmentType" class="form-control">
+                            <option value="UPPER_BODY" th:selected="${product.garmentType?.name() == 'UPPER_BODY'}">Áo (Upper Body)</option>
+                            <option value="LOWER_BODY" th:selected="${product.garmentType?.name() == 'LOWER_BODY'}">Quần (Lower Body)</option>
+                            <option value="FULL_BODY"  th:selected="${product.garmentType?.name() == 'FULL_BODY'}">Đầm/Bộ (Full Body)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <button type="submit" class="btn btn-primary" style="font-size:13px;">
+                        Lưu Garment &amp; Bật Try-On
+                    </button>
+                </div>
+            </form>
+
+            <!-- Disable form (only show if currently enabled) -->
+            <form th:if="${product.tryOnEnabled}"
+                  th:action="@{/admin/products/{id}/tryon/disable(id=${productId})}"
+                  method="post" style="margin-top:8px;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="btn btn-sm btn-secondary" style="font-size:12px; color:#ef4444;">
+                    Tắt Try-On
+                </button>
+            </form>
+
+            <p style="font-size:11px; color:#9ca3af; margin:12px 0 0;">
+                Upload ảnh sản phẩm dạng flat-lay (nền trắng). AI sẽ ghép sản phẩm này lên ảnh khách hàng.
+            </p>
+        </div>
+    </div>
 
     <script th:inline="javascript">
         /* ── CATEGORY → SUBCATEGORY ──────────────────────── */
@@ -268,9 +349,9 @@
         document.addEventListener('input', e => {
             if (e.target.classList.contains('price-input')) formatPrice(e.target);
         });
-        document.addEventListener('submit', () => {
+        document.querySelector('form[method="post"]').addEventListener('submit', function() {
             document.querySelectorAll('.price-input').forEach(i => {
-                i.value = i.value.replace(/\./g, '');
+                i.value = i.value.replace(/\D/g, '');
             });
         });
         window.addEventListener('load', () => {

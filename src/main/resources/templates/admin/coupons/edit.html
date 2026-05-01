@@ -15,7 +15,7 @@
 
         <!-- MAIN FORM -->
         <div class="card" style="padding:28px;">
-            <form th:action="@{/admin/coupons/{id}(id=${coupon.id})}" method="post" th:object="${couponDTO}">
+            <form th:action="@{/admin/coupons/{id}(id=${coupon.id})}" method="post" th:object="${couponDTO}" data-validate>
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div style="display:flex; flex-direction:column; gap:20px;">
 
@@ -23,8 +23,9 @@
                         <label class="form-label">Mã coupon <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="code" class="form-control"
                                th:value="*{code}"
+                               data-required="mã coupon"
                                style="font-family:monospace; text-transform:uppercase; letter-spacing:0.08em;"
-                               oninput="this.value=this.value.toUpperCase()" required maxlength="50">
+                               oninput="this.value=this.value.toUpperCase()" maxlength="50">
                     </div>
 
                     <div>
@@ -38,7 +39,7 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div>
                             <label class="form-label">Loại giảm giá <span style="color:#ef4444;">*</span></label>
-                            <select name="discountType" class="form-control" onchange="updateHint(this.value)" required>
+                            <select name="discountType" class="form-control" onchange="updateHint(this.value)" data-required="loại giảm giá">
                                 <option th:each="dt : ${discountTypes}"
                                         th:value="${dt}" th:text="${dt}"
                                         th:selected="*{discountType == dt}"></option>
@@ -48,7 +49,8 @@
                             <label class="form-label">Giá trị giảm <span style="color:#ef4444;">*</span></label>
                             <input type="number" name="discountValue" class="form-control"
                                    th:value="*{discountValue}"
-                                   min="0.01" step="0.01" required>
+                                   data-required="giá trị giảm"
+                                   min="0.01" step="0.01">
                             <p class="form-hint" id="valueHint">Nhập % hoặc số tiền</p>
                         </div>
                     </div>

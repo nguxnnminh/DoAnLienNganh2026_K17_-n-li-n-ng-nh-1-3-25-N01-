@@ -13,6 +13,8 @@ import com.shop.clothingstore.entity.base.SellableItem;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -50,6 +52,17 @@ public class Product extends BaseEntity implements SellableItem {
     private SubCategory subCategory;
 
     private boolean active = true;
+
+    // ================= VIRTUAL TRY-ON =================
+    @Column(name = "try_on_enabled")
+    private boolean tryOnEnabled = false;
+
+    @Column(name = "garment_processed_url")
+    private String garmentProcessedUrl;
+
+    @Column(name = "garment_type")
+    @Enumerated(EnumType.STRING)
+    private GarmentType garmentType;
 
     // Denormalized for efficient sorting — updated whenever variants change.
     // Using a column so Spring Data Pageable can ORDER BY min_price.

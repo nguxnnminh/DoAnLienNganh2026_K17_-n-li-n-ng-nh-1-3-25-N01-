@@ -29,4 +29,9 @@ public class ProductCreateDTO {
     private List<MultipartFile> images = new ArrayList<>();
 
     private Integer primaryImageIndex = 0; // index của ảnh chính
+
+    // Try-On (optional — set during creation)
+    private MultipartFile garmentImage;
+    private String garmentType; // UPPER_BODY, LOWER_BODY, FULL_BODY
 }
+

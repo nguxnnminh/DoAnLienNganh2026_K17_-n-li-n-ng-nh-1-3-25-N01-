@@ -21,6 +21,7 @@ import com.shop.clothingstore.dto.ProductCreateDTO;
 import com.shop.clothingstore.dto.ProductFilterDTO;
 import com.shop.clothingstore.dto.ProductUpdateDTO;
 import com.shop.clothingstore.dto.VariantDTO;
+import com.shop.clothingstore.entity.GarmentType;
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.ProductImage;
 import com.shop.clothingstore.entity.ProductVariant;
@@ -95,6 +96,22 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             saveImages(product, dto.getImages(), dto.getPrimaryImageIndex());
         }
 
+        // Handle Try-On garment image (optional during create)
+        if (dto.getGarmentImage() != null && !dto.getGarmentImage().isEmpty()) {
+            String garmentUrl = fileStorageService.upload(dto.getGarmentImage(), "tryon-garments");
+            product.setGarmentProcessedUrl(garmentUrl);
+            product.setTryOnEnabled(true);
+
+            GarmentType gType = GarmentType.UPPER_BODY;
+            if (dto.getGarmentType() != null) {
+                try {
+                    gType = GarmentType.valueOf(dto.getGarmentType());
+                } catch (IllegalArgumentException ignored) {}
+            }
+            product.setGarmentType(gType);
+            log.info("Try-on enabled during creation | garment={} type={}", garmentUrl, gType);
+        }
+
         try {
             Product saved = save(product);
             log.info("Product created | id={} | name={} | slug={}",
@@ -143,7 +160,20 @@ public class ProductService extends GenericServiceBase<Product, Long> {
         // BUG-01 FIX: use removeImagesByIds() which operates on the backing Set,
         // not getImages() which returns an unmodifiable copy.
         if (dto.getImagesToDelete() != null && !dto.getImagesToDelete().isEmpty()) {
+            // Collect URLs before removal so we can delete files from disk
+            List<String> urlsToDelete = product.getImages().stream()
+                    .filter(img -> dto.getImagesToDelete().contains(img.getId()))
+                    .map(ProductImage::getImageUrl)
+                    .toList();
             product.removeImagesByIds(dto.getImagesToDelete());
+            // Delete physical files
+            for (String url : urlsToDelete) {
+                try {
+                    fileStorageService.delete(url);
+                } catch (IOException e) {
+                    log.warn("Failed to delete image file: {}", url, e);
+                }
+            }
         }
 
         if (dto.getNewImages() != null && !dto.getNewImages().isEmpty()) {
@@ -216,6 +246,27 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     @Transactional
     public void deleteProduct(Long id) {
         log.info("Deleting product | id={}", id);
+
+        // Delete all image files and garment file from disk before removing from DB
+        productRepository.findById(id).ifPresent(product -> {
+            // Product images
+            for (ProductImage img : product.getImages()) {
+                try {
+                    fileStorageService.delete(img.getImageUrl());
+                } catch (IOException e) {
+                    log.warn("Failed to delete image: {}", img.getImageUrl(), e);
+                }
+            }
+            // Garment image (try-on)
+            if (product.getGarmentProcessedUrl() != null) {
+                try {
+                    fileStorageService.delete(product.getGarmentProcessedUrl());
+                } catch (IOException e) {
+                    log.warn("Failed to delete garment: {}", product.getGarmentProcessedUrl(), e);
+                }
+            }
+        });
+
         delete(id);
     }
 

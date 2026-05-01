@@ -12,15 +12,16 @@
 
     <div style="max-width:560px;">
         <div class="card" style="padding:28px;">
-            <form th:action="@{/admin/categories/create}" method="post">
+            <form th:action="@{/admin/categories/create}" method="post" data-validate>
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div style="display:flex; flex-direction:column; gap:18px;">
 
                     <div>
                         <label class="form-label">Tên danh mục <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="name" id="nameInput" class="form-control"
+                               data-required="tên danh mục"
                                placeholder="VD: Top, Bottom, Accessories..."
-                               maxlength="100" oninput="autoSlug(this.value)" required>
+                               maxlength="100" oninput="autoSlug(this.value)">
                     </div>
 
                     <div>

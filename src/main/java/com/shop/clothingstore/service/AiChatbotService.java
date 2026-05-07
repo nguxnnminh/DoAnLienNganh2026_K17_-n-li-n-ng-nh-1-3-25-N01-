@@ -80,7 +80,7 @@ public class AiChatbotService {
 
     public ChatbotResponse processMessage(String userMessage) {
         if (userMessage == null || userMessage.isBlank()) {
-            return ChatbotResponse.text("Xin chào! Mình có thể giúp bạn tìm sản phẩm, tư vấn size, hoặc giải đáp thắc mắc về đơn hàng, vận chuyển, đổi trả. Bạn cần gì ạ?");
+            return ChatbotResponse.text("Hello! I can help you find products, advise on sizing, or answer questions about orders, shipping, and returns. How can I help?");
         }
 
         // Rule-based: handle common questions without AI
@@ -88,12 +88,12 @@ public class AiChatbotService {
         if (ruleResult != null) return ruleResult;
 
         if (!isEnabledAndConfigured()) {
-            return ChatbotResponse.text("Hiện chatbot AI chưa được bật/cấu hình. Bạn có thể hỏi mình về sản phẩm (loại, màu, khoảng giá) để mình gợi ý nhé.");
+            return ChatbotResponse.text("AI chatbot is not enabled/configured. You can ask me about products (type, color, price range) and I'll suggest some options.");
         }
 
         Instant disabledUntil = aiDisabledUntil;
         if (disabledUntil != null && Instant.now().isBefore(disabledUntil)) {
-            return ChatbotResponse.text("Chatbot AI đang tạm thời quá tải. Bạn mô tả giúp mình: loại (áo/quần/phụ kiện), màu và khoảng giá để mình gợi ý sản phẩm nhé.");
+            return ChatbotResponse.text("AI chatbot is temporarily overloaded. Describe what you need — type (top/bottom/accessory), color, and price range — and I'll suggest products.");
         }
 
         String planner = planAction(userMessage);
@@ -102,8 +102,8 @@ public class AiChatbotService {
         if ("best_sellers".equals(plan.intent())) {
             List<Product> products = productRepository.findBestSellers(PageRequest.of(0, clamp(plan.limit(), 1, 8)));
             String msg = products.isEmpty()
-                    ? "Hiện mình chưa có danh sách bán chạy. Bạn muốn mình gợi ý theo loại/màu/giá không?"
-                    : "Đây là một số sản phẩm đang bán chạy tại NOVA:";
+                    ? "No best-seller data available yet. Want me to suggest by type/color/price?"
+                    : "Here are some best-selling products at NOVA:";
             return ChatbotResponse.withProducts(msg, products);
         }
 
@@ -127,9 +127,9 @@ public class AiChatbotService {
                 fallback.setMaxPrice(filter.getMaxPrice());
                 List<Product> fallbackProducts = productService.findWithFilter(fallback, PageRequest.of(0, limit)).getContent();
                 if (!fallbackProducts.isEmpty()) {
-                    return ChatbotResponse.withProducts("Mình không tìm thấy đúng loại đó, nhưng đây là một số sản phẩm tương tự:", fallbackProducts);
+                    return ChatbotResponse.withProducts("Couldn't find that exact type, but here are some similar products:", fallbackProducts);
                 }
-                return ChatbotResponse.text("Mình chưa tìm thấy sản phẩm phù hợp 😔 Bạn thử mô tả theo: loại (áo thun / quần jeans / giày / túi…), màu sắc, và khoảng giá nhé!");
+                return ChatbotResponse.text("No matching products found 😔 Try describing: type (tee / jeans / shoes / bag…), color, and price range!");
             }
 
             String intro = buildSearchIntro(plan, products.size());
@@ -138,7 +138,7 @@ public class AiChatbotService {
 
         String answer = answerGeneral(userMessage);
         if (answer == null || answer.isBlank()) {
-            return ChatbotResponse.text("Mình có thể giúp bạn tìm sản phẩm theo loại, màu, giá. Bạn mô tả nhu cầu để mình gợi ý nhé!");
+            return ChatbotResponse.text("I can help you find products by type, color, or price. Describe what you're looking for and I'll suggest some options!");
         }
         return ChatbotResponse.text(answer);
     }
@@ -152,7 +152,7 @@ public class AiChatbotService {
 
         // ── Greeting ──────────────────────────────────────────────────────────
         if (containsAny(msg, "xin chao", "chào", "hello", "hi", "hey", "alo", "helo")) {
-            return ChatbotResponse.text("Xin chào! Mình là trợ lý của NOVA 👋 Bạn cần tìm sản phẩm, hỏi về size, vận chuyển hay đổi trả? Cứ hỏi mình nhé!");
+            return ChatbotResponse.text("Hello! I'm NOVA's assistant 👋 Looking for products, size advice, shipping info, or return policy? Just ask!");
         }
 
         // ── Shipping ──────────────────────────────────────────────────────────
@@ -160,11 +160,11 @@ public class AiChatbotService {
                 "phi ship", "phí ship", "free ship", "bao lau", "bao lâu", "khi nao", "khi nào",
                 "thoi gian giao", "thời gian giao", "nhan hang", "nhận hàng")) {
             return ChatbotResponse.text("""
-                    📦 Thông tin vận chuyển tại NOVA:
-                    • Miễn phí ship cho đơn hàng từ 500.000₫ trở lên.
-                    • Đơn dưới 500k: phí ship tính theo khu vực.
-                    • Thời gian giao hàng: 2–4 ngày làm việc (nội thành), 3–6 ngày (tỉnh thành khác).
-                    • Hiện chỉ giao hàng trong nước Việt Nam.
+                    📦 NOVA Shipping Info:
+                    • Free shipping on orders from 500,000₫ and above.
+                    • Orders under 500,000₫: flat 30,000₫ shipping fee.
+                    • Delivery time: 2–4 business days (city), 3–6 days (other provinces).
+                    • Currently ships within Vietnam only.
                     """.strip());
         }
 
@@ -173,11 +173,11 @@ public class AiChatbotService {
                 "chinh sach", "chính sách", "refund", "return", "doi hang", "đổi hàng",
                 "khieu nai", "khiếu nại", "bao hanh", "bảo hành")) {
             return ChatbotResponse.text("""
-                    🔄 Chính sách đổi trả tại NOVA:
-                    • Đổi trả miễn phí trong vòng 14 ngày kể từ khi nhận hàng.
-                    • Sản phẩm phải còn nguyên tem, chưa qua sử dụng, còn đầy đủ hộp.
-                    • Các lỗi do nhà sản xuất được đổi trả 100%.
-                    • Để đổi trả, bạn vào mục "Đơn hàng của tôi" trên website và làm theo hướng dẫn.
+                    🔄 NOVA Return & Refund Policy:
+                    • Free returns within 14 days of receiving your order.
+                    • Items must be unused, with tags intact and original packaging.
+                    • Manufacturing defects are eligible for 100% exchange/refund.
+                    • To return, go to "My Orders" on the website and follow the instructions.
                     """.strip());
         }
 
@@ -186,13 +186,13 @@ public class AiChatbotService {
                 "size chart", "bang size", "bảng size", "fit", "rong", "rộng", "chat", "chật",
                 "m la", "l la", "xl la", "xxl", "size nao", "size nào")) {
             return ChatbotResponse.text("""
-                    📏 Hướng dẫn chọn size NOVA:
-                    • S  → phù hợp 48–55 kg, cao 155–165 cm
-                    • M  → phù hợp 55–65 kg, cao 163–170 cm
-                    • L  → phù hợp 65–75 kg, cao 168–175 cm
-                    • XL → phù hợp 75–85 kg, cao 173–180 cm
-                    • XXL→ phù hợp 85–95 kg, cao 178–185 cm
-                    Nếu bạn đang phân vân giữa 2 size, mình gợi ý chọn size lớn hơn để mặc thoải mái hơn nhé!
+                    📏 NOVA Size Guide:
+                    • S   → 48–55 kg, height 155–165 cm
+                    • M   → 55–65 kg, height 163–170 cm
+                    • L   → 65–75 kg, height 168–175 cm
+                    • XL  → 75–85 kg, height 173–180 cm
+                    • XXL → 85–95 kg, height 178–185 cm
+                    If you're between two sizes, we recommend sizing up for a more comfortable fit!
                     """.strip());
         }
 
@@ -201,10 +201,10 @@ public class AiChatbotService {
                 "chuyen khoan", "chuyển khoản", "atm", "the tin dung", "thẻ tín dụng",
                 "momo", "zalopay", "vnpay", "banking")) {
             return ChatbotResponse.text("""
-                    💳 Phương thức thanh toán tại NOVA:
-                    • Thanh toán khi nhận hàng (COD).
-                    • Chuyển khoản ngân hàng.
-                    Mình sẽ bổ sung thêm cổng thanh toán online trong thời gian tới!
+                    💳 NOVA Payment Methods:
+                    • Cash on delivery (COD).
+                    • Bank transfer.
+                    More online payment options coming soon!
                     """.strip());
         }
 
@@ -212,10 +212,10 @@ public class AiChatbotService {
         if (containsAny(msg, "ma giam gia", "mã giảm giá", "coupon", "discount", "khuyen mai", "khuyến mãi",
                 "giam gia", "giảm giá", "sale", "uu dai", "ưu đãi", "voucher", "promo")) {
             return ChatbotResponse.text("""
-                    🎁 Mã giảm giá & khuyến mãi NOVA:
-                    • Bạn có thể nhập mã giảm giá ở bước Checkout.
-                    • Theo dõi NOVA trên mạng xã hội để cập nhật mã ưu đãi mới nhất.
-                    • Đơn hàng đầu tiên thường có ưu đãi đặc biệt — đăng ký tài khoản để nhận!
+                    🎁 NOVA Coupons & Promotions:
+                    • Enter your coupon code at Checkout.
+                    • Follow NOVA on social media for the latest discount codes.
+                    • First orders often include a special offer — create an account to claim it!
                     """.strip());
         }
 
@@ -224,11 +224,11 @@ public class AiChatbotService {
                 "vai", "vải", "hang that", "hàng thật", "hang chinh hang", "hàng chính hãng",
                 "hang fake", "nhu the nao", "như thế nào", "co tot", "có tốt")) {
             return ChatbotResponse.text("""
-                    ✨ Về chất lượng sản phẩm NOVA:
-                    • Sản phẩm sử dụng vải cotton cao cấp, garment-dyed, bền màu.
-                    • Thiết kế minimal, form oversized – phù hợp phong cách thời thượng.
-                    • 100% hàng chính hãng, được kiểm tra chất lượng trước khi xuất kho.
-                    • Cam kết đổi trả nếu phát hiện lỗi sản xuất.
+                    ✨ NOVA Product Quality:
+                    • Premium garment-dyed cotton fabric, color-fast and durable.
+                    • Minimal design, oversized fit — perfect for a modern aesthetic.
+                    • 100% authentic products, quality-checked before dispatch.
+                    • Full exchange/refund guaranteed for manufacturing defects.
                     """.strip());
         }
 
@@ -237,17 +237,17 @@ public class AiChatbotService {
                 "offline", "den truc tiep", "đến trực tiếp", "lien he", "liên hệ",
                 "contact", "ho tro", "hỗ trợ", "cskh", "hotline")) {
             return ChatbotResponse.text("""
-                    📍 Về NOVA:
-                    • Hiện NOVA hoạt động online tại website này.
-                    • Để được hỗ trợ trực tiếp, bạn có thể liên hệ qua mạng xã hội của NOVA.
-                    • Mình (chatbot) có thể giúp bạn tìm sản phẩm, tư vấn size và giải đáp thắc mắc ngay tại đây!
+                    📍 About NOVA:
+                    • NOVA currently operates online through this website.
+                    • For direct support, reach us via NOVA's social media channels.
+                    • I (chatbot) can help you find products, advise on sizing, and answer questions right here!
                     """.strip());
         }
 
         // ── Order status ──────────────────────────────────────────────────────
         if (containsAny(msg, "don hang", "đơn hàng", "order", "trang thai", "trạng thái",
                 "theo doi", "theo dõi", "tracking", "da dat", "đã đặt", "khi nao den", "khi nào đến")) {
-            return ChatbotResponse.text("Để kiểm tra trạng thái đơn hàng, bạn vào mục \"Đơn hàng của tôi\" sau khi đăng nhập nhé! Nếu có vấn đề bất thường, bạn mô tả thêm để mình hỗ trợ.");
+            return ChatbotResponse.text("To check your order status, go to \"My Orders\" after logging in. If something looks wrong, describe the issue and I'll help you.");
         }
 
         // ── Best sellers / trending ───────────────────────────────────────────

@@ -60,7 +60,7 @@ public class CouponApiController {
 
         if (coupon == null) {
             return ResponseEntity.ok(new CouponValidationResponse(
-                    false, "Mã giảm giá không hợp lệ hoặc đã hết hạn", null, null, null));
+                    false, "Invalid or expired coupon code", null, null, null));
         }
 
         BigDecimal discountedTotal = coupon.applyDiscount(request.getOrderTotal());
@@ -69,7 +69,7 @@ public class CouponApiController {
 
         return ResponseEntity.ok(new CouponValidationResponse(
                 true,
-                "Mã giảm giá hợp lệ",
+                "Valid coupon code",
                 coupon.getDiscountValue(),
                 discountedTotal,
                 savedAmount
@@ -79,10 +79,10 @@ public class CouponApiController {
     @Data
     public static class ValidateRequest {
 
-        @NotBlank(message = "Ma coupon khong duoc trong")
+        @NotBlank(message = "Coupon code is required")
         private String code;
 
-        @NotNull(message = "Tong tien khong duoc null")
+        @NotNull(message = "Order total is required")
         @PositiveOrZero
         private BigDecimal orderTotal;
     }

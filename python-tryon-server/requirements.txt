@@ -1,5 +1,32 @@
+# ── Web server ─────────────────────────────────────────────
 fastapi==0.115.12
 uvicorn==0.34.3
 python-multipart==0.0.20
-Pillow==11.1.0
-gradio_client>=1.5.0
+
+# ── Image processing ────────────────────────────────────────
+Pillow>=9.4.0
+numpy==1.24.4
+
+# ── Garment background removal ──────────────────────────────
+rembg>=2.0.50
+
+# ── OOTDiffusion core dependencies (from OOTDiffusion/requirements.txt) ──
+# Install PyTorch FIRST with the correct CUDA version for your GPU:
+#   pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
+# Then install the rest:
+scipy==1.10.1
+scikit-image==0.21.0
+opencv-python==4.7.0.72
+diffusers==0.27.2
+transformers==4.44.2
+accelerate==0.33.0
+matplotlib==3.7.4
+tqdm==4.64.1
+einops==0.7.0
+onnxruntime==1.16.2
+
+# ── HuggingFace CLI (for downloading checkpoints once) ──────
+huggingface_hub>=0.22.0
+
+# ── NO gradio_client dependency — we no longer use HF Spaces ──
+basicsr==1.4.2

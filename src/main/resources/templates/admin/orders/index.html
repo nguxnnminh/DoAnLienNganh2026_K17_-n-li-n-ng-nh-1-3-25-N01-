@@ -6,26 +6,56 @@
     <!-- PAGE HEADER -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Đơn hàng</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Orders</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">
-                Tổng <strong th:text="${orders?.totalElements ?: 0}" style="color:#374151;">0</strong> đơn hàng
+                Total <strong th:text="${orders?.totalElements ?: 0}" style="color:#374151;">0</strong> orders
             </p>
         </div>
     </div>
 
-    <!-- STATUS FILTER TABS -->
+    <!-- SEARCH + FILTER BAR -->
+    <form th:action="@{/admin/orders}" method="get" style="margin-bottom:16px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+
+            <!-- Keyword search -->
+            <div style="flex:1; min-width:180px; max-width:280px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Search</label>
+                <input type="text" name="keyword" th:value="${keyword}"
+                       placeholder="Name, phone, order ID…"
+                       class="form-control">
+            </div>
+
+            <!-- Date From -->
+            <div style="min-width:140px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">From</label>
+                <input type="date" name="dateFrom" th:value="${dateFrom}" class="form-control">
+            </div>
+
+            <!-- Date To -->
+            <div style="min-width:140px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Big</label>
+                <input type="date" name="dateTo" th:value="${dateTo}" class="form-control">
+            </div>
+
+            <div style="display:flex; gap:8px; align-items:flex-end; padding-bottom:1px;">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a th:href="@{/admin/orders}" class="btn btn-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- STATUS FILTER TABS — preserve search params -->
     <div style="display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap;">
-        <a th:href="@{/admin/orders}"
+        <a th:href="@{/admin/orders(keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
            style="padding:7px 16px; border-radius:20px; font-size:13px; font-weight:500; text-decoration:none; border:1px solid;"
-           th:classappend="${param.status == null} ? ' bg-blue-600 text-white border-blue-600' : ' bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
-           th:style="${param.status == null} ? 'background:#2563eb;color:white;border-color:#2563eb;' : 'background:white;color:#4b5563;border-color:#e5e7eb;'">
-            Tất cả
+           th:style="${status == null} ? 'background:#2563eb;color:white;border-color:#2563eb;' : 'background:white;color:#4b5563;border-color:#e5e7eb;'">
+            All
         </a>
         <th:block th:each="s : ${statuses}">
-            <a th:href="@{/admin/orders(status=${s.name()})}"
+            <a th:href="@{/admin/orders(status=${s.name()}, keyword=${keyword}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
                th:text="${s.name()}"
                style="padding:7px 16px; border-radius:20px; font-size:13px; font-weight:500; text-decoration:none; border:1px solid;"
-               th:style="${param.status == s.name()} ? 'background:#2563eb;color:white;border-color:#2563eb;' : 'background:white;color:#4b5563;border-color:#e5e7eb;'"></a>
+               th:style="${status == s.name()} ? 'background:#2563eb;color:white;border-color:#2563eb;' : 'background:white;color:#4b5563;border-color:#e5e7eb;'"></a>
         </th:block>
     </div>
 
@@ -35,13 +65,13 @@
             <table class="data-table" style="min-width:780px;">
                 <thead>
                     <tr>
-                        <th style="width:80px;">Mã ĐH</th>
-                        <th>Khách hàng</th>
-                        <th>Địa chỉ</th>
-                        <th style="text-align:right;">Tổng tiền</th>
-                        <th style="text-align:center;">Trạng thái</th>
-                        <th style="text-align:center;">Ngày tạo</th>
-                        <th style="text-align:center;">Thao tác</th>
+                        <th style="width:80px;">Order #</th>
+                        <th>Customer</th>
+                        <th>Address</th>
+                        <th style="text-align:right;">Total</th>
+                        <th style="text-align:center;">Status</th>
+                        <th style="text-align:center;">Date</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,7 +83,7 @@
                         </td>
                         <td>
                             <div style="font-weight:500;"
-                                 th:text="${o.customerName ?: (o.actor?.fullName ?: 'Khách vãng lai')}"></div>
+                                 th:text="${o.customerName ?: (o.actor?.fullName ?: 'Guest')}"></div>
                             <div style="font-size:12px; color:#9ca3af;"
                                  th:text="${o.actor?.email ?: (o.phone ?: '')}"></div>
                         </td>
@@ -64,17 +94,19 @@
                         </td>
                         <td style="text-align:center;">
                             <span class="badge"
-                                  th:classappend="${o.status?.name() == 'PENDING' ? ' badge-yellow' :
-                                                   o.status?.name() == 'PROCESSING' ? ' badge-blue' :
-                                                   o.status?.name() == 'SHIPPING' ? ' badge-indigo' :
-                                                   o.status?.name() == 'COMPLETED' ? ' badge-green' : ' badge-red'}"
+                                  th:classappend="${o.status?.name() == 'PENDING'           ? ' badge-yellow' :
+                                                   o.status?.name() == 'PROCESSING'        ? ' badge-blue'   :
+                                                   o.status?.name() == 'SHIPPING'          ? ' badge-indigo' :
+                                                   o.status?.name() == 'COMPLETED'         ? ' badge-green'  :
+                                                   o.status?.name() == 'CANCEL_REQUESTED'  ? ' badge-yellow' : ' badge-red'}"
+                                  th:style="${o.status?.name() == 'CANCEL_REQUESTED'} ? 'background:#fffbeb;color:#92400e;border-color:#fde68a;' : ''"
                                   th:text="${o.status}"></span>
                         </td>
                         <td style="text-align:center; font-size:12px; color:#6b7280; white-space:nowrap;"
                             th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
                         <td style="text-align:center;">
                             <a th:href="@{/admin/orders/{id}(id=${o.id})}" class="btn btn-sm btn-secondary">
-                                Chi tiết
+                                View
                             </a>
                         </td>
                     </tr>
@@ -83,32 +115,45 @@
                             <div style="margin-bottom:8px;">
                                 <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto;display:block;opacity:0.4;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                             </div>
-                            Chưa có đơn hàng nào.
+                            No orders found.
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- PAGINATION -->
+        <!-- PAGINATION — window of ±2, preserves all filter params -->
         <div th:if="${orders != null and orders.totalPages > 1}"
              style="padding:16px 20px; border-top:1px solid #f3f4f6; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <div style="font-size:13px; color:#9ca3af;">
-                Trang <strong style="color:#374151;" th:text="${orders.number + 1}"></strong> /
+                Page <strong style="color:#374151;" th:text="${orders.number + 1}"></strong> /
                 <span th:text="${orders.totalPages}"></span>
+                &nbsp;·&nbsp;<span th:text="${orders.totalElements}"></span> orders
             </div>
             <div class="pagination">
                 <a th:if="${orders.number > 0}"
-                   th:href="@{/admin/orders(page=${orders.number - 1})}"
+                   th:href="@{/admin/orders(page=${orders.number - 1}, keyword=${keyword}, status=${status}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
                    class="page-btn">←</a>
-                <th:block th:each="i : ${#numbers.sequence(0, orders.totalPages - 1)}">
-                    <a th:href="@{/admin/orders(page=${i})}"
+
+                <a th:if="${pageWindowStart > 0}"
+                   th:href="@{/admin/orders(page=0, keyword=${keyword}, status=${status}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="page-btn">1</a>
+                <span th:if="${showStartEllipsis}" class="page-btn" style="border:none;cursor:default;color:#9ca3af;">…</span>
+
+                <th:block th:each="i : ${#numbers.sequence(pageWindowStart, pageWindowEnd)}">
+                    <a th:href="@{/admin/orders(page=${i}, keyword=${keyword}, status=${status}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
                        th:text="${i + 1}"
                        class="page-btn"
                        th:classappend="${i == orders.number} ? ' active' : ''"></a>
                 </th:block>
+
+                <span th:if="${showEndEllipsis}" class="page-btn" style="border:none;cursor:default;color:#9ca3af;">…</span>
+                <a th:if="${pageWindowEnd < orders.totalPages - 1}"
+                   th:href="@{/admin/orders(page=${orders.totalPages - 1}, keyword=${keyword}, status=${status}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
+                   class="page-btn" th:text="${orders.totalPages}"></a>
+
                 <a th:if="${orders.number < orders.totalPages - 1}"
-                   th:href="@{/admin/orders(page=${orders.number + 1})}"
+                   th:href="@{/admin/orders(page=${orders.number + 1}, keyword=${keyword}, status=${status}, dateFrom=${dateFrom}, dateTo=${dateTo})}"
                    class="page-btn">→</a>
             </div>
         </div>

@@ -4,11 +4,11 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Sửa mã giảm giá</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Edit Coupon</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;"
-               th:text="'Mã: ' + ${coupon.code} + '  ·  ID #' + ${coupon.id}"></p>
+               th:text="'Code: ' + ${coupon.code} + '  ·  ID #' + ${coupon.id}"></p>
         </div>
-        <a th:href="@{/admin/coupons}" class="btn btn-secondary">← Quay lại</a>
+        <a th:href="@{/admin/coupons}" class="btn btn-secondary">← Back</a>
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; max-width:960px;">
@@ -20,64 +20,64 @@
                 <div style="display:flex; flex-direction:column; gap:20px;">
 
                     <div>
-                        <label class="form-label">Mã coupon <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Coupon Code <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="code" class="form-control"
                                th:value="*{code}"
-                               data-required="mã coupon"
+                               data-required="coupon code"
                                style="font-family:monospace; text-transform:uppercase; letter-spacing:0.08em;"
                                oninput="this.value=this.value.toUpperCase()" maxlength="50">
                     </div>
 
                     <div>
-                        <label class="form-label">Mô tả</label>
+                        <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" rows="2"
                                   th:text="*{description}"
-                                  placeholder="Mô tả hiển thị cho khách hàng"
+                                  placeholder="Customer-facing description"
                                   maxlength="255"></textarea>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div>
-                            <label class="form-label">Loại giảm giá <span style="color:#ef4444;">*</span></label>
-                            <select name="discountType" class="form-control" onchange="updateHint(this.value)" data-required="loại giảm giá">
+                            <label class="form-label">Discount Type <span style="color:#ef4444;">*</span></label>
+                            <select name="discountType" class="form-control" onchange="updateHint(this.value)" data-required="discount type">
                                 <option th:each="dt : ${discountTypes}"
                                         th:value="${dt}" th:text="${dt}"
                                         th:selected="*{discountType == dt}"></option>
                             </select>
                         </div>
                         <div>
-                            <label class="form-label">Giá trị giảm <span style="color:#ef4444;">*</span></label>
+                            <label class="form-label">Discount Value <span style="color:#ef4444;">*</span></label>
                             <input type="number" name="discountValue" class="form-control"
                                    th:value="*{discountValue}"
-                                   data-required="giá trị giảm"
+                                   data-required="discount value"
                                    min="0.01" step="0.01">
-                            <p class="form-hint" id="valueHint">Nhập % hoặc số tiền</p>
+                            <p class="form-hint" id="valueHint">Enter % or amount</p>
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div>
-                            <label class="form-label">Đơn hàng tối thiểu (₫)</label>
+                            <label class="form-label">Min. Order (₫)</label>
                             <input type="number" name="minOrderAmount" class="form-control"
                                    th:value="*{minOrderAmount}"
                                    placeholder="0" min="0" step="1000">
                         </div>
                         <div>
-                            <label class="form-label">Giới hạn lượt dùng</label>
+                            <label class="form-label">Usage Limit</label>
                             <input type="number" name="usageLimit" class="form-control"
                                    th:value="*{usageLimit}"
-                                   placeholder="Không giới hạn" min="1">
+                                   placeholder="Unlimited" min="1">
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                         <div>
-                            <label class="form-label">Ngày bắt đầu</label>
+                            <label class="form-label">Start Date</label>
                             <input type="datetime-local" name="startDate" class="form-control"
                                    th:value="*{startDate}">
                         </div>
                         <div>
-                            <label class="form-label">Ngày hết hạn</label>
+                            <label class="form-label">Expiry Date</label>
                             <input type="datetime-local" name="expiryDate" class="form-control"
                                    th:value="*{expiryDate}">
                         </div>
@@ -85,8 +85,8 @@
 
                     <div style="display:flex; align-items:center; justify-content:space-between; background:#f9fafb; padding:14px 16px; border-radius:8px; border:1px solid #e5e7eb;">
                         <div>
-                            <div style="font-size:14px; font-weight:500;">Kích hoạt</div>
-                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Coupon có hiệu lực hay không</div>
+                            <div style="font-size:14px; font-weight:500;">Active</div>
+                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Whether coupon is active or not</div>
                         </div>
                         <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
                             <input type="checkbox" name="active" value="true" id="activeCheck"
@@ -103,10 +103,10 @@
                     <div class="divider"></div>
 
                     <div style="display:flex; justify-content:flex-end; gap:10px;">
-                        <a th:href="@{/admin/coupons}" class="btn btn-secondary">Hủy</a>
+                        <a th:href="@{/admin/coupons}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Lưu thay đổi
+                            Save Changes
                         </button>
                     </div>
                 </div>
@@ -116,37 +116,37 @@
         <!-- INFO PANEL -->
         <div style="display:flex; flex-direction:column; gap:14px;">
             <div class="card" style="padding:20px;">
-                <div class="section-title">Thống kê sử dụng</div>
+                <div class="section-title">Usage Statistics</div>
                 <div style="font-size:13px; color:#6b7280; line-height:1.7;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <span>Đã dùng:</span>
+                        <span>Used:</span>
                         <strong style="color:#374151;" th:text="${coupon.usageCount}">0</strong>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <span>Giới hạn:</span>
+                        <span>Limit:</span>
                         <strong style="color:#374151;" th:text="${coupon.usageLimit != null ? coupon.usageLimit : '∞'}">∞</strong>
                     </div>
                     <div style="display:flex; justify-content:space-between;">
-                        <span>Tạo lúc:</span>
+                        <span>Created:</span>
                         <span th:text="${#temporals.format(coupon.createdAt, 'dd/MM/yyyy')}">—</span>
                     </div>
                 </div>
             </div>
 
             <div class="card" style="padding:20px; border-color:#fecaca;">
-                <div class="section-title" style="color:#dc2626;">Vùng nguy hiểm</div>
+                <div class="section-title" style="color:#dc2626;">Danger Zone</div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <form th:action="@{/admin/coupons/{id}/toggle(id=${coupon.id})}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit" class="btn btn-secondary" style="width:100%; justify-content:center; font-size:13px;"
-                                th:text="${coupon.active} ? 'Vô hiệu hóa coupon' : 'Kích hoạt lại coupon'"></button>
+                                th:text="${coupon.active} ? 'Disable coupon' : 'Re-enable coupon'"></button>
                     </form>
                     <form th:action="@{/admin/coupons/{id}/delete(id=${coupon.id})}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit" class="btn btn-danger" style="width:100%; justify-content:center;"
-                                data-confirm="Xóa vĩnh viễn mã coupon này?">
+                                data-confirm="Permanently delete this coupon?">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            Xóa mã coupon
+                            Delete Coupon
                         </button>
                     </form>
                 </div>
@@ -157,8 +157,8 @@
     <script>
         function updateHint(type) {
             const hint = document.getElementById('valueHint');
-            if (type === 'PERCENTAGE') hint.textContent = 'Nhập % (VD: 10 = giảm 10%)';
-            else if (type === 'FIXED') hint.textContent = 'Nhập số tiền VND (VD: 50000)';
+            if (type === 'PERCENTAGE') hint.textContent = 'Enter % (e.g. 10 = 10% off)';
+            else if (type === 'FIXED') hint.textContent = 'Enter VND amount (e.g. 50000)';
         }
         document.getElementById('activeCheck').addEventListener('change', function() {
             const track = document.getElementById('toggleTrack');

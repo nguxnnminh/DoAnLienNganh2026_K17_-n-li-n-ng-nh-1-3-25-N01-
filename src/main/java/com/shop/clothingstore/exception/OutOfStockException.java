@@ -1,22 +1,9 @@
 package com.shop.clothingstore.exception;
 
-public class OutOfStockException extends RuntimeException {
-
-    private final String productName;
-    private final int availableStock;
-
-    public OutOfStockException(String productName, int availableStock) {
-        super("Không đủ tồn kho cho sản phẩm: " + productName
-                + ". Còn lại: " + availableStock);
-        this.productName = productName;
-        this.availableStock = availableStock;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public int getAvailableStock() {
-        return availableStock;
+public class OutOfStockException extends AppException {
+    public OutOfStockException(String productName, String size, String color) {
+        super(String.format(
+            "Sản phẩm '%s' (%s / %s) không đủ số lượng trong kho. Vui lòng giảm số lượng.",
+            productName, size, color));
     }
 }

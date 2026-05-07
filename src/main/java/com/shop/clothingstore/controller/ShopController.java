@@ -1,7 +1,6 @@
 package com.shop.clothingstore.controller;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -25,7 +24,9 @@ import com.shop.clothingstore.dto.ProductFilterDTO;
 import com.shop.clothingstore.dto.VariantDTO;
 import com.shop.clothingstore.entity.Category;
 import com.shop.clothingstore.entity.Product;
+import com.shop.clothingstore.entity.Review;
 import com.shop.clothingstore.entity.SubCategory;
+import com.shop.clothingstore.exception.ProductNotFoundException;
 import com.shop.clothingstore.service.CategoryService;
 import com.shop.clothingstore.service.ProductService;
 import com.shop.clothingstore.service.RecommendationService;
@@ -66,47 +67,42 @@ public class ShopController {
     // =====================================================
     @GetMapping("/")
     public String home(Model model) {
-        List<Product> homeProducts = new ArrayList<>();
-        homeProducts.addAll(productService.findTopByCategorySlug("top", PageRequest.of(0, 1)).getContent());
-        homeProducts.addAll(productService.findTopByCategorySlug("bottom", PageRequest.of(0, 1)).getContent());
-        homeProducts.addAll(productService.findTopByCategorySlug("accessories", PageRequest.of(0, 1)).getContent());
-        model.addAttribute("homeProducts", homeProducts);
-        model.addAttribute("bestSellers", homeProducts);
+        // Best sellers: 1 top-selling product per category (top / bottom / accessories)
+        List<Product> bestSellers = new java.util.ArrayList<>();
+        productService.findBestSellerByCategorySlug("top")        .ifPresent(bestSellers::add);
+        productService.findBestSellerByCategorySlug("bottom")     .ifPresent(bestSellers::add);
+        productService.findBestSellerByCategorySlug("accessories").ifPresent(bestSellers::add);
+        model.addAttribute("bestSellers", bestSellers);
         return "shop/home";
     }
 
     // =====================================================
     // SORT HELPER
-    // price_asc / price_desc sort on the denormalized minPrice column
-    // (computed from variants and stored on the product row).
-    // best_seller sorts by totalSold which is also a computed helper —
-    // for proper DB-level sorting a denormalized column would be needed;
-    // fall back to newest for now.
     // =====================================================
     private Pageable buildPageable(int page, String sort) {
-        Sort sortObj;
-        if (sort == null) {
-            sortObj = Sort.by("id").descending();
-        } else {
-            switch (sort) {
-                case "price_asc":
-                    sortObj = Sort.by("minPrice").ascending();
-                    break;
-                case "price_desc":
-                    sortObj = Sort.by("minPrice").descending();
-                    break;
-                case "best_seller":
-                    // totalSold is computed from variants; minPrice is the only
-                    // reliable denormalized sortable column. Use it as proxy.
-                    sortObj = Sort.by("id").descending();
-                    break;
-                case "newest":
-                default:
-                    sortObj = Sort.by("id").descending();
-                    break;
-            }
-        }
+        Sort sortObj = switch (sort != null ? sort : "newest") {
+            case "price_asc"   -> Sort.by("minPrice").ascending();
+            case "price_desc"  -> Sort.by("minPrice").descending();
+            case "best_seller" -> Sort.by("totalSold").descending();
+            default            -> Sort.by("id").descending();
+        };
         return PageRequest.of(page, 12, sortObj);
+    }
+
+    // =====================================================
+    // PAGINATION WINDOW HELPER
+    // Computes a ±2 window around the current page so the
+    // template never renders more than 7 page buttons.
+    // =====================================================
+    private void addPaginationWindow(Model model, Page<?> page) {
+        int current     = page.getNumber();
+        int total       = page.getTotalPages();
+        int windowStart = Math.max(0, current - 2);
+        int windowEnd   = Math.min(total - 1, current + 2);
+        model.addAttribute("pageWindowStart",    windowStart);
+        model.addAttribute("pageWindowEnd",      windowEnd);
+        model.addAttribute("showStartEllipsis",  windowStart > 1);
+        model.addAttribute("showEndEllipsis",    windowEnd < total - 2);
     }
 
     // =====================================================
@@ -114,11 +110,11 @@ public class ShopController {
     // =====================================================
     @GetMapping("/products")
     public String products(
-            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
-            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "sort", required = false) String sort,
-            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         ProductFilterDTO filter = new ProductFilterDTO();
@@ -126,13 +122,13 @@ public class ShopController {
         filter.setMaxPrice(maxPrice);
         filter.setKeyword(keyword);
 
-        Pageable pageable = buildPageable(page, sort);
-        Page<Product> products = productService.findWithFilter(filter, pageable);
+        Page<Product> products = productService.findWithFilter(filter, buildPageable(page, sort));
 
-        model.addAttribute("products", products);
-        model.addAttribute("filter", filter);
-        model.addAttribute("sort", sort);
-        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("products",    products);
+        model.addAttribute("filter",      filter);
+        model.addAttribute("sort",        sort);
+        model.addAttribute("categories",  categoryService.getAllCategories());
+        addPaginationWindow(model, products);
 
         return "shop/products";
     }
@@ -143,16 +139,16 @@ public class ShopController {
     @GetMapping("/products/{categorySlug}")
     public String productsByCategory(
             @PathVariable String categorySlug,
-            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
-            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "sort", required = false) String sort,
-            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         Category category = categoryService.getCategoryBySlug(categorySlug)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Category not found: " + categorySlug));
+                        HttpStatus.NOT_FOUND, "Category not found: " + categorySlug));
 
         ProductFilterDTO filter = new ProductFilterDTO();
         filter.setCategoryId(category.getId());
@@ -160,43 +156,44 @@ public class ShopController {
         filter.setMaxPrice(maxPrice);
         filter.setKeyword(keyword);
 
-        Pageable pageable = buildPageable(page, sort);
-        Page<Product> products = productService.findWithFilter(filter, pageable);
+        Page<Product> products = productService.findWithFilter(filter, buildPageable(page, sort));
 
-        model.addAttribute("products", products);
-        model.addAttribute("filter", filter);
-        model.addAttribute("sort", sort);
-        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("products",        products);
+        model.addAttribute("filter",          filter);
+        model.addAttribute("sort",            sort);
+        model.addAttribute("categories",      categoryService.getAllCategories());
         model.addAttribute("currentCategory", category);
-        model.addAttribute("subCategories", subCategoryService.getByCategoryId(category.getId()));
+        model.addAttribute("subCategories",   subCategoryService.getByCategoryId(category.getId()));
+        addPaginationWindow(model, products);
 
         return "shop/products";
     }
 
     // =====================================================
-    // PRODUCTS BY SUB CATEGORY
+    // PRODUCTS BY SUBCATEGORY
     // =====================================================
     @GetMapping("/products/{categorySlug}/{subSlug}")
     public String productsBySubCategory(
             @PathVariable String categorySlug,
             @PathVariable String subSlug,
-            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
-            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "sort", required = false) String sort,
-            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
         Category category = categoryService.getCategoryBySlug(categorySlug)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Category not found: " + categorySlug));
+                        HttpStatus.NOT_FOUND, "Category not found: " + categorySlug));
 
         SubCategory subCategory = subCategoryService.getBySlug(subSlug)
                 .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "SubCategory not found: " + subSlug));
+                        HttpStatus.NOT_FOUND, "SubCategory not found: " + subSlug));
 
         if (!subCategory.getCategory().getId().equals(category.getId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "SubCategory does not belong to this category");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "SubCategory does not belong to this category");
         }
 
         ProductFilterDTO filter = new ProductFilterDTO();
@@ -206,16 +203,16 @@ public class ShopController {
         filter.setMaxPrice(maxPrice);
         filter.setKeyword(keyword);
 
-        Pageable pageable = buildPageable(page, sort);
-        Page<Product> products = productService.findWithFilter(filter, pageable);
+        Page<Product> products = productService.findWithFilter(filter, buildPageable(page, sort));
 
-        model.addAttribute("products", products);
-        model.addAttribute("filter", filter);
-        model.addAttribute("sort", sort);
-        model.addAttribute("categories", categoryService.getAllCategories());
-        model.addAttribute("currentCategory", category);
+        model.addAttribute("products",           products);
+        model.addAttribute("filter",             filter);
+        model.addAttribute("sort",               sort);
+        model.addAttribute("categories",         categoryService.getAllCategories());
+        model.addAttribute("currentCategory",    category);
         model.addAttribute("currentSubCategory", subCategory);
-        model.addAttribute("subCategories", subCategoryService.getByCategoryId(category.getId()));
+        model.addAttribute("subCategories",      subCategoryService.getByCategoryId(category.getId()));
+        addPaginationWindow(model, products);
 
         return "shop/products";
     }
@@ -229,7 +226,7 @@ public class ShopController {
             Model model,
             Authentication authentication) {
 
-        Product product = productService.findBySlug(slug);
+        Product product = productService.findBySlug(slug); // throws ProductNotFoundException
         return renderProductDetail(product, model, authentication);
     }
 
@@ -245,18 +242,32 @@ public class ShopController {
             Authentication authentication) {
 
         Product product = productService.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
         return renderProductDetail(product, model, authentication);
     }
 
     // =====================================================
     // SHARED RENDER LOGIC
+    //
+    // BEFORE: 6 sequential DB queries per page view
+    //   reviewService.getAverageRating()  → query 1
+    //   reviewService.getReviewCount()    → query 2
+    //   reviewService.getReviewsByItem()  → query 3
+    //   recommendationService.get...()   → query 4 (+N+1 for images — fixed in repo)
+    //   userService.findByEmail()         → query 5
+    //   wishlistService.isInWishlist()    → query 6
+    //
+    // AFTER: 4 queries
+    //   reviewService.getReviewsByItem()  → query 1  (avg+count computed in memory)
+    //   recommendationService.get...()   → query 2  (images pre-fetched via EntityGraph)
+    //   userService.findByEmail()         → query 3
+    //   wishlistService.isInWishlist()    → query 4
     // =====================================================
     private String renderProductDetail(Product product, Model model, Authentication authentication) {
         Long id = product.getId();
 
+        // Variant selectors
         Set<String> sizes = product.getProductVariants().stream()
                 .map(v -> v.getSize())
                 .filter(Objects::nonNull)
@@ -267,25 +278,32 @@ public class ShopController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        double averageRating = reviewService.getAverageRating(id);
-        long reviewCount = reviewService.getReviewCount(id);
+        // Single review query — compute avg + count from the returned list in memory
+        List<Review> reviews    = reviewService.getReviewsByItem(id);
+        double averageRating    = reviews.stream()
+                .mapToDouble(r -> r.getRating())
+                .average()
+                .orElse(0.0);
+        long reviewCount        = reviews.size();
 
-        model.addAttribute("product", product);
-        model.addAttribute("sizes", sizes);
-        model.addAttribute("colors", colors);
+        model.addAttribute("product",       product);
+        model.addAttribute("sizes",         sizes);
+        model.addAttribute("colors",        colors);
         model.addAttribute("averageRating", averageRating);
-        model.addAttribute("reviewCount", reviewCount);
-        model.addAttribute("reviews", reviewService.getReviewsByItem(id));
+        model.addAttribute("reviewCount",   reviewCount);
+        model.addAttribute("reviews",       reviews);
 
-        var variantDTOs = product.getProductVariants().stream()
+        // Variants as JSON for the client-side size/color selector
+        List<VariantDTO> variantDTOs = product.getProductVariants().stream()
                 .map(v -> new VariantDTO(v.getId(), v.getSize(), v.getColor(), v.getPrice(), v.getStock()))
                 .toList();
-
         model.addAttribute("variantsJson", variantDTOs);
 
+        // Related products — images pre-fetched via EntityGraph (no lazy load in template)
         List<Product> relatedProducts = recommendationService.getSimilarProducts(id, 4);
         model.addAttribute("relatedProducts", relatedProducts);
 
+        // Wishlist state — only for authenticated users
         boolean isInWishlist = false;
         if (authentication != null && authentication.isAuthenticated()) {
             isInWishlist = userService.findByEmail(authentication.getName())

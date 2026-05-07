@@ -10,12 +10,16 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.shop.clothingstore.exception.ProductNotFoundException;
 
 import com.shop.clothingstore.dto.ProductCreateDTO;
 import com.shop.clothingstore.dto.ProductFilterDTO;
@@ -54,6 +58,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     // CREATE PRODUCT
     // =====================================================
     @Transactional
+    @CacheEvict(value = "bestSellers", allEntries = true)
     public Product createProduct(ProductCreateDTO dto) throws IOException {
 
         log.info("Creating product: {}", dto.getName());
@@ -130,6 +135,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     // UPDATE PRODUCT
     // =====================================================
     @Transactional
+    @CacheEvict(value = {"bestSellers", "tryOnProducts"}, allEntries = true)
     public Product updateProduct(Long id, ProductUpdateDTO dto) throws IOException {
 
         Product product = productRepository.findProductForEdit(id)
@@ -244,11 +250,13 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     // DELETE PRODUCT
     // =====================================================
     @Transactional
-    public void deleteProduct(Long id) {
-        log.info("Deleting product | id={}", id);
+    @CacheEvict(value = {"bestSellers", "tryOnProducts"}, allEntries = true)
+    public void deleteProduct(Long productId) {
+        log.info("Deleting product | id={}", productId);
+        if (productId == null) throw new ProductNotFoundException(0L);
 
         // Delete all image files and garment file from disk before removing from DB
-        productRepository.findById(id).ifPresent(product -> {
+        productRepository.findById(productId).ifPresent(product -> {
             // Product images
             for (ProductImage img : product.getImages()) {
                 try {
@@ -267,7 +275,7 @@ public class ProductService extends GenericServiceBase<Product, Long> {
             }
         });
 
-        delete(id);
+        delete(productId);
     }
 
     public Product getProductForEdit(Long id) {
@@ -327,11 +335,22 @@ public class ProductService extends GenericServiceBase<Product, Long> {
     // =====================================================
     public Product findBySlug(String slug) {
         return productRepository.findBySlug(slug)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + slug));
+                .orElseThrow(() -> new ProductNotFoundException(slug));
     }
 
     public Page<Product> findTopByCategorySlug(String slug, Pageable pageable) {
         return productRepository.findTopByCategorySlug(slug, pageable);
+    }
+
+    @Cacheable(value = "bestSellers", key = "#pageable.pageSize")
+    public List<Product> findBestSellers(Pageable pageable) {
+        return productRepository.findBestSellers(pageable);
+    }
+
+    public java.util.Optional<Product> findBestSellerByCategorySlug(String slug) {
+        List<Product> results = productRepository.findBestSellerByCategorySlug(
+                slug, org.springframework.data.domain.PageRequest.of(0, 1));
+        return results.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(results.get(0));
     }
 
     public Page<Product> findWithFilter(ProductFilterDTO filter, Pageable pageable) {

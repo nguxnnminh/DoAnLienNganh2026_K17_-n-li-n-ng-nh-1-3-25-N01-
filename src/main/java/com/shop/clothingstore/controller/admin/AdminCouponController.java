@@ -32,7 +32,7 @@ public class AdminCouponController extends AdminBaseController {
     public String list(@RequestParam(required = false) String search,
                        @RequestParam(required = false) String status,
                        Model model) {
-        model.addAttribute("title", "Mã giảm giá");
+        model.addAttribute("title", "Coupons");
         model.addAttribute("currentPage", "coupons");
 
         List<Coupon> coupons = couponService.findAll();
@@ -61,7 +61,7 @@ public class AdminCouponController extends AdminBaseController {
     // ── CREATE FORM ──────────────────────────────────────
     @GetMapping("/create")
     public String createForm(Model model) {
-        model.addAttribute("title", "Tạo mã giảm giá");
+        model.addAttribute("title", "Create Coupon");
         model.addAttribute("currentPage", "coupons");
         if (!model.containsAttribute("couponDTO")) {
             model.addAttribute("couponDTO", new CouponFormDTO());
@@ -75,12 +75,12 @@ public class AdminCouponController extends AdminBaseController {
     public String create(CouponFormDTO dto, RedirectAttributes ra) {
         String code = dto.getCode() == null ? "" : dto.getCode().trim().toUpperCase();
         if (code.isBlank()) {
-            ra.addFlashAttribute("error", "Mã coupon không được để trống.");
+            ra.addFlashAttribute("error", "Coupon code cannot be empty.");
             ra.addFlashAttribute("couponDTO", dto);
             return "redirect:/admin/coupons/create";
         }
         if (couponService.existsByCode(code)) {
-            ra.addFlashAttribute("error", "Mã '" + code + "' đã tồn tại.");
+            ra.addFlashAttribute("error", "Code '" + code + "' already exists.");
             ra.addFlashAttribute("couponDTO", dto);
             return "redirect:/admin/coupons/create";
         }
@@ -90,9 +90,9 @@ public class AdminCouponController extends AdminBaseController {
             // Admin-created coupons are public by default (visible to all users)
             coupon.setUserSpecific(false);
             couponService.save(coupon);
-            ra.addFlashAttribute("success", "Tạo mã giảm giá '" + code + "' thành công!");
+            ra.addFlashAttribute("success", "Coupon '" + code + "' created successfully!");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
             ra.addFlashAttribute("couponDTO", dto);
             return "redirect:/admin/coupons/create";
         }
@@ -103,7 +103,7 @@ public class AdminCouponController extends AdminBaseController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
         return couponService.findById(id).map(coupon -> {
-            model.addAttribute("title", "Sửa mã giảm giá");
+            model.addAttribute("title", "Edit Coupon");
             model.addAttribute("currentPage", "coupons");
             model.addAttribute("coupon", coupon);
             if (!model.containsAttribute("couponDTO")) {
@@ -112,7 +112,7 @@ public class AdminCouponController extends AdminBaseController {
             model.addAttribute("discountTypes", Coupon.DiscountType.values());
             return "admin/coupons/edit";
         }).orElseGet(() -> {
-            ra.addFlashAttribute("error", "Không tìm thấy mã giảm giá.");
+            ra.addFlashAttribute("error", "Coupon code not found.");
             return "redirect:/admin/coupons";
         });
     }
@@ -122,26 +122,26 @@ public class AdminCouponController extends AdminBaseController {
     public String update(@PathVariable Long id, CouponFormDTO dto, RedirectAttributes ra) {
         Coupon existing = couponService.findById(id).orElse(null);
         if (existing == null) {
-            ra.addFlashAttribute("error", "Không tìm thấy mã giảm giá.");
+            ra.addFlashAttribute("error", "Coupon code not found.");
             return "redirect:/admin/coupons";
         }
         String code = dto.getCode() == null ? "" : dto.getCode().trim().toUpperCase();
         if (code.isBlank()) {
-            ra.addFlashAttribute("error", "Mã coupon không được để trống.");
+            ra.addFlashAttribute("error", "Coupon code cannot be empty.");
             return "redirect:/admin/coupons/" + id + "/edit";
         }
         // Check code uniqueness only if changed
         if (!code.equals(existing.getCode()) && couponService.existsByCode(code)) {
-            ra.addFlashAttribute("error", "Mã '" + code + "' đã tồn tại.");
+            ra.addFlashAttribute("error", "Code '" + code + "' already exists.");
             return "redirect:/admin/coupons/" + id + "/edit";
         }
         try {
             existing.setCode(code);
             mapFromDTO(existing, dto);
             couponService.save(existing);
-            ra.addFlashAttribute("success", "Cập nhật mã giảm giá thành công!");
+            ra.addFlashAttribute("success", "Coupon updated successfully!");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/admin/coupons";
     }
@@ -153,8 +153,8 @@ public class AdminCouponController extends AdminBaseController {
             coupon.setActive(!coupon.isActive());
             couponService.save(coupon);
             ra.addFlashAttribute("success",
-                    coupon.isActive() ? "Đã kích hoạt mã coupon." : "Đã vô hiệu hóa mã coupon.");
-        }, () -> ra.addFlashAttribute("error", "Không tìm thấy mã giảm giá."));
+                    coupon.isActive() ? "Coupon activated." : "Coupon deactivated.");
+        }, () -> ra.addFlashAttribute("error", "Coupon code not found."));
         return "redirect:/admin/coupons";
     }
 
@@ -163,9 +163,9 @@ public class AdminCouponController extends AdminBaseController {
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
         try {
             couponService.delete(id);
-            ra.addFlashAttribute("success", "Đã xóa mã giảm giá.");
+            ra.addFlashAttribute("success", "Coupon deleted.");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Không thể xóa mã giảm giá.");
+            ra.addFlashAttribute("error", "Cannot delete coupon.");
         }
         return "redirect:/admin/coupons";
     }

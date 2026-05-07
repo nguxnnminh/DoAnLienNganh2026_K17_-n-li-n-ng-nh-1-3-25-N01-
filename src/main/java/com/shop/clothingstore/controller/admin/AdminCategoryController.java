@@ -33,7 +33,7 @@ public class AdminCategoryController extends AdminBaseController {
     // ── LIST ────────────────────────────────────────────
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("title", "Danh mục chính");
+        model.addAttribute("title", "Categories");
         model.addAttribute("currentPage", "categories");
         model.addAttribute("categories", categoryService.getAllCategories());
         return "admin/categories/index";
@@ -42,7 +42,7 @@ public class AdminCategoryController extends AdminBaseController {
     // ── CREATE FORM ─────────────────────────────────────
     @GetMapping("/create")
     public String createForm(Model model) {
-        model.addAttribute("title", "Thêm danh mục");
+        model.addAttribute("title", "Add Category");
         model.addAttribute("currentPage", "categories");
         if (!model.containsAttribute("category")) {
             model.addAttribute("category", new Category());
@@ -56,7 +56,7 @@ public class AdminCategoryController extends AdminBaseController {
                          @RequestParam(required = false) String slug,
                          RedirectAttributes ra) {
         if (name == null || name.isBlank()) {
-            ra.addFlashAttribute("error", "Tên danh mục không được để trống.");
+            ra.addFlashAttribute("error", "Category name cannot be empty.");
             return "redirect:/admin/categories/create";
         }
         String finalSlug = (slug != null && !slug.isBlank())
@@ -64,7 +64,7 @@ public class AdminCategoryController extends AdminBaseController {
                 : generateUniqueSlug(name);
 
         if (categoryService.getCategoryBySlug(finalSlug).isPresent()) {
-            ra.addFlashAttribute("error", "Slug '" + finalSlug + "' đã tồn tại.");
+            ra.addFlashAttribute("error", "Slug '" + finalSlug + "' already exists.");
             return "redirect:/admin/categories/create";
         }
 
@@ -73,9 +73,9 @@ public class AdminCategoryController extends AdminBaseController {
             c.setName(name.trim());
             c.setSlug(finalSlug);
             categoryService.saveCategory(c);
-            ra.addFlashAttribute("success", "Tạo danh mục '" + name.trim() + "' thành công!");
+            ra.addFlashAttribute("success", "Category '" + name.trim() + "' created successfully!");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -84,12 +84,12 @@ public class AdminCategoryController extends AdminBaseController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
         return categoryService.getCategoryById(id).map(c -> {
-            model.addAttribute("title", "Sửa danh mục");
+            model.addAttribute("title", "Edit Category");
             model.addAttribute("currentPage", "categories");
             model.addAttribute("category", c);
             return "admin/categories/edit";
         }).orElseGet(() -> {
-            ra.addFlashAttribute("error", "Không tìm thấy danh mục.");
+            ra.addFlashAttribute("error", "Category not found.");
             return "redirect:/admin/categories";
         });
     }
@@ -102,11 +102,11 @@ public class AdminCategoryController extends AdminBaseController {
                          RedirectAttributes ra) {
         Category existing = categoryService.getCategoryById(id).orElse(null);
         if (existing == null) {
-            ra.addFlashAttribute("error", "Không tìm thấy danh mục.");
+            ra.addFlashAttribute("error", "Category not found.");
             return "redirect:/admin/categories";
         }
         if (name == null || name.isBlank()) {
-            ra.addFlashAttribute("error", "Tên danh mục không được để trống.");
+            ra.addFlashAttribute("error", "Category name cannot be empty.");
             return "redirect:/admin/categories/" + id + "/edit";
         }
 
@@ -117,7 +117,7 @@ public class AdminCategoryController extends AdminBaseController {
         // Check uniqueness only if slug changed
         if (!finalSlug.equals(existing.getSlug())) {
             if (categoryService.getCategoryBySlug(finalSlug).isPresent()) {
-                ra.addFlashAttribute("error", "Slug '" + finalSlug + "' đã tồn tại.");
+                ra.addFlashAttribute("error", "Slug '" + finalSlug + "' already exists.");
                 return "redirect:/admin/categories/" + id + "/edit";
             }
         }
@@ -126,9 +126,9 @@ public class AdminCategoryController extends AdminBaseController {
             existing.setName(name.trim());
             existing.setSlug(finalSlug);
             categoryService.saveCategory(existing);
-            ra.addFlashAttribute("success", "Cập nhật danh mục thành công!");
+            ra.addFlashAttribute("success", "Category updated successfully!");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -139,14 +139,14 @@ public class AdminCategoryController extends AdminBaseController {
         List<SubCategory> subs = subCategoryService.getByCategoryId(id);
         if (!subs.isEmpty()) {
             ra.addFlashAttribute("error",
-                    "Không thể xóa: danh mục còn " + subs.size() + " danh mục phụ.");
+                    "Cannot delete: category still has " + subs.size() + " subcategory(s).");
             return "redirect:/admin/categories";
         }
         try {
             categoryService.deleteCategory(id);
-            ra.addFlashAttribute("success", "Đã xóa danh mục.");
+            ra.addFlashAttribute("success", "Category deleted.");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Không thể xóa danh mục.");
+            ra.addFlashAttribute("error", "Cannot delete category.");
         }
         return "redirect:/admin/categories";
     }

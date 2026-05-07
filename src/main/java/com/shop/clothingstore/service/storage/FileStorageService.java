@@ -37,12 +37,12 @@ public class FileStorageService {
         // VALIDATE
         // =====================================================
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File không được rỗng");
+            throw new IllegalArgumentException("File must not be empty");
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new IllegalArgumentException(
-                    "File quá lớn. Tối đa 5MB, file hiện tại: "
+                    "File too large. Maximum 5MB, current file: "
                     + (file.getSize() / 1024 / 1024) + "MB");
         }
 
@@ -54,7 +54,7 @@ public class FileStorageService {
 
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             throw new IllegalArgumentException(
-                    "Định dạng file không được hỗ trợ. Chỉ chấp nhận: " + ALLOWED_EXTENSIONS);
+                    "Unsupported file format. Allowed: " + ALLOWED_EXTENSIONS);
         }
 
         // Validate magic bytes (file signature)
@@ -63,7 +63,7 @@ public class FileStorageService {
         boolean validMagic = ALLOWED_MAGIC_BYTES.stream().anyMatch(magic::startsWith);
         if (!validMagic) {
             throw new IllegalArgumentException(
-                    "File signature không hợp lệ. Có thể file đã bị đổi đuôi.");
+                    "Invalid file signature. The file extension may have been spoofed.");
         }
 
         // =====================================================
@@ -85,6 +85,43 @@ public class FileStorageService {
         log.info("File uploaded | path={} | size={}KB | original={}",
                 publicUrl, file.getSize() / 1024, originalName);
 
+        return publicUrl;
+    }
+
+    /**
+     * Upload raw bytes with a known filename.
+     * Used when the caller already has bytes (e.g. from Python bridge preprocessing)
+     * and wrapping in a MultipartFile is unnecessary.
+     *
+     * @param bytes    raw file content
+     * @param filename original filename (used only for extension detection)
+     * @param folder   target subfolder under baseUploadDir
+     * @return public URL of the saved file (e.g. /images/tryon-garments/uuid.png)
+     */
+    public String uploadBytes(byte[] bytes, String filename, String folder) throws IOException {
+        if (bytes == null || bytes.length == 0) {
+            throw new IllegalArgumentException("Bytes must not be empty");
+        }
+
+        String extension = "png"; // safe default for garment preprocessing
+        if (filename != null && filename.contains(".")) {
+            extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+        }
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            extension = "png";
+        }
+
+        Path uploadPath = Paths.get(baseUploadDir, folder);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        String fileName = UUID.randomUUID() + "." + extension;
+        Path   filePath = uploadPath.resolve(fileName);
+        Files.write(filePath, bytes);
+
+        String publicUrl = "/images/" + folder + "/" + fileName;
+        log.info("Bytes uploaded | path={} | size={}KB", publicUrl, bytes.length / 1024);
         return publicUrl;
     }
 

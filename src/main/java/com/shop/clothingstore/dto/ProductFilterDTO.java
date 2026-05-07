@@ -12,4 +12,10 @@ public class ProductFilterDTO {
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private String keyword;
+
+    /**
+     * When true (default), the specification adds WHERE active = true.
+     * Set to false for admin queries that must show inactive products.
+     */
+    private boolean onlyActive = true;
 }

@@ -1,5 +1,7 @@
 package com.shop.clothingstore.controller;
 
+import java.math.BigDecimal;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.shop.clothingstore.service.CartService;
+import com.shop.clothingstore.service.CheckoutService;
 
 @Controller
 @RequestMapping("/cart")
@@ -24,8 +27,13 @@ public class CartController {
 
     @GetMapping
     public String cart(Model model) {
+        BigDecimal subtotal = cartService.getTotal();
+        BigDecimal shippingFee = subtotal.compareTo(CheckoutService.FREE_SHIP_THRESHOLD) >= 0
+                ? BigDecimal.ZERO : CheckoutService.SHIP_FEE;
         model.addAttribute("cartItems", cartService.getCart());
-        model.addAttribute("total", cartService.getTotal());
+        model.addAttribute("total", subtotal);
+        model.addAttribute("shippingFee", shippingFee);
+        model.addAttribute("grandTotal", subtotal.add(shippingFee));
         return "shop/cart";
     }
 
@@ -37,7 +45,7 @@ public class CartController {
     ) {
         if (quantity < 1 || quantity > MAX_QUANTITY) {
             redirectAttributes.addFlashAttribute("error",
-                    "Số lượng phải từ 1 đến " + MAX_QUANTITY);
+                    "Quantity must be between 1 and " + MAX_QUANTITY);
             return "redirect:/cart";
         }
 
@@ -58,7 +66,7 @@ public class CartController {
     ) {
         if (quantity < 1 || quantity > MAX_QUANTITY) {
             redirectAttributes.addFlashAttribute("error",
-                    "Số lượng phải từ 1 đến " + MAX_QUANTITY);
+                    "Quantity must be between 1 and " + MAX_QUANTITY);
             return "redirect:/cart";
         }
 

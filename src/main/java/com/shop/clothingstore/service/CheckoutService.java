@@ -15,7 +15,9 @@ import com.shop.clothingstore.entity.OrderItem;
 import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.entity.ProductVariant;
 import com.shop.clothingstore.entity.User;
+import com.shop.clothingstore.exception.OutOfStockException;
 import com.shop.clothingstore.repository.OrderRepository;
+import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 
 @Service
@@ -23,17 +25,29 @@ public class CheckoutService {
 
     private static final Logger log = LoggerFactory.getLogger(CheckoutService.class);
 
+    public static final BigDecimal FREE_SHIP_THRESHOLD = BigDecimal.valueOf(500_000);
+    public static final BigDecimal SHIP_FEE            = BigDecimal.valueOf(30_000);
+
     private final OrderRepository orderRepository;
     private final ProductVariantRepository variantRepository;
     private final CouponService couponService;
+    private final ProductRepository productRepository;
+    private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
     public CheckoutService(
             OrderRepository orderRepository,
             ProductVariantRepository variantRepository,
-            CouponService couponService) {
+            CouponService couponService,
+            ProductRepository productRepository,
+            PaymentService paymentService,
+            NotificationService notificationService) {
         this.orderRepository = orderRepository;
         this.variantRepository = variantRepository;
         this.couponService = couponService;
+        this.productRepository = productRepository;
+        this.paymentService = paymentService;
+        this.notificationService = notificationService;
     }
 
     // =====================================================
@@ -81,8 +95,12 @@ public class CheckoutService {
         // Reject zero/negative quantity items (data integrity)
         cartCopy.removeIf(c -> c.getQuantity() <= 0);
         if (cartCopy.isEmpty()) {
-            throw new IllegalStateException("Không có sản phẩm hợp lệ trong giỏ hàng (quantity >= 1)");
+            throw new IllegalStateException("No valid items in cart (quantity >= 1)");
         }
+
+        // Collect product IDs touched during this checkout — used for a single
+        // batch totalSold refresh AFTER the loop, avoiding one findById+save per item.
+        java.util.Set<Long> touchedProductIds = new java.util.LinkedHashSet<>();
 
         for (CartItemDTO c : cartCopy) {
 
@@ -90,19 +108,20 @@ public class CheckoutService {
             ProductVariant variant = variantRepository
                     .findByIdForUpdate(c.getVariantId())
                     .orElseThrow(() -> new IllegalStateException(
-                    "San pham khong ton tai: variantId=" + c.getVariantId()));
+                    "Product variant not found: variantId=" + c.getVariantId()));
 
             if (variant.getStock() < c.getQuantity()) {
-                // Do NOT expose remaining stock count in user-facing messages
-                throw new IllegalStateException(
-                        "San pham '" + variant.getProduct().getName()
-                        + "' (" + variant.getSize() + " / " + variant.getColor()
-                        + ") khong du so luong trong kho. Vui long giam so luong.");
+                throw new OutOfStockException(
+                        variant.getProduct().getName(),
+                        variant.getSize(),
+                        variant.getColor());
             }
 
             variant.setStock(variant.getStock() - c.getQuantity());
             variant.setSold(variant.getSold() + c.getQuantity());
             variantRepository.save(variant);
+
+            touchedProductIds.add(variant.getProduct().getId());
 
             // Price snapshot from DB — never trust the cart-session price
             BigDecimal currentPrice = variant.getPrice();
@@ -120,17 +139,38 @@ public class CheckoutService {
             subtotal = subtotal.add(currentPrice.multiply(BigDecimal.valueOf(c.getQuantity())));
         }
 
+        // Batch-refresh denormalized totalSold — one findById+save per unique product,
+        // not one per cart item. Keeps ORDER BY total_sold correct without N×2 queries.
+        for (Long pid : touchedProductIds) {
+            if (pid == null) continue;
+            productRepository.findById(pid).ifPresent(p -> {
+                p.refreshTotalSold();
+                productRepository.save(p);
+            });
+        }
+
+        // ---- Shipping fee: free on orders >= 500k, else flat 30k ----
+        BigDecimal shippingFee = subtotal.compareTo(FREE_SHIP_THRESHOLD) >= 0
+                ? BigDecimal.ZERO : SHIP_FEE;
+
         // ---- Apply coupon — throws if coupon invalid at apply-time ----
-        // Pass user for user-specific coupon validation
-        BigDecimal total = couponService.applyCoupon(couponCode, subtotal, user);
+        BigDecimal discountedSubtotal = couponService.applyCoupon(couponCode, subtotal, user);
+        BigDecimal total = discountedSubtotal.add(shippingFee);
 
         order.setItems(items);
+        order.setShippingFee(shippingFee);
         order.setTotal(total);
 
         Order savedOrder = orderRepository.save(order);
 
         log.info("Order created | orderId={} | subtotal={} | total={} | items={} | customer={}",
                 savedOrder.getId(), subtotal, total, items.size(), customerName);
+
+        // Create COD payment record and notify authenticated user
+        paymentService.createForOrder(savedOrder, PaymentService.METHOD_COD);
+        if (user != null) {
+            notificationService.notifyOrderPlaced(user, savedOrder);
+        }
 
         return savedOrder;
     }

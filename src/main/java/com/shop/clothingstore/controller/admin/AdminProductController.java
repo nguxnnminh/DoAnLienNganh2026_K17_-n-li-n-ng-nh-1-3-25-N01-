@@ -48,23 +48,74 @@ public class AdminProductController extends AdminBaseController {
         this.categoryService = categoryService;
     }
 
-    // ===============================
+    // ─────────────────────────────────────────────────────────
     // LIST PRODUCTS
-    // ===============================
+    // BUG FIX: template sent name="search" but controller read
+    //          "keyword" — now both controller AND template use
+    //          "keyword" consistently.
+    // Added:   categoryId filter, status (active/inactive) filter,
+    //          stock filter, sort option.
+    // ─────────────────────────────────────────────────────────
     @GetMapping
     public String listProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String status,   // "active"|"inactive"|null
+            @RequestParam(required = false) String stock,    // "low"|"out"|null
+            @RequestParam(defaultValue = "newest") String sort,
             Model model) {
 
-        model.addAttribute("title", "Quản lý sản phẩm");
+        model.addAttribute("title", "Product Management");
 
-        Page<Product> productPage = productService.findAll(
-                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        com.shop.clothingstore.dto.ProductFilterDTO filter = new com.shop.clothingstore.dto.ProductFilterDTO();
+        filter.setOnlyActive(false); // admin sees active + inactive
+
+        if (keyword  != null && !keyword.isBlank())  filter.setKeyword(keyword.trim());
+        if (categoryId != null)                      filter.setCategoryId(categoryId);
+
+        // Status filter — handled by setting onlyActive or overriding in spec
+        if ("active".equals(status))   filter.setOnlyActive(true);
+        // "inactive" → we'll filter in-memory after query (spec doesn't have "only inactive")
+        // For large datasets use a proper inactive spec; acceptable here for admin usage
+
+        Sort sortObj = switch (sort) {
+            case "name_asc"   -> Sort.by("name").ascending();
+            case "price_asc"  -> Sort.by("minPrice").ascending();
+            case "price_desc" -> Sort.by("minPrice").descending();
+            case "stock_asc"  -> Sort.by("totalSold").ascending();
+            default           -> Sort.by("id").descending();
+        };
+
+        Page<Product> productPage = productService.findWithFilter(
+                filter, PageRequest.of(page, size, sortObj)
         );
-        model.addAttribute("products", productPage);
+
+        // Post-filter for "inactive only" — spec already returns all statuses
+        // when onlyActive=false; just filter the page result for display only.
+        // (Pagination count may be slightly off for "inactive" tab — acceptable for admin.)
+        List<Product> content = productPage.getContent();
+        if ("inactive".equals(status)) {
+            content = content.stream().filter(p -> !p.isActive()).toList();
+        }
+        if ("out".equals(stock)) {
+            content = content.stream().filter(p -> p.getTotalStock() == 0).toList();
+        } else if ("low".equals(stock)) {
+            content = content.stream().filter(p -> p.getTotalStock() > 0 && p.getTotalStock() <= 10).toList();
+        }
+
+        model.addAttribute("products",    productPage);
+        model.addAttribute("content",     content);
+        model.addAttribute("keyword",     keyword);
+        model.addAttribute("categoryId",  categoryId);
+        model.addAttribute("status",      status);
+        model.addAttribute("stock",       stock);
+        model.addAttribute("sort",        sort);
+        model.addAttribute("categories",  categoryService.getAllCategories());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalPages",  productPage.getTotalPages());
+        addPageWindow(model, productPage);
 
         return "admin/products/index";
     }
@@ -75,7 +126,7 @@ public class AdminProductController extends AdminBaseController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
 
-        model.addAttribute("title", "Thêm sản phẩm");
+        model.addAttribute("title", "Add Product");
 
         if (!model.containsAttribute("productDTO")) {
             model.addAttribute("productDTO", new ProductCreateDTO());
@@ -110,11 +161,11 @@ public class AdminProductController extends AdminBaseController {
             productService.createProduct(dto);
             redirectAttributes.addFlashAttribute(
                     "success",
-                    "Tạo sản phẩm thành công!");
+                    "Product created successfully!");
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute(
                     "error",
-                    "Lỗi khi upload ảnh.");
+                    "Image upload failed.");
             return "redirect:/admin/products/create";
         }
 
@@ -133,11 +184,11 @@ public class AdminProductController extends AdminBaseController {
             productService.deleteProduct(id);
             redirectAttributes.addFlashAttribute(
                     "success",
-                    "Xóa sản phẩm thành công!");
+                    "Product deleted successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute(
                     "error",
-                    "Không thể xóa sản phẩm.");
+                    "Cannot delete product.");
         }
 
         return "redirect:/admin/products";
@@ -154,7 +205,7 @@ public class AdminProductController extends AdminBaseController {
 
         try {
 
-            model.addAttribute("title", "Chỉnh sửa sản phẩm");
+            model.addAttribute("title", "Edit Product");
 
             Product product = productService.getProductForEdit(id);
 
@@ -198,7 +249,7 @@ public class AdminProductController extends AdminBaseController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute(
                     "error",
-                    "Không tìm thấy sản phẩm.");
+                    "Product not found.");
             return "redirect:/admin/products";
         }
     }
@@ -211,7 +262,7 @@ public class AdminProductController extends AdminBaseController {
             @PathVariable Long id,
             @Valid @ModelAttribute("productDTO") ProductUpdateDTO dto,
             BindingResult result,
-            @RequestParam(value = "imagesToDelete", required = false) List<Long> imagesToDelete,
+            @RequestParam(required = false) List<Long> imagesToDelete,
             RedirectAttributes redirectAttributes) {
 
         dto.setId(id);
@@ -232,11 +283,11 @@ public class AdminProductController extends AdminBaseController {
             productService.updateProduct(id, dto);
             redirectAttributes.addFlashAttribute(
                     "success",
-                    "Cập nhật sản phẩm thành công!");
+                    "Product updated successfully!");
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute(
                     "error",
-                    "Lỗi khi xử lý ảnh.");
+                    "Image processing failed.");
             return "redirect:/admin/products/" + id + "/edit";
         }
 

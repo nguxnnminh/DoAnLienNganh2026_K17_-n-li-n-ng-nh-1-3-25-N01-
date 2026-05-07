@@ -99,36 +99,31 @@
   </style>
 
   <!-- ── PAGE HEADER ──────────────────────────────────── -->
-  <div class="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 border-b border-zinc-900">
-    <div class="flex justify-between items-end pb-6 md:pb-8">
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12">
+    <div class="flex justify-between items-end pt-10 md:pt-16 mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
       <div>
-        <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Nova Store</p>
-        <h1 class="font-display text-4xl md:text-6xl lg:text-7xl tracking-wide leading-none text-[#f5f5f3]">
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Nova Store</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">
           Try-On Studio
         </h1>
       </div>
-      <p class="text-[0.65rem] tracking-widest uppercase text-zinc-500">
+      <p class="text-xs tracking-widest uppercase text-zinc-500">
         <span th:text="${tryOnProducts.size()}">0</span>&nbsp;Items Available
       </p>
     </div>
-    <div class="flex items-center gap-3 pb-5 text-[0.62rem] tracking-widest uppercase flex-wrap">
-      <a th:href="@{/}" class="text-zinc-700 no-underline transition-colors hover:text-[#f5f5f3]">Home</a>
-      <span class="text-zinc-800">&mdash;</span>
-      <span class="text-zinc-500">Try-On Studio</span>
-    </div>
-  </div>
 
-  <!-- ── EMPTY STATE ──────────────────────────────────── -->
-  <div th:if="${tryOnProducts.isEmpty()}" class="text-center py-20 px-4">
-    <p class="font-display text-5xl md:text-6xl tracking-wide text-zinc-900 mb-5">No Items Available</p>
-    <p class="text-[0.72rem] tracking-widest uppercase text-zinc-600 mb-6">
-      Admin hasn't enabled Try-On for any products yet.
-    </p>
-    <a th:href="@{/products}"
-       class="text-[0.7rem] tracking-widest uppercase text-zinc-500 no-underline transition-colors hover:text-[#f5f5f3]"
-       style="border-bottom:1px solid #333; padding-bottom:2px;">
-      Browse Shop
-    </a>
+    <!-- ── EMPTY STATE ──────────────────────────────────── -->
+    <div th:if="${tryOnProducts.isEmpty()}" class="text-center py-20 md:py-28">
+      <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-700 mb-3">No Items Available</p>
+      <p class="text-xs tracking-widest uppercase text-zinc-700 mb-8">
+        No Try-On products are available yet.
+      </p>
+      <a th:href="@{/products}"
+         class="h-11 md:h-12 px-8 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase
+                no-underline font-medium inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
+        Browse Shop
+      </a>
+    </div>
   </div>
 
   <!-- ── MAIN STUDIO ──────────────────────────────────── -->
@@ -141,7 +136,6 @@
       <div class="flex gap-6 mb-6 border-b border-zinc-900 pb-0">
         <button class="tab-btn active" onclick="switchTab('upper')">Tops</button>
         <button class="tab-btn" onclick="switchTab('lower')">Bottoms</button>
-        <button class="tab-btn" onclick="switchTab('full')">Full Body</button>
         <button class="tab-btn" onclick="switchTab('all')">All</button>
       </div>
 
@@ -179,24 +173,6 @@
           </div>
         </div>
         <p th:if="${lowerProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No bottoms available</p>
-      </div>
-
-      <!-- Full Body Panel -->
-      <div id="panel-full" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-        <div th:each="p : ${fullProducts}" class="tryon-card"
-             th:data-id="${p.id}" th:data-type="${p.garmentType}"
-             th:data-name="${p.name}"
-             th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
-             th:data-price="${p.minPrice}"
-             onclick="selectProduct(this)">
-          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
-          <div class="tryon-card-info">
-            <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
-            <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
-               th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
-          </div>
-        </div>
-        <p th:if="${fullProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No full body items available</p>
       </div>
 
       <!-- All Panel -->
@@ -287,7 +263,7 @@
       <div id="studioLoading" style="display:none; text-align:center; padding:20px 0;">
         <div style="width:28px; height:28px; border:1.5px solid #272727; border-top-color:#888;
                     border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
-        <p style="font-size:10px; color:#444; letter-spacing:0.1em;">Processing... 30–120 seconds</p>
+        <p style="font-size:10px; color:#444; letter-spacing:0.1em;">OOTDiffusion processing… 30–120 seconds</p>
       </div>
 
       <!-- Result -->
@@ -329,16 +305,23 @@
 
     // ── Product selection ─────────────────────────────
     function selectProduct(card) {
-      const id = card.dataset.id;
-      const type = card.dataset.type;
+      const id   = card.dataset.id;
+      const type = card.dataset.type;   // 'UPPER_BODY' or 'LOWER_BODY'
       const name = card.dataset.name;
-      const img = card.dataset.img;
+      const img  = card.dataset.img;
       const price = card.dataset.price;
 
+      // Route strictly by garment type — UPPER_BODY → top slot, LOWER_BODY → bottom slot.
+      // This prevents pants/shorts from being accidentally assigned to the top slot.
       let slot;
-      if (type === 'UPPER_BODY') slot = 'upper';
-      else if (type === 'LOWER_BODY') slot = 'lower';
-      else slot = 'upper'; // FULL_BODY defaults to upper slot
+      if (type === 'UPPER_BODY') {
+        slot = 'upper';
+      } else if (type === 'LOWER_BODY') {
+        slot = 'lower';
+      } else {
+        // Unknown type — do nothing
+        return;
+      }
 
       // Deselect previous in this slot
       if (selectedItems[slot]) {
@@ -427,55 +410,51 @@
         return;
       }
 
-      // Collect all selected product IDs (upper first, then lower)
-      const productIds = [];
-      if (selectedItems.upper) productIds.push(selectedItems.upper.id);
-      if (selectedItems.lower) productIds.push(selectedItems.lower.id);
+      const hasUpper = !!selectedItems.upper;
+      const hasLower = !!selectedItems.lower;
 
-      if (productIds.length === 0) {
+      if (!hasUpper && !hasLower) {
         alert('Please select at least one item to try on.');
         return;
       }
 
-      const csrf = document.querySelector('meta[name="_csrf"]')?.content;
+      const csrf       = document.querySelector('meta[name="_csrf"]')?.content;
       const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+      const headers    = {};
+      if (csrf && csrfHeader) headers[csrfHeader] = csrf;
 
       // Show loading
       document.getElementById('studioLoading').style.display = 'block';
-      document.getElementById('studioResult').style.display = 'none';
-      document.getElementById('studioGenerateBtn').disabled = true;
+      document.getElementById('studioResult').style.display  = 'none';
+      document.getElementById('studioGenerateBtn').disabled  = true;
       document.getElementById('studioGenerateBtn').style.opacity = '0.4';
 
-      // Use single generate for 1 item, outfit endpoint for multiple
       const formData = new FormData();
       formData.append('personId', studioPersonId);
 
       let endpoint;
-      if (productIds.length === 1) {
-        formData.append('productId', productIds[0]);
-        endpoint = '/api/tryon/generate';
-      } else {
-        productIds.forEach(id => formData.append('productIds', id));
+
+      if (hasUpper && hasLower) {
+        // Full outfit: OOTDiffusion single session — upper then lower in shared UNet context
+        formData.append('topProductId',    selectedItems.upper.id);
+        formData.append('bottomProductId', selectedItems.lower.id);
         endpoint = '/api/tryon/generate-outfit';
-      }
-
-      const headers = {};
-      if (csrf && csrfHeader) headers[csrfHeader] = csrf;
-
-      // Update loading text for multi-garment
-      if (productIds.length > 1) {
         document.querySelector('#studioLoading p').textContent =
-          'Processing ' + productIds.length + ' garments... 60–240 seconds';
+          'OOTDiffusion outfit (upper + lower, single pass)… 60–180 seconds';
       } else {
+        // Single garment
+        const singleId = hasUpper ? selectedItems.upper.id : selectedItems.lower.id;
+        formData.append('productId', singleId);
+        endpoint = '/api/tryon/generate';
         document.querySelector('#studioLoading p').textContent =
-          'Processing... 30–120 seconds';
+          'OOTDiffusion processing… 30–120 seconds';
       }
 
       fetch(endpoint, { method: 'POST', body: formData, headers })
         .then(r => r.json())
         .then(data => {
           document.getElementById('studioLoading').style.display = 'none';
-          document.getElementById('studioGenerateBtn').disabled = false;
+          document.getElementById('studioGenerateBtn').disabled  = false;
           document.getElementById('studioGenerateBtn').style.opacity = '1';
 
           if (data.resultUrl) {

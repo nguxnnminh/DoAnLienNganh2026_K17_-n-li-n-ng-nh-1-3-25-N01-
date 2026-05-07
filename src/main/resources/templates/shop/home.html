@@ -16,6 +16,55 @@
     .cat-card:hover { filter:brightness(.78); }
     .cat-card img { transition:transform .7s cubic-bezier(.22,1,.36,1); }
     .cat-card:hover img { transform:scale(1.06); }
+
+    /* ── STAGGER FADE-UP ── */
+    .stagger-item {
+      opacity:0;
+      transform:translateY(28px);
+      transition:opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1);
+    }
+    .stagger-item.visible { opacity:1; transform:translateY(0); }
+
+    /* ── TRUST BAR ── */
+    .trust-item {
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+      padding:24px 12px; text-align:center;
+      border-right:1px solid #1a1a1a;
+      transition:background .3s;
+    }
+    .trust-item:last-child { border-right:none; }
+    .trust-item:hover { background:#0d0d0d; }
+    .trust-icon {
+      width:36px; height:36px;
+      display:flex; align-items:center; justify-content:center;
+      color:#666;
+      transition:color .3s, transform .35s cubic-bezier(.22,1,.36,1);
+    }
+    .trust-item:hover .trust-icon {
+      color:#c8c8c4;
+      transform: scale(1.14) translateY(-2px);
+    }
+
+    /* ── NEWSLETTER ── */
+    .newsletter-input {
+      flex:1; background:transparent;
+      border:1px solid #303030; border-right:none;
+      color:#f5f5f3; padding:14px 18px;
+      font-family:'DM Sans',sans-serif; font-size:.8rem;
+      letter-spacing:.06em; outline:none;
+      transition:border-color .2s;
+    }
+    .newsletter-input::placeholder { color:#444; }
+    .newsletter-input:focus { border-color:#666; }
+    .newsletter-btn {
+      padding:14px 28px;
+      background:#f5f5f3; color:#0a0a0a;
+      border:1px solid #f5f5f3; font-family:'DM Sans',sans-serif;
+      font-size:.7rem; letter-spacing:.22em; text-transform:uppercase;
+      font-weight:500; cursor:pointer; white-space:nowrap;
+      transition:background .2s, color .2s;
+    }
+    .newsletter-btn:hover { background:#d8d8d4; border-color:#d8d8d4; }
   </style>
 
   <!-- ── HERO ─────────────────────────────────── -->
@@ -62,6 +111,54 @@
     </div>
   </section>
 
+  <!-- ── TRUST BAR ─────────────────────────────── -->
+  <div class="border-b border-zinc-900 grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 divide-zinc-900">
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[0.65rem] tracking-widest uppercase text-zinc-400 font-medium">Free Shipping</p>
+        <p class="text-[0.58rem] tracking-widest uppercase text-zinc-700 mt-0.5">Over 500k</p>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[0.65rem] tracking-widest uppercase text-zinc-400 font-medium">Free Returns</p>
+        <p class="text-[0.58rem] tracking-widest uppercase text-zinc-700 mt-0.5">Within 14 Days</p>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[0.65rem] tracking-widest uppercase text-zinc-400 font-medium">Secure Payment</p>
+        <p class="text-[0.58rem] tracking-widest uppercase text-zinc-700 mt-0.5">SSL Encrypted</p>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[0.65rem] tracking-widest uppercase text-zinc-400 font-medium">New Drops</p>
+        <p class="text-[0.58rem] tracking-widest uppercase text-zinc-700 mt-0.5">Every Friday</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ── EDITORIAL STRIP ───────────────────────── -->
   <section class="py-12 md:py-20 px-4 md:px-12 border-b border-zinc-900
                   flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -93,7 +190,8 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-0.5">
-      <div th:each="product,iter : ${bestSellers}" class="pcard relative">
+      <div th:each="product,iter : ${bestSellers}" class="pcard relative stagger-item"
+           th:attr="style=${'transition-delay:' + (iter.index * 80) + 'ms'}">
         <a th:href="@{'/products/'+${product.subCategory.category.slug}+'/'+${product.subCategory.slug}+'/'+${product.id}}"
            class="block no-underline text-inherit">
           <div class="pcard-wrap" style="aspect-ratio:3/4">
@@ -108,9 +206,10 @@
           <div class="pt-4 pb-6">
             <div class="flex justify-between items-baseline gap-2">
               <h3 class="text-xs tracking-widest uppercase text-[#e8e8e4] font-normal" th:text="${product.name}"></h3>
-              <p class="text-xs text-zinc-600 whitespace-nowrap"
-                 th:with="hp=${product.productVariants!=null and !product.productVariants.isEmpty()}">
-                <span th:text="${hp?#numbers.formatDecimal(product.productVariants[0].price,0,'POINT',0,'COMMA')+' ₫':'—'}"></span>
+              <p class="text-xs text-zinc-600 whitespace-nowrap">
+                <span th:if="${product.minPrice != null and product.minPrice > 0}"
+                      th:text="${#numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')+' ₫'}"></span>
+                <span th:unless="${product.minPrice != null and product.minPrice > 0}">—</span>
               </p>
             </div>
             <p class="text-xs tracking-widest text-zinc-700 uppercase mt-1" th:text="${product.subCategory?.name}"></p>
@@ -122,7 +221,7 @@
 
   <!-- ── MARQUEE ───────────────────────────────── -->
   <div class="border-t border-b border-zinc-900 py-5 overflow-hidden whitespace-nowrap">
-    <div class="inline-block" style="animation:ticker 22s linear infinite">
+    <div class="inline-block" style="animation:ticker 36s linear infinite">
       <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">NOVA ESSENTIALS</span>
       <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">—</span>
       <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">SPRING 2026</span>
@@ -144,7 +243,7 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-0.5">
       <!-- Tops -->
-      <a th:href="@{/products/top}" class="cat-card relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]">
+      <a th:href="@{/products/top}" class="cat-card stagger-item relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]" style="transition-delay:0ms">
         <img src="/images/top.jpg" alt="Tops" class="absolute inset-0 w-full h-full object-cover" />
         <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(17,17,17,.85) 0%,rgba(17,17,17,.2) 50%,transparent 100%)"></div>
         <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8 z-10">
@@ -156,7 +255,7 @@
         </div>
       </a>
       <!-- Bottoms -->
-      <a th:href="@{/products/bottom}" class="cat-card relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]">
+      <a th:href="@{/products/bottom}" class="cat-card stagger-item relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]" style="transition-delay:90ms">
         <img src="/images/bottom.jpg" alt="Bottoms" class="absolute inset-0 w-full h-full object-cover" />
         <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(17,17,17,.85) 0%,rgba(17,17,17,.2) 50%,transparent 100%)"></div>
         <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8 z-10">
@@ -168,7 +267,7 @@
         </div>
       </a>
       <!-- Accessories -->
-      <a th:href="@{/products/accessories}" class="cat-card relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]">
+      <a th:href="@{/products/accessories}" class="cat-card stagger-item relative aspect-[3/4] overflow-hidden block no-underline bg-[#111]" style="transition-delay:180ms">
         <img src="/images/accessories.jpg" alt="Accessories" class="absolute inset-0 w-full h-full object-cover" />
         <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(17,17,17,.85) 0%,rgba(17,17,17,.2) 50%,transparent 100%)"></div>
         <div class="absolute inset-0 flex flex-col justify-end p-6 md:p-8 z-10">
@@ -181,6 +280,54 @@
       </a>
     </div>
   </section>
+
+  <!-- ── NEWSLETTER ──────────────────────────────── -->
+  <section class="py-16 md:py-24 px-4 md:px-12 border-t border-zinc-900">
+    <div class="max-w-xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-10">
+        <div>
+          <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-3">Stay Connected</p>
+          <h2 class="font-display text-[2.8rem] md:text-[4rem] tracking-wide leading-none text-[#f5f5f3]">
+            Join<br>Nova
+          </h2>
+        </div>
+        <p class="text-sm text-zinc-600 md:text-right leading-relaxed max-w-xs">
+          First access to drops.<br>
+          Exclusive edits. No spam.
+        </p>
+      </div>
+      <form id="newsletterForm" onsubmit="handleNewsletter(event)" class="flex">
+        <input id="newsletterEmail" type="email" placeholder="Your email address"
+               class="newsletter-input" required />
+        <button type="submit" class="newsletter-btn">Subscribe</button>
+      </form>
+      <p id="newsletterMsg" class="text-xs tracking-widest uppercase mt-4" style="display:none; color:#6dbf6d;"></p>
+    </div>
+  </section>
+
+  <script>
+    // ── STAGGER FADE-UP on scroll ──
+    const staggerObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          staggerObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.stagger-item').forEach(el => staggerObs.observe(el));
+
+    // ── NEWSLETTER ──
+    function handleNewsletter(e) {
+      e.preventDefault();
+      const msg = document.getElementById('newsletterMsg');
+      msg.style.display = 'block';
+      msg.textContent = 'Thank you — you\'re on the list.';
+      document.getElementById('newsletterEmail').value = '';
+      document.getElementById('newsletterForm').style.opacity = '0.4';
+      document.getElementById('newsletterForm').style.pointerEvents = 'none';
+    }
+  </script>
 
 </div>
 </html>

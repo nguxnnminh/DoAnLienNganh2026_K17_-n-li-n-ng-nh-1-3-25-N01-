@@ -10,22 +10,25 @@
       padding: 5px 13px;
       border: 1px solid;
     }
-    .status-PENDING        { border-color: #4a3a10; color: #c8a52b; }
+    .status-PENDING        { border-color: #4a3a10; color: #c8a52b; background: rgba(200,165,43,0.06); }
     .status-CONFIRMED,
-    .status-PROCESSING     { border-color: #1a3a4a; color: #5a9bbf; }
-    .status-SHIPPING       { border-color: #2a1a4a; color: #8a6dbf; }
-    .status-COMPLETED      { border-color: #1a4a2a; color: #6dbf6d; }
-    .status-CANCELLED      { border-color: #4a1a1a; color: #bf7070; }
+    .status-PROCESSING     { border-color: #1a3a4a; color: #5a9bbf; background: rgba(90,155,191,0.06); }
+    .status-SHIPPING       { border-color: #2a1a4a; color: #8a6dbf; background: rgba(138,109,191,0.06); }
+    .status-COMPLETED      { border-color: #1a4a2a; color: #6dbf6d; background: rgba(109,191,109,0.06); }
+    .status-CANCELLED         { border-color: #4a1a1a; color: #bf7070; background: rgba(191,112,112,0.06); }
+    .status-CANCEL_REQUESTED  { border-color: #4a3010; color: #c87a20; background: rgba(200,122,32,0.06); }
 
     .order-row {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 24px 0;
+      padding: 24px 12px;
+      margin: 0 -12px;
       border-bottom: 1px solid #252525;
+      border-radius: 3px;
       text-decoration: none;
       color: inherit;
-      transition: opacity .2s;
+      transition: background .2s, border-color .2s;
     }
     @media (min-width: 640px) {
       .order-row {
@@ -33,29 +36,36 @@
         justify-content: space-between;
         align-items: flex-start;
         gap: 32px;
-        padding: 28px 0;
+        padding: 28px 12px;
       }
     }
-    .order-row:hover { opacity: .78; }
+    .order-row:hover {
+      background: rgba(245,245,243,0.025);
+      border-color: #333;
+    }
   </style>
 
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
 
     <!-- HEADER -->
-    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
-      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
-      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">My Orders</h1>
+    <div class="flex justify-between items-end mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <div>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">My Orders</h1>
+      </div>
+      <p class="text-xs tracking-widest uppercase text-zinc-500">
+        <span th:text="${#lists.size(orders)}">0</span>&nbsp;Orders
+      </p>
     </div>
 
     <!-- EMPTY -->
-    <div th:if="${#lists.isEmpty(orders)}" class="text-center py-16 md:py-20 border border-zinc-900">
-      <p class="font-display text-4xl md:text-6xl tracking-wide text-zinc-900 mb-6">No Orders Yet</p>
+    <div th:if="${#lists.isEmpty(orders)}" class="text-center py-20 md:py-28">
+      <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-700 mb-3">No Orders Yet</p>
+      <p class="text-xs tracking-widest uppercase text-zinc-700 mb-8">You haven't placed any orders.</p>
       <a th:href="@{/products}"
-        class="text-[0.68rem] tracking-widest uppercase text-zinc-500 no-underline inline-flex items-center gap-2 transition-colors duration-200 hover:text-[#c0c0bc]">
-        Start Shopping
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
+         class="h-11 md:h-12 px-8 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase
+                no-underline font-medium inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
+        Browse Shop
       </a>
     </div>
 

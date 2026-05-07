@@ -3,6 +3,8 @@ package com.shop.clothingstore.service;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,21 @@ public class UserService extends GenericServiceBase<User, Long> {
             throw new IllegalStateException("Cannot delete admin account");
         }
         delete(id);
+    }
+
+    /**
+     * Admin paginated user list with optional keyword + role filter.
+     * Runs DB-level search — never loads all users into memory.
+     */
+    public Page<User> searchUsers(String keyword, String roleStr, Pageable pageable) {
+        Role role = null;
+        if (roleStr != null && !roleStr.isBlank()) {
+            try {
+                role = Role.valueOf(roleStr.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
+        String kw = (keyword != null && keyword.isBlank()) ? null : keyword;
+        return userRepository.searchAdmin(kw, role, pageable);
     }
 
     public Optional<User> findByEmail(String email) {

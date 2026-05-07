@@ -21,20 +21,35 @@
     /* ── THUMBNAILS ──────────────────────────────────────────── */
     .thumb {
       width:68px;height:86px;object-fit:cover;cursor:pointer;
-      border:1px solid #2a2a2a;opacity:.5;transition:opacity .2s,border-color .2s;flex-shrink:0;
+      border:1px solid #2a2a2a;opacity:.5;
+      transition:opacity .2s,border-color .2s,transform .25s cubic-bezier(.22,1,.36,1);
+      flex-shrink:0;
     }
-    .thumb.active-thumb,.thumb:hover { opacity:1;border-color:#777; }
+    .thumb:hover { opacity:.8;border-color:#666;transform:scale(1.06); }
+    .thumb.active-thumb { opacity:1;border-color:#f5f5f3; }
 
     /* ── ACCORDION ───────────────────────────────────────────── */
     .acc-btn {
       width:100%;background:none;border:none;border-top:1px solid #272727;
       color:#c8c8c4;display:flex;justify-content:space-between;align-items:center;
       padding:16px 0;font-family:'DM Sans',sans-serif;font-size:.75rem;
-      letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:color .2s;
+      letter-spacing:.2em;text-transform:uppercase;cursor:pointer;
+      transition:color .2s;position:relative;
+    }
+    .acc-btn::after {
+      content:''; position:absolute; bottom:0; left:0;
+      width:0; height:1px; background:#f5f5f3;
+      transition:width .35s cubic-bezier(.22,1,.36,1);
     }
     .acc-btn:hover { color:#f5f5f3; }
-    .acc-body { display:none;font-size:.85rem;line-height:1.85;color:#999;padding:4px 0 16px; }
-    .acc-body.open { display:block; }
+    .acc-btn:hover::after { width:100%; }
+    .acc-body {
+      overflow:hidden; max-height:0;
+      font-size:.85rem;line-height:1.85;color:#999;
+      transition:max-height .4s cubic-bezier(.22,1,.36,1), padding .3s;
+      padding:0;
+    }
+    .acc-body.open { max-height:400px; padding:8px 0 20px; }
 
     /* ── REC CARDS ───────────────────────────────────────────── */
     .rec-img-wrap { position:relative;overflow:hidden;background:#111; }
@@ -214,18 +229,26 @@
       </a>
     </div>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5">
-      <div th:each="rec : ${relatedProducts}" class="rec-card">
+      <!--
+        rec.images is pre-fetched via EntityGraph in ProductRepository (no lazy load).
+        Use rec.minPrice (denormalized column) instead of rec.productVariants[0].price —
+        eliminates N+1 lazy loads on productVariants for each related product card.
+      -->
+      <div th:each="rec : ${relatedProducts}" class="rec-card"
+           th:with="recImgs=${rec.images}">
         <a th:href="@{'/products/'+${rec.subCategory.category.slug}+'/'+${rec.subCategory.slug}+'/'+${rec.id}}"
            class="block no-underline text-inherit">
           <div class="rec-img-wrap aspect-[3/4]">
-            <img th:src="${rec.images!=null and !rec.images.isEmpty()?rec.images[0].imageUrl:'/images/no-image.png'}" alt="" />
+            <img th:src="${!recImgs.isEmpty() ? recImgs[0].imageUrl : '/images/no-image.png'}"
+                 th:alt="${rec.name}" loading="lazy" />
           </div>
           <div class="pt-4 pb-6">
             <div class="flex justify-between items-baseline gap-2">
               <h4 class="text-xs tracking-widest uppercase text-[#e0e0de] font-normal" th:text="${rec.name}"></h4>
-              <span class="text-xs text-zinc-600 whitespace-nowrap"
-                    th:with="hp=${rec.productVariants!=null and !rec.productVariants.isEmpty()}">
-                <span th:text="${hp?#numbers.formatDecimal(rec.productVariants[0].price,0,'POINT',0,'COMMA')+' ₫':'—'}"></span>
+              <span class="text-xs text-zinc-600 whitespace-nowrap">
+                <span th:if="${rec.minPrice != null and rec.minPrice > 0}"
+                      th:text="${#numbers.formatDecimal(rec.minPrice,0,'POINT',0,'COMMA')+' ₫'}"></span>
+                <span th:unless="${rec.minPrice != null and rec.minPrice > 0}">—</span>
               </span>
             </div>
           </div>
@@ -262,7 +285,7 @@
       </div>
     </div>
 
-    <!-- Reviews chỉ hiển thị để đọc. Để gửi review, hoàn thành đơn hàng rồi vào Đơn hàng của tôi. -->
+    <!-- Reviews are read-only. To submit a review, complete an order then go to My Orders. -->
   </section>
 
   <script th:inline="javascript">
@@ -272,7 +295,13 @@
 
     document.querySelectorAll('.thumb').forEach(t => {
       t.addEventListener('click', () => {
-        document.getElementById('mainImage').src = t.dataset.src;
+        const mainImg = document.getElementById('mainImage');
+        mainImg.style.opacity = '0';
+        mainImg.style.transition = 'opacity .25s ease';
+        setTimeout(() => {
+          mainImg.src = t.dataset.src;
+          mainImg.style.opacity = '1';
+        }, 200);
         document.querySelectorAll('.thumb').forEach(x => x.classList.remove('active-thumb'));
         t.classList.add('active-thumb');
       });
@@ -318,6 +347,7 @@
       const icon = btn.querySelector('span:last-child');
       const open = body.classList.toggle('open');
       icon.style.transform = open ? 'rotate(45deg)' : 'rotate(0deg)';
+      icon.style.transition = 'transform .3s cubic-bezier(.22,1,.36,1)';
     }
 
     /* ══════════════════════════════════════════════════════ */
@@ -406,7 +436,7 @@
       if (savedPersonId && savedPersonUrl) {
         document.getElementById('tryonPersonPreview').src = savedPersonUrl;
         document.getElementById('tryonPersonPreview').style.display = 'block';
-        document.getElementById('tryonUploadLabel').textContent = 'Đổi ảnh khác';
+        document.getElementById('tryonUploadLabel').textContent = 'Change photo';
       }
       // Reset result area
       document.getElementById('tryonResultArea').style.display = 'none';
@@ -433,7 +463,7 @@
       const formData = new FormData();
       formData.append('personImage', file);
 
-      document.getElementById('tryonUploadLabel').textContent = 'Đang tải lên...';
+      document.getElementById('tryonUploadLabel').textContent = 'Uploading...';
 
       fetch('/api/tryon/upload-person', { method: 'POST', body: formData })
         .then(r => r.json())
@@ -443,19 +473,19 @@
             savedPersonUrl = data.url;
             localStorage.setItem('tryon_personId', savedPersonId);
             localStorage.setItem('tryon_personUrl', savedPersonUrl);
-            document.getElementById('tryonUploadLabel').textContent = '✓ Ảnh đã lưu — Đổi ảnh khác';
+            document.getElementById('tryonUploadLabel').textContent = '✓ Saved — Change photo';
           } else {
-            document.getElementById('tryonUploadLabel').textContent = 'Lỗi: ' + (data.error || 'Unknown');
+            document.getElementById('tryonUploadLabel').textContent = 'Error: ' + (data.error || 'Unknown');
           }
         })
         .catch(err => {
-          document.getElementById('tryonUploadLabel').textContent = 'Lỗi upload: ' + err.message;
+          document.getElementById('tryonUploadLabel').textContent = 'Upload error: ' + err.message;
         });
     }
 
     function startTryOn() {
       if (!savedPersonId) {
-        alert('Vui lòng upload ảnh chân dung trước!');
+        alert('Please upload a portrait photo first.');
         return;
       }
 
@@ -491,14 +521,14 @@
             document.getElementById('tryonResultImg').src = data.resultUrl + '?t=' + Date.now();
             document.getElementById('tryonResultArea').style.display = 'block';
           } else {
-            alert('Lỗi: ' + (data.error || 'Không thể tạo ảnh thử đồ'));
+            alert('Error: ' + (data.error || 'Could not generate try-on image.'));
           }
         })
         .catch(err => {
           clearInterval(stepInterval);
           document.getElementById('tryonLoading').style.display = 'none';
           document.getElementById('tryonGenerateBtn').disabled = false;
-          alert('Lỗi kết nối: ' + err.message);
+          alert('Connection error: ' + err.message);
         });
     }
   </script>
@@ -530,7 +560,7 @@
         Virtual Try-On
       </h3>
       <p style="font-size:0.65rem; color:#555; letter-spacing:0.2em; text-transform:uppercase;
-                margin:0 0 28px;">AI-Powered &middot; IDM-VTON</p>
+                margin:0 0 28px;">AI-Powered &middot; OOTDiffusion</p>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
 

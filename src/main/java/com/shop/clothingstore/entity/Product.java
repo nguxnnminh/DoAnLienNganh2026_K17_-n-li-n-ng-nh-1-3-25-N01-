@@ -2,6 +2,7 @@ package com.shop.clothingstore.entity;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -69,6 +71,11 @@ public class Product extends BaseEntity implements SellableItem {
     @Column(name = "min_price", precision = 19, scale = 2)
     private BigDecimal minPrice = BigDecimal.ZERO;
 
+    // Denormalized total units sold across all variants.
+    // Updated on checkout completion. Enables DB-level ORDER BY total_sold DESC.
+    @Column(name = "total_sold")
+    private Integer totalSold = 0;
+
     // ================= VARIANTS =================
     @OneToMany(
             mappedBy = "product",
@@ -79,11 +86,17 @@ public class Product extends BaseEntity implements SellableItem {
     private List<ProductVariant> productVariants = new ArrayList<>();
 
     // ================= IMAGES =================
+    // @OrderBy tells Hibernate to emit ORDER BY primary_image DESC, id ASC
+    // in the secondary SELECT for this collection.
+    // Must be Set (not List/bag) because productVariants is already a List;
+    // Hibernate forbids JOIN-fetching two bag collections simultaneously
+    // (MultipleBagFetchException). One List + one Set is always safe.
     @OneToMany(
             mappedBy = "product",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
+    @OrderBy("primaryImage DESC, id ASC")
     private Set<ProductImage> images = new HashSet<>();
 
     // ================= INTERFACE IMPLEMENTATION =================
@@ -113,12 +126,17 @@ public class Product extends BaseEntity implements SellableItem {
     }
 
     /**
-     * Returns a mutable copy of the image collection.
-     * Use removeImagesByIds() or addImage() to mutate the actual collection.
+     * Returns images sorted: primary image first, then by id ascending.
+     * @OrderBy handles the DB-side ordering; this sort covers in-memory cases
+     * (e.g. after addImage() before flush).
      */
     @Override
     public List<ProductImage> getImages() {
-        return new ArrayList<>(images);
+        return images.stream()
+                .sorted(Comparator
+                        .comparing(ProductImage::isPrimary, Comparator.reverseOrder())
+                        .thenComparingLong(img -> img.getId() != null ? img.getId() : Long.MAX_VALUE))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // ================= HELPER METHODS =================
@@ -133,7 +151,9 @@ public class Product extends BaseEntity implements SellableItem {
 
     public void addImage(ProductImage image) {
         image.setProduct(this);
-        images.add(image);
+        if (!images.contains(image)) {
+            images.add(image);
+        }
     }
 
     /**
@@ -144,6 +164,7 @@ public class Product extends BaseEntity implements SellableItem {
         if (imageIds == null || imageIds.isEmpty()) {
             return;
         }
+        // Operate on the actual backing List (not the defensive copy from getImages())
         images.removeIf(img -> imageIds.contains(img.getId()));
     }
 
@@ -157,5 +178,15 @@ public class Product extends BaseEntity implements SellableItem {
                 .filter(p -> p != null && p.compareTo(BigDecimal.ZERO) > 0)
                 .min(BigDecimal::compareTo)
                 .orElse(BigDecimal.ZERO);
+    }
+
+    /**
+     * Recompute the denormalized totalSold from current variants.
+     * Call after any variant sold count change (checkout, cancellation).
+     */
+    public void refreshTotalSold() {
+        this.totalSold = productVariants.stream()
+                .mapToInt(v -> v.getSold() != null ? v.getSold() : 0)
+                .sum();
     }
 }

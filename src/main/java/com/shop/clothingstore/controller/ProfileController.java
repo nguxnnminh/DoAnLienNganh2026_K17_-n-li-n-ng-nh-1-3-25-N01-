@@ -71,7 +71,7 @@ public class ProfileController {
 
         userService.save(user);
 
-        redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin thành công");
+        redirectAttributes.addFlashAttribute("success", "Information updated successfully");
 
         return "redirect:/profile";
     }
@@ -92,28 +92,28 @@ public class ProfileController {
                 .findByEmail(userDetails.getUsername())
                 .orElseThrow();
 
-        // Check mật khẩu cũ
+        // Verify old password
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng");
+            redirectAttributes.addFlashAttribute("error", "Incorrect current password");
             return "redirect:/profile";
         }
 
         // Check confirm
         if (!newPassword.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
+            redirectAttributes.addFlashAttribute("error", "Passwords do not match");
             return "redirect:/profile";
         }
 
-        // Check độ dài
+        // Validate length
         if (newPassword.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
             return "redirect:/profile";
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.save(user);
 
-        redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công");
+        redirectAttributes.addFlashAttribute("success", "Password changed successfully");
 
         return "redirect:/profile";
     }

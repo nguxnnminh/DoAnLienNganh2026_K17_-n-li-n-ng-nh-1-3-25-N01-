@@ -4,9 +4,9 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Thêm danh mục phụ</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Add Subcategory</h1>
         </div>
-        <a th:href="@{/admin/subcategories}" class="btn btn-secondary">← Quay lại</a>
+        <a th:href="@{/admin/subcategories}" class="btn btn-secondary">← Back</a>
     </div>
 
     <div style="max-width:560px;">
@@ -16,17 +16,17 @@
                 <div style="display:flex; flex-direction:column; gap:18px;">
 
                     <div>
-                        <label class="form-label">Tên danh mục phụ <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Subcategory Name <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="name" class="form-control"
-                               data-required="tên danh mục phụ"
+                               data-required="subcategory name"
                                placeholder="VD: Tee, Hoodie, Jeans..."
                                maxlength="100" oninput="autoSlug(this.value)">
                     </div>
 
                     <div>
-                        <label class="form-label">Danh mục chính <span style="color:#ef4444;">*</span></label>
-                        <select name="categoryId" class="form-control" data-required="danh mục chính">
-                            <option value="">-- Chọn danh mục chính --</option>
+                        <label class="form-label">Main Category <span style="color:#ef4444;">*</span></label>
+                        <select name="categoryId" class="form-control" data-required="main category">
+                            <option value="">-- Select main category --</option>
                             <option th:each="cat : ${categories}"
                                     th:value="${cat.id}"
                                     th:text="${cat.name}"
@@ -35,9 +35,9 @@
                     </div>
 
                     <div>
-                        <label class="form-label">Loại size</label>
+                        <label class="form-label">Size Type</label>
                         <select name="sizeType" class="form-control">
-                            <option value="">-- Không chọn --</option>
+                            <option value="">-- None --</option>
                             <option th:each="st : ${sizeTypes}"
                                     th:value="${st}" th:text="${st}"></option>
                         </select>
@@ -49,16 +49,16 @@
                         <input type="text" name="slug" id="slugInput" class="form-control"
                                placeholder="tu-dong-tao-tu-ten"
                                style="font-family:monospace; font-size:13px;">
-                        <p class="form-hint">Để trống để tự động tạo từ tên.</p>
+                        <p class="form-hint">Leave blank to auto-generate.</p>
                     </div>
 
                     <div class="divider"></div>
 
                     <div style="display:flex; justify-content:flex-end; gap:10px;">
-                        <a th:href="@{/admin/subcategories}" class="btn btn-secondary">Hủy</a>
+                        <a th:href="@{/admin/subcategories}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Tạo danh mục phụ
+                            Create Subcategory
                         </button>
                     </div>
                 </div>

@@ -12,4 +12,6 @@ import com.shop.clothingstore.entity.Shipment;
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 
     Optional<Shipment> findByOrder(Order order);
+
+    Optional<Shipment> findByOrderId(Long orderId);
 }

@@ -6,6 +6,5 @@ package com.shop.clothingstore.entity;
  */
 public enum GarmentType {
     UPPER_BODY,   // T-shirts, jackets, hoodies, blouses
-    LOWER_BODY,   // Pants, shorts, skirts
-    FULL_BODY     // Dresses, jumpsuits, overalls
+    LOWER_BODY    // Pants, shorts, skirts
 }

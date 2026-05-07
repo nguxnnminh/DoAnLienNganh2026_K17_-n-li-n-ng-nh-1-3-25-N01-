@@ -33,11 +33,11 @@ public class ReportService {
 
     public byte[] exportDashboardToExcel() throws IOException {
         Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Báo cáo Dashboard");
+        Sheet sheet = workbook.createSheet("Dashboard Report");
 
         // Header
         Row header = sheet.createRow(0);
-        String[] columns = {"Chỉ số", "Giá trị"};
+        String[] columns = {"Metric", "Value"};
         for (int i = 0; i < columns.length; i++) {
             Cell cell = header.createCell(i);
             cell.setCellValue(columns[i]);
@@ -46,12 +46,12 @@ public class ReportService {
         DashboardReportDTO report = getFullReport();
         int rowNum = 1;
 
-        rowNum = addRow(sheet, rowNum, "Tổng số đơn hàng", report.getTotalOrders());
-        rowNum = addRow(sheet, rowNum, "Đơn hàng hoàn thành", report.getCompletedOrders());
-        rowNum = addRow(sheet, rowNum, "Đơn hàng bị hủy", report.getCancelledOrders());
-        rowNum = addRow(sheet, rowNum, "Tổng doanh thu (VND)", report.getTotalRevenue());
-        rowNum = addRow(sheet, rowNum, "Tổng số khách hàng", report.getTotalCustomers());
-        rowNum = addRow(sheet, rowNum, "Tỷ lệ hoàn thành (%)", String.format("%.2f", report.getCompletionRate()));
+        rowNum = addRow(sheet, rowNum, "Total Orders", report.getTotalOrders());
+        rowNum = addRow(sheet, rowNum, "Completed Orders", report.getCompletedOrders());
+        rowNum = addRow(sheet, rowNum, "Cancelled Orders", report.getCancelledOrders());
+        rowNum = addRow(sheet, rowNum, "Total Revenue (VND)", report.getTotalRevenue());
+        rowNum = addRow(sheet, rowNum, "Total Customers", report.getTotalCustomers());
+        rowNum = addRow(sheet, rowNum, "Completion Rate (%)", String.format("%.2f", report.getCompletionRate()));
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);

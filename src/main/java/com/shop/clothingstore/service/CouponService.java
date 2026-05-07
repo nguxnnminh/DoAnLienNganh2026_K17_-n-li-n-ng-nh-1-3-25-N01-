@@ -74,7 +74,7 @@ public class CouponService {
 
         Coupon coupon = new Coupon();
         coupon.setCode(code);
-        coupon.setDescription("Chào mừng thành viên mới! Giảm 100.000₫ cho đơn hàng đầu tiên.");
+        coupon.setDescription("Welcome new member! Get 100,000₫ off your first order.");
         coupon.setDiscountType(Coupon.DiscountType.FIXED);
         coupon.setDiscountValue(WELCOME_DISCOUNT);
         coupon.setMinOrderAmount(WELCOME_MIN_ORDER);
@@ -243,26 +243,26 @@ public class CouponService {
         Coupon coupon = couponRepository
                 .findByCodeForUpdate(code.trim().toUpperCase())
                 .orElseThrow(() -> new IllegalStateException(
-                "Mã giảm giá '" + code.trim().toUpperCase() + "' không hợp lệ."));
+                "Coupon '" + code.trim().toUpperCase() + "' is not valid."));
 
         if (!coupon.isValid(orderTotal)) {
             log.warn("Coupon invalid at apply time | code={} | orderTotal={}", code, orderTotal);
             throw new IllegalStateException(
-                    "Mã giảm giá '" + code.trim().toUpperCase()
-                    + "' đã hết hạn hoặc không đáp ứng điều kiện đơn hàng. "
-                    + "Vui lòng chọn mã khác.");
+                    "Coupon '" + code.trim().toUpperCase()
+                    + "' has expired or does not meet order requirements. "
+                    + "Please choose another code.");
         }
 
         // User-specific coupon: verify ownership and not already used
         if (coupon.isUserSpecific()) {
             if (user == null) {
-                throw new IllegalStateException("Bạn cần đăng nhập để sử dụng mã này.");
+                throw new IllegalStateException("You must be logged in to use this coupon.");
             }
             UserCoupon uc = userCouponRepository.findByUserAndCoupon(user, coupon)
                     .orElseThrow(() -> new IllegalStateException(
-                    "Mã giảm giá này không thuộc về bạn."));
+                    "This coupon does not belong to you."));
             if (uc.isUsed()) {
-                throw new IllegalStateException("Bạn đã sử dụng mã giảm giá này rồi.");
+                throw new IllegalStateException("You have already used this coupon.");
             }
             // Mark as used
             uc.setUsed(true);
@@ -272,7 +272,7 @@ public class CouponService {
             // Public coupon: track usage per user
             if (user != null) {
                 if (userCouponRepository.existsByUserAndCouponAndUsedTrue(user, coupon)) {
-                    throw new IllegalStateException("Bạn đã sử dụng mã giảm giá này rồi.");
+                    throw new IllegalStateException("You have already used this coupon.");
                 }
                 // Create usage record
                 Optional<UserCoupon> existingUc = userCouponRepository.findByUserAndCoupon(user, coupon);

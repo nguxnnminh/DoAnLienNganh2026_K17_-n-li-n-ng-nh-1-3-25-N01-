@@ -40,7 +40,7 @@ public class WishlistService {
         Objects.requireNonNull(productId, "productId must not be null");
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalStateException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new IllegalStateException("Product not found"));
 
         if (wishlistItemRepository.existsByUserAndProduct(user, product)) {
             return;
@@ -57,7 +57,7 @@ public class WishlistService {
         Objects.requireNonNull(productId, "productId must not be null");
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalStateException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new IllegalStateException("Product not found"));
         wishlistItemRepository.deleteByUserAndProduct(user, product);
     }
 }

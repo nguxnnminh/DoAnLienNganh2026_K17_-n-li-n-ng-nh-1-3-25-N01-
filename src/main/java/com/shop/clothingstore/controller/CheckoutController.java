@@ -141,8 +141,12 @@ public class CheckoutController {
     }
 
     private void loadCartData(Model model) {
+        BigDecimal subtotal = cartService.getTotal();
+        BigDecimal shippingFee = subtotal.compareTo(CheckoutService.FREE_SHIP_THRESHOLD) >= 0
+                ? BigDecimal.ZERO : CheckoutService.SHIP_FEE;
         model.addAttribute("cartItems", cartService.getCart());
-        model.addAttribute("total", cartService.getTotal());
+        model.addAttribute("total", subtotal);
+        model.addAttribute("shippingFee", shippingFee);
     }
 
     private User getCurrentUser(Principal principal) {

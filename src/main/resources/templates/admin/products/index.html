@@ -6,52 +6,106 @@
     <!-- PAGE HEADER -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Sản phẩm</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Products</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">
-                Tổng <strong th:text="${products?.totalElements ?: 0}" style="color:#374151;">0</strong> sản phẩm
+                Total <strong th:text="${products?.totalElements ?: 0}" style="color:#374151;">0</strong> products
             </p>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <a th:href="@{/admin/products/create}" class="btn btn-primary">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Thêm sản phẩm
-            </a>
-        </div>
+        <a th:href="@{/admin/products/create}" class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Product
+        </a>
     </div>
 
-    <!-- SEARCH / FILTER BAR -->
+    <!--
+        SEARCH / FILTER BAR
+        BUG FIX: template previously used name="search" but controller
+                 read "keyword" — search never worked. Fixed to use "keyword".
+        NEW:     categoryId, status, stock, sort filters added.
+    -->
     <form th:action="@{/admin/products}" method="get" style="margin-bottom:20px;">
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <input type="text" name="search" th:value="${param.search}"
-                   placeholder="Tìm tên sản phẩm..."
-                   class="form-control" style="max-width:280px; flex:1; min-width:180px;">
-            <select name="status" class="form-control" style="max-width:160px;">
-                <option value="">Tất cả trạng thái</option>
-                <option value="active" th:selected="${param.status == 'active'}">Active</option>
-                <option value="inactive" th:selected="${param.status == 'inactive'}">Inactive</option>
-            </select>
-            <button type="submit" class="btn btn-secondary">Lọc</button>
-            <a th:href="@{/admin/products}" class="btn btn-secondary">Xóa lọc</a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+
+            <!-- Keyword -->
+            <div style="flex:1; min-width:180px; max-width:280px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Search</label>
+                <input type="text" name="keyword" th:value="${keyword}"
+                       placeholder="Product name..."
+                       class="form-control">
+            </div>
+
+            <!-- Category -->
+            <div style="min-width:160px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Category</label>
+                <select name="categoryId" class="form-control">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${categoryId != null and categoryId == cat.id}"></option>
+                </select>
+            </div>
+
+            <!-- Status -->
+            <div style="min-width:140px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Status</label>
+                <select name="status" class="form-control">
+                    <option value="">All</option>
+                    <option value="active"   th:selected="${status == 'active'}">Active</option>
+                    <option value="inactive" th:selected="${status == 'inactive'}">Inactive</option>
+                </select>
+            </div>
+
+            <!-- Stock -->
+            <div style="min-width:140px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Inventory</label>
+                <select name="stock" class="form-control">
+                    <option value="">All</option>
+                    <option value="low" th:selected="${stock == 'low'}">Low Stock (≤10)</option>
+                    <option value="out" th:selected="${stock == 'out'}">Out of Stock</option>
+                </select>
+            </div>
+
+            <!-- Sort -->
+            <div style="min-width:150px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Sort</label>
+                <select name="sort" class="form-control">
+                    <option value="newest"    th:selected="${sort == 'newest' or sort == null}">Newest</option>
+                    <option value="name_asc"  th:selected="${sort == 'name_asc'}">Name A–Z</option>
+                    <option value="price_asc" th:selected="${sort == 'price_asc'}">Price: Low–High</option>
+                    <option value="price_desc" th:selected="${sort == 'price_desc'}">Price: High–Low</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:8px; align-items:flex-end; padding-bottom:1px;">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a th:href="@{/admin/products}" class="btn btn-secondary">Clear</a>
+            </div>
         </div>
     </form>
 
-    <!-- TABLE -->
+    <!-- TABLE — uses ${content} (post-filtered list) for rows, ${products} for pagination -->
     <div class="card">
         <div style="overflow-x:auto;">
             <table class="data-table" style="min-width:800px;">
                 <thead>
                     <tr>
                         <th style="width:50px;">ID</th>
-                        <th>Tên sản phẩm</th>
-                        <th>Danh mục</th>
-                        <th style="text-align:right;">Giá</th>
-                        <th style="text-align:center;">Tồn kho</th>
-                        <th style="text-align:center;">Trạng thái</th>
-                        <th style="text-align:center;">Thao tác</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th style="text-align:right;">Price</th>
+                        <th style="text-align:center;">Stock</th>
+                        <th style="text-align:center;">Status</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="product : ${products}">
+                    <!--
+                        Use ${content} — the controller applies post-filter for
+                        "inactive only" and stock filters after the DB query.
+                        Falls back to ${products} content if ${content} is null.
+                    -->
+                    <tr th:each="product : ${content != null ? content : products}">
                         <td style="color:#9ca3af; font-family:'DM Mono',monospace; font-size:12px;" th:text="${product.id}"></td>
                         <td>
                             <div style="font-weight:500;" th:text="${product.name}"></div>
@@ -60,71 +114,84 @@
                         </td>
                         <td>
                             <div style="font-size:13px;" th:text="${product.subCategory?.category?.name}"></div>
-                            <div style="font-size:12px; color:#9ca3af;" th:text="${product.subCategory?.name ?: 'Chưa phân loại'}"></div>
+                            <div style="font-size:12px; color:#9ca3af;" th:text="${product.subCategory?.name ?: 'Uncategorized'}"></div>
                         </td>
                         <td style="text-align:right; font-weight:500; white-space:nowrap;">
                             <span th:text="${product.minPrice != null ? #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA') : '-'}"></span>₫
                         </td>
                         <td style="text-align:center;">
-                            <span th:if="${product.totalStock != null and product.totalStock <= 5}"
-                                  class="badge badge-red" th:text="${product.totalStock}"></span>
-                            <span th:if="${product.totalStock == null or product.totalStock > 5}"
-                                  style="font-weight:500;" th:text="${product.totalStock ?: 0}"></span>
+                            <span th:if="${product.totalStock == 0}"
+                                  class="badge badge-red">Out</span>
+                            <span th:if="${product.totalStock != null and product.totalStock > 0 and product.totalStock <= 10}"
+                                  class="badge badge-yellow" th:text="${product.totalStock}"></span>
+                            <span th:if="${product.totalStock != null and product.totalStock > 10}"
+                                  style="font-weight:500;" th:text="${product.totalStock}"></span>
                         </td>
                         <td style="text-align:center;">
-                            <span th:if="${product.active}" class="badge badge-green">Active</span>
+                            <span th:if="${product.active}"  class="badge badge-green">Active</span>
                             <span th:unless="${product.active}" class="badge badge-gray">Inactive</span>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
                                 <a th:href="@{/admin/products/{id}/edit(id=${product.id})}"
-                                   class="btn btn-sm btn-secondary">Sửa</a>
+                                   class="btn btn-sm btn-secondary">Edit</a>
 
                                 <form th:action="@{/admin/products/{id}(id=${product.id})}" method="post" style="display:inline;">
                                     <input type="hidden" name="_method" value="DELETE"/>
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <button type="submit"
                                             class="btn btn-sm btn-danger"
-                                            data-confirm="Xóa sản phẩm này? Hành động không thể hoàn tác.">
-                                        Xóa
+                                            data-confirm="Delete this product? This action cannot be undone.">
+                                        Delete
                                     </button>
                                 </form>
                             </div>
                         </td>
                     </tr>
-                    <tr th:if="${products == null or products.isEmpty()}">
+                    <tr th:if="${(content != null ? content : products.content).isEmpty()}">
                         <td colspan="7" style="text-align:center; padding:48px; color:#9ca3af;">
                             <div style="margin-bottom:8px;">
                                 <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto; display:block; opacity:0.4;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                             </div>
-                            Chưa có sản phẩm nào.
+                            No products found.
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- PAGINATION -->
+        <!-- PAGINATION — window of ±2, preserves ALL filter params -->
         <div th:if="${totalPages != null and totalPages > 1}"
              style="padding:16px 20px; border-top:1px solid #f3f4f6; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <div style="font-size:13px; color:#9ca3af;">
-                Trang <strong th:text="${currentPage + 1}" style="color:#374151;"></strong> /
+                Page <strong th:text="${currentPage + 1}" style="color:#374151;"></strong> /
                 <span th:text="${totalPages}"></span>
+                &nbsp;·&nbsp;<span th:text="${products?.totalElements ?: 0}"></span> products
             </div>
             <div class="pagination">
                 <a th:if="${currentPage > 0}"
-                   th:href="@{/admin/products(page=${currentPage - 1}, size=20)}"
+                   th:href="@{/admin/products(page=${currentPage - 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, stock=${stock}, sort=${sort})}"
                    class="page-btn">←</a>
 
-                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
-                    <a th:href="@{/admin/products(page=${i}, size=20)}"
+                <a th:if="${pageWindowStart > 0}"
+                   th:href="@{/admin/products(page=0, keyword=${keyword}, categoryId=${categoryId}, status=${status}, stock=${stock}, sort=${sort})}"
+                   class="page-btn">1</a>
+                <span th:if="${showStartEllipsis}" class="page-btn" style="border:none;cursor:default;color:#9ca3af;">…</span>
+
+                <th:block th:each="i : ${#numbers.sequence(pageWindowStart, pageWindowEnd)}">
+                    <a th:href="@{/admin/products(page=${i}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, stock=${stock}, sort=${sort})}"
                        th:text="${i + 1}"
                        class="page-btn"
                        th:classappend="${i == currentPage} ? ' active' : ''"></a>
                 </th:block>
 
+                <span th:if="${showEndEllipsis}" class="page-btn" style="border:none;cursor:default;color:#9ca3af;">…</span>
+                <a th:if="${pageWindowEnd < totalPages - 1}"
+                   th:href="@{/admin/products(page=${totalPages - 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, stock=${stock}, sort=${sort})}"
+                   class="page-btn" th:text="${totalPages}"></a>
+
                 <a th:if="${currentPage < totalPages - 1}"
-                   th:href="@{/admin/products(page=${currentPage + 1}, size=20)}"
+                   th:href="@{/admin/products(page=${currentPage + 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, stock=${stock}, sort=${sort})}"
                    class="page-btn">→</a>
             </div>
         </div>

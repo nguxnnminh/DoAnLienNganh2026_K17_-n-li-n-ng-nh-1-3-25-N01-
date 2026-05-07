@@ -20,8 +20,18 @@
       opacity: 0;
       transition: opacity .5s ease;
     }
+    .shop-card .img-over {
+      position: absolute; inset: 0;
+      background: rgba(17,17,17,.45);
+      display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 20px; color: #f5f5f3;
+      opacity: 0; transition: opacity .3s;
+    }
+    .shop-card { transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s; }
+    .shop-card:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
     .shop-card:hover .img-main { transform: scale(1.04); }
     .shop-card:hover .img-hover { opacity: 1; }
+    .shop-card:hover .img-over { opacity: 1; }
 
     .filter-link {
       display: block;
@@ -31,17 +41,27 @@
       color: #888;
       text-decoration: none;
       padding: 8px 0;
-      border-bottom: 1px solid transparent;
+      position: relative;
       transition: color .2s;
     }
+    .filter-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 1px;
+      background: #f5f5f3;
+      transition: width .3s cubic-bezier(.22,1,.36,1);
+    }
     .filter-link:hover { color: #f5f5f3; }
-    .filter-link.active { color: #f5f5f3; border-bottom-color: #484848; }
+    .filter-link:hover::after { width: 100%; }
+    .filter-link.active { color: #f5f5f3; }
+    .filter-link.active::after { width: 100%; }
 
     .sidebar-label {
       font-size: .58rem;
       letter-spacing: .42em;
       text-transform: uppercase;
-      color: #666;
+      color: #888;
       margin-bottom: 12px;
       display: block;
     }
@@ -57,6 +77,7 @@
     }
     .pg-btn:hover { border-color: #f5f5f3; color: #f5f5f3; }
     .pg-btn.pg-active { background: #f5f5f3; color: #111111; border-color: #f5f5f3; }
+    .pg-ellipsis { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #444; font-size: .7rem; }
 
     .sort-select {
       background: transparent;
@@ -75,7 +96,55 @@
     .sort-select:hover { border-color: #666; }
     .sort-select option { background: #111111; color: #f5f5f3; }
 
-    /* Mobile sidebar: horizontal scroll strip */
+    .price-input {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #303030;
+      color: #aaa;
+      font-size: .72rem;
+      padding: 8px 10px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color .2s;
+      -moz-appearance: textfield;
+    }
+    .price-input:hover, .price-input:focus { border-color: #666; color: #f5f5f3; }
+    .price-input::-webkit-outer-spin-button,
+    .price-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .price-apply-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 0;
+      background: transparent;
+      border: 1px solid #303030;
+      color: #888;
+      font-size: .65rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .price-apply-btn:hover { border-color: #f5f5f3; color: #f5f5f3; }
+
+    .search-input {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #303030;
+      color: #e0e0de;
+      font-size: .72rem;
+      padding: 9px 12px 9px 34px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input::placeholder { color: #555; }
+    .search-input:hover, .search-input:focus { border-color: #666; }
+    .search-wrap { position: relative; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #555; pointer-events: none; }
+
+    /* Mobile sidebar */
     .shop-sidebar-mobile {
       display: flex;
       gap: 8px;
@@ -106,23 +175,23 @@
   </style>
 
   <!-- PAGE HEADER -->
-  <div class="px-4 md:px-8 lg:px-12 pt-8 md:pt-12 border-b border-zinc-900">
-    <div class="flex justify-between items-end pb-6 md:pb-8">
+  <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 pt-10 md:pt-16">
+    <div class="flex justify-between items-end border-b border-zinc-900 pb-6 md:pb-8 mb-0">
       <div>
-        <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Nova Store</p>
-        <h1 class="font-display text-4xl md:text-6xl lg:text-7xl tracking-wide leading-none text-[#f5f5f3]">
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Nova Store</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">
           <span th:if="${currentSubCategory != null}" th:text="${currentSubCategory.name}"></span>
           <span th:if="${currentCategory != null and currentSubCategory == null}" th:text="${currentCategory.name}"></span>
           <span th:if="${currentCategory == null}">All Pieces</span>
         </h1>
       </div>
-      <p class="text-[0.65rem] tracking-widest uppercase text-zinc-500">
+      <p class="text-xs tracking-widest uppercase text-zinc-500">
         <span th:text="${products.totalElements}">0</span>&nbsp;Items
       </p>
     </div>
 
     <!-- BREADCRUMB -->
-    <div class="flex items-center gap-3 pb-5 text-[0.62rem] tracking-widest uppercase flex-wrap">
+    <div class="flex items-center gap-3 py-5 text-[0.62rem] tracking-widest uppercase flex-wrap border-b border-zinc-900">
       <a th:href="@{/}" class="text-zinc-700 no-underline transition-colors hover:text-[#f5f5f3]">Home</a>
       <span class="text-zinc-800">—</span>
       <a th:href="@{/products}" class="text-zinc-700 no-underline transition-colors hover:text-[#f5f5f3]">Shop</a>
@@ -133,30 +202,33 @@
     </div>
   </div>
 
-  <!-- MOBILE FILTERS (visible on small screens only) -->
+  <!-- MOBILE FILTERS -->
   <div class="lg:hidden px-4 md:px-8 py-4">
     <div class="shop-sidebar-mobile">
-      <a th:href="@{/products}" class="mobile-filter-pill"
-        th:classappend="${currentCategory == null ? ' active' : ''}">All</a>
+      <!--
+        All category/sub-category links carry the current sort, keyword, and
+        price params so the user's context is never lost on navigation.
+        Thymeleaf omits null values from the URL automatically.
+      -->
+      <a th:href="@{/products(sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+         class="mobile-filter-pill"
+         th:classappend="${currentCategory == null ? ' active' : ''}">All</a>
       <a th:each="cat : ${categories}"
-        th:href="@{/products/{slug}(slug=${cat.slug})}"
-        class="mobile-filter-pill"
-        th:classappend="${currentCategory != null and currentCategory.id == cat.id ? ' active' : ''}"
-        th:text="${cat.name}">Category</a>
+         th:href="@{/products/{slug}(slug=${cat.slug}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+         class="mobile-filter-pill"
+         th:classappend="${currentCategory != null and currentCategory.id == cat.id ? ' active' : ''}"
+         th:text="${cat.name}">Category</a>
       <a th:if="${currentCategory != null}" th:each="sub : ${subCategories}"
-        th:href="@{/products/{catSlug}/{subSlug}(catSlug=${currentCategory.slug},subSlug=${sub.slug})}"
-        class="mobile-filter-pill"
-        th:classappend="${currentSubCategory != null and currentSubCategory.id == sub.id ? ' active' : ''}"
-        th:text="${sub.name}">Sub</a>
+         th:href="@{/products/{catSlug}/{subSlug}(catSlug=${currentCategory.slug}, subSlug=${sub.slug}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+         class="mobile-filter-pill"
+         th:classappend="${currentSubCategory != null and currentSubCategory.id == sub.id ? ' active' : ''}"
+         th:text="${sub.name}">Sub</a>
     </div>
     <div class="mt-3">
-      <select id="sortSelectMobile" class="sort-select"
-        th:data-baseurl="${currentSubCategory != null
-          ? '/products/' + currentCategory.slug + '/' + currentSubCategory.slug
-          : (currentCategory != null ? '/products/' + currentCategory.slug : '/products')}">
-        <option value="newest" th:selected="${sort == 'newest' or sort == null}">Newest</option>
-        <option value="price_asc" th:selected="${sort == 'price_asc'}">Price ↑</option>
-        <option value="price_desc" th:selected="${sort == 'price_desc'}">Price ↓</option>
+      <select id="sortSelectMobile" class="sort-select">
+        <option value="newest"      th:selected="${sort == 'newest' or sort == null}">Newest</option>
+        <option value="price_asc"   th:selected="${sort == 'price_asc'}">Price ↑</option>
+        <option value="price_desc"  th:selected="${sort == 'price_desc'}">Price ↓</option>
         <option value="best_seller" th:selected="${sort == 'best_seller'}">Best Seller</option>
       </select>
     </div>
@@ -167,107 +239,221 @@
 
     <!-- DESKTOP SIDEBAR -->
     <aside class="hidden lg:block w-52 flex-shrink-0 border-r border-zinc-900 px-7 py-10">
+
+      <!-- Search -->
       <div class="mb-8">
-        <span class="sidebar-label">Category</span>
-        <a th:href="@{/products}" class="filter-link"
-          th:classappend="${currentCategory == null ? ' active' : ''}">All</a>
-        <a th:each="cat : ${categories}"
-          th:href="@{/products/{slug}(slug=${cat.slug})}"
-          class="filter-link"
-          th:classappend="${currentCategory != null and currentCategory.id == cat.id ? ' active' : ''}"
-          th:text="${cat.name}">Category</a>
+        <span class="sidebar-label">Search</span>
+        <form id="searchForm" onsubmit="applySearch(event)">
+          <div class="search-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="keywordInput" class="search-input" placeholder="Search products…"
+                   th:value="${filter.keyword}" />
+          </div>
+        </form>
       </div>
 
+      <!-- Category -->
+      <div class="mb-8">
+        <span class="sidebar-label">Category</span>
+        <a th:href="@{/products(sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="filter-link"
+           th:classappend="${currentCategory == null ? ' active' : ''}">All</a>
+        <a th:each="cat : ${categories}"
+           th:href="@{/products/{slug}(slug=${cat.slug}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="filter-link"
+           th:classappend="${currentCategory != null and currentCategory.id == cat.id ? ' active' : ''}"
+           th:text="${cat.name}">Category</a>
+      </div>
+
+      <!-- Subcategory (only shown when a category is selected) -->
       <div th:if="${currentCategory != null}" class="mb-8">
         <span class="sidebar-label">Type</span>
         <a th:each="sub : ${subCategories}"
-          th:href="@{/products/{catSlug}/{subSlug}(catSlug=${currentCategory.slug},subSlug=${sub.slug})}"
-          class="filter-link"
-          th:classappend="${currentSubCategory != null and currentSubCategory.id == sub.id ? ' active' : ''}"
-          th:text="${sub.name}">Sub</a>
+           th:href="@{/products/{catSlug}/{subSlug}(catSlug=${currentCategory.slug}, subSlug=${sub.slug}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="filter-link"
+           th:classappend="${currentSubCategory != null and currentSubCategory.id == sub.id ? ' active' : ''}"
+           th:text="${sub.name}">Sub</a>
       </div>
 
-      <div>
+      <!-- Sort -->
+      <div class="mb-8">
         <span class="sidebar-label">Sort</span>
-        <select id="sortSelect" class="sort-select"
-          th:data-baseurl="${currentSubCategory != null
-            ? '/products/' + currentCategory.slug + '/' + currentSubCategory.slug
-            : (currentCategory != null ? '/products/' + currentCategory.slug : '/products')}">
-          <option value="newest" th:selected="${sort == 'newest' or sort == null}">Newest</option>
-          <option value="price_asc" th:selected="${sort == 'price_asc'}">Price ↑</option>
-          <option value="price_desc" th:selected="${sort == 'price_desc'}">Price ↓</option>
+        <select id="sortSelect" class="sort-select">
+          <option value="newest"      th:selected="${sort == 'newest' or sort == null}">Newest</option>
+          <option value="price_asc"   th:selected="${sort == 'price_asc'}">Price ↑</option>
+          <option value="price_desc"  th:selected="${sort == 'price_desc'}">Price ↓</option>
           <option value="best_seller" th:selected="${sort == 'best_seller'}">Best Seller</option>
         </select>
       </div>
+
+      <!-- Price filter -->
+      <div class="mb-8">
+        <span class="sidebar-label">Price (₫)</span>
+        <div class="flex gap-1 items-center mb-1">
+          <input type="number" id="minPriceInput" class="price-input" placeholder="Min" min="0"
+                 th:value="${filter.minPrice}" />
+        </div>
+        <div class="flex gap-1 items-center">
+          <input type="number" id="maxPriceInput" class="price-input" placeholder="Max" min="0"
+                 th:value="${filter.maxPrice}" />
+        </div>
+        <button class="price-apply-btn" onclick="applyPriceFilter()">Apply</button>
+        <button th:if="${filter.minPrice != null or filter.maxPrice != null}"
+                class="price-apply-btn mt-1" onclick="clearPriceFilter()" style="border-color:#333;color:#555;">
+          Clear
+        </button>
+      </div>
+
     </aside>
 
     <!-- PRODUCT GRID -->
     <div class="flex-1 px-4 md:px-8 lg:px-10 py-6 md:py-10">
 
       <!-- EMPTY STATE -->
-      <div th:if="${products.content.isEmpty()}" class="text-center py-20">
-        <p class="font-display text-5xl md:text-6xl tracking-wide text-zinc-900 mb-5">No Items Found</p>
+      <div th:if="${products.content.isEmpty()}" class="text-center py-20 md:py-28">
+        <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-700 mb-3">No Items Found</p>
+        <p class="text-xs tracking-widest uppercase text-zinc-700 mb-8">Try adjusting your filters or search.</p>
         <a th:href="@{/products}"
-          class="text-[0.7rem] tracking-widest uppercase text-zinc-500 no-underline transition-colors hover:text-[#f5f5f3]">
+           class="h-11 md:h-12 px-8 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase
+                  no-underline font-medium inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
           View All
         </a>
       </div>
 
       <!-- GRID -->
       <div th:unless="${products.content.isEmpty()}"
-        class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-0.5">
-        <div th:each="product : ${products.content}" class="shop-card">
+           class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-0.5">
+        <!--
+          product.images calls getImages() which returns a sorted List
+          (primary image first, then by id). Safe to use [0] / [1].
+          Use th:with to call getImages() once per card instead of 3–4 times.
+        -->
+        <div th:each="product : ${products.content}" class="shop-card"
+             th:with="imgs=${product.images}">
           <a th:href="@{'/products/' + ${product.subCategory.category.slug} + '/' + ${product.subCategory.slug} + '/' + ${product.id}}"
-            class="block no-underline text-inherit">
+             class="block no-underline text-inherit">
             <div class="img-wrap">
               <img class="img-main"
-                th:src="${product.images != null and !product.images.isEmpty() ? product.images[0].imageUrl : '/images/no-image.png'}"
-                alt="" />
-              <img th:if="${product.images != null and product.images.size() > 1}"
-                class="img-hover"
-                th:src="${product.images[1].imageUrl}" alt="" />
+                   th:src="${!imgs.isEmpty() ? imgs[0].imageUrl : '/images/no-image.png'}"
+                   th:alt="${product.name}" loading="lazy" />
+              <img th:if="${imgs.size() > 1}"
+                   class="img-hover"
+                   th:src="${imgs[1].imageUrl}"
+                   th:alt="${product.name}" loading="lazy" />
+              <div class="img-over"><span class="text-xs tracking-widest uppercase">Quick View</span></div>
             </div>
             <div class="py-3 md:py-4 pb-6">
               <div class="flex justify-between items-baseline gap-2">
                 <h3 class="text-[0.78rem] tracking-widest uppercase text-[#e0e0de] font-normal flex-1"
-                  th:text="${product.name}"></h3>
+                    th:text="${product.name}"></h3>
                 <span class="text-[0.75rem] tracking-wide text-zinc-500 whitespace-nowrap">
                   <span th:if="${product.minPrice != null and product.minPrice > 0}"
-                    th:text="${#numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')} + ' ₫'"></span>
+                        th:text="${#numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA')} + ' ₫'"></span>
                   <span th:if="${product.minPrice == null or product.minPrice == 0}" class="text-zinc-800">—</span>
                 </span>
               </div>
               <p class="text-[0.62rem] tracking-widest text-zinc-700 uppercase mt-1"
-                th:text="${product.subCategory?.name}"></p>
+                 th:text="${product.subCategory?.name}"></p>
             </div>
           </a>
         </div>
       </div>
 
-      <!-- PAGINATION -->
+      <!-- PAGINATION — window of ±2 pages around current, with ellipsis -->
       <div th:if="${products.totalPages > 1}"
-        class="flex justify-center items-center gap-1 mt-16 md:mt-20">
+           class="flex justify-center items-center gap-1 mt-16 md:mt-20 flex-wrap">
+
+        <!-- Prev -->
         <a th:if="${!products.first}"
-          th:href="@{''(page=${products.number - 1},sort=${sort})}"
-          class="pg-btn">←</a>
-        <a th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}"
-          th:href="@{''(page=${i},sort=${sort})}"
-          class="pg-btn"
-          th:classappend="${i == products.number ? ' pg-active' : ''}"
-          th:text="${i + 1}"></a>
+           th:href="@{''(page=${products.number - 1}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="pg-btn">←</a>
+
+        <!-- First page (when window doesn't start at 0) -->
+        <a th:if="${pageWindowStart > 0}"
+           th:href="@{''(page=0, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="pg-btn">1</a>
+        <span th:if="${showStartEllipsis}" class="pg-ellipsis">…</span>
+
+        <!-- Window pages -->
+        <a th:each="i : ${#numbers.sequence(pageWindowStart, pageWindowEnd)}"
+           th:href="@{''(page=${i}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="pg-btn"
+           th:classappend="${i == products.number ? ' pg-active' : ''}"
+           th:text="${i + 1}"></a>
+
+        <!-- Last page (when window doesn't reach the end) -->
+        <span th:if="${showEndEllipsis}" class="pg-ellipsis">…</span>
+        <a th:if="${pageWindowEnd < products.totalPages - 1}"
+           th:href="@{''(page=${products.totalPages - 1}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="pg-btn" th:text="${products.totalPages}"></a>
+
+        <!-- Next -->
         <a th:if="${!products.last}"
-          th:href="@{''(page=${products.number + 1},sort=${sort})}"
-          class="pg-btn">→</a>
+           th:href="@{''(page=${products.number + 1}, sort=${sort}, keyword=${filter.keyword}, minPrice=${filter.minPrice}, maxPrice=${filter.maxPrice})}"
+           class="pg-btn">→</a>
       </div>
     </div>
   </div>
 
   <script>
-    document.getElementById('sortSelect')?.addEventListener('change', function () {
-      window.location.href = (this.dataset.baseurl || '/products') + '?sort=' + this.value;
+    // ── Keyword search ──
+    function applySearch(e) {
+      if (e) e.preventDefault();
+      const url = new URL(window.location.href);
+      const kw = document.getElementById('keywordInput')?.value?.trim();
+      if (kw) url.searchParams.set('keyword', kw);
+      else url.searchParams.delete('keyword');
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+    // Also trigger on Enter key
+    document.getElementById('keywordInput')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') applySearch(null);
     });
-    document.getElementById('sortSelectMobile')?.addEventListener('change', function () {
-      window.location.href = (this.dataset.baseurl || '/products') + '?sort=' + this.value;
+
+    // ── Sort selects: update sort param while preserving ALL other URL params ──
+    function onSortChange(value) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('sort', value);
+      url.searchParams.delete('page'); // reset to first page on sort change
+      window.location.href = url.toString();
+    }
+
+    document.getElementById('sortSelect')?.addEventListener('change', function() {
+      onSortChange(this.value);
+    });
+    document.getElementById('sortSelectMobile')?.addEventListener('change', function() {
+      onSortChange(this.value);
+    });
+
+    // ── Price filter: update min/max params, keep everything else ──
+    function applyPriceFilter() {
+      const url = new URL(window.location.href);
+      const min = document.getElementById('minPriceInput')?.value;
+      const max = document.getElementById('maxPriceInput')?.value;
+      if (min) url.searchParams.set('minPrice', min);
+      else url.searchParams.delete('minPrice');
+      if (max) url.searchParams.set('maxPrice', max);
+      else url.searchParams.delete('maxPrice');
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    function clearPriceFilter() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('minPrice');
+      url.searchParams.delete('maxPrice');
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    // Allow pressing Enter in price inputs to apply
+    ['minPriceInput', 'maxPriceInput'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyPriceFilter();
+      });
     });
   </script>
 </div>

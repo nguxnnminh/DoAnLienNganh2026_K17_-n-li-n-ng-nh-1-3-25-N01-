@@ -145,9 +145,14 @@
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
 
     <!-- HEADER -->
-    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
-      <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Final Step</p>
-      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Checkout</h1>
+    <div class="flex justify-between items-end mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <div>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Final Step</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Checkout</h1>
+      </div>
+      <p class="text-xs tracking-widest uppercase text-zinc-500">
+        <span th:text="${cartItems.size()}">0</span>&nbsp;Items
+      </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 md:gap-16 items-start">
@@ -244,7 +249,7 @@
                   <div th:if="${c.minOrderAmount != null}">
                     Min <span th:text="${#numbers.formatDecimal(c.minOrderAmount, 0, 'POINT', 0, 'COMMA')}">200,000</span>₫
                   </div>
-                  <div th:if="${c.expiryDate != null}" th:text="'HSD ' + ${#temporals.format(c.expiryDate, 'dd/MM')}">HSD 01/06</div>
+                  <div th:if="${c.expiryDate != null}" th:text="'Exp. ' + ${#temporals.format(c.expiryDate, 'dd/MM')}">Exp. 01/06</div>
                 </div>
               </label>
             </div>
@@ -255,7 +260,7 @@
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
-                Nhập mã khác
+                Enter a different code
               </button>
               <div id="manualInputWrap" style="display:none; margin-top:10px;">
                 <div class="flex gap-2">
@@ -276,7 +281,7 @@
           <!-- Manual input only (for guests or users with no coupons) -->
           <div th:if="${!isLoggedIn or #lists.isEmpty(availableCoupons)}">
             <div th:if="${!isLoggedIn}" class="text-[0.6rem] tracking-widest uppercase text-zinc-600 mb-3">
-              <a th:href="@{/login}" class="text-zinc-500 hover:text-[#c0c0bc] transition-colors" style="text-decoration:underline;">Đăng nhập</a> để xem mã giảm giá
+              <a th:href="@{/login}" class="text-zinc-500 hover:text-[#c0c0bc] transition-colors" style="text-decoration:underline;">Sign in</a> to view your discount codes
             </div>
             <div class="flex gap-2">
               <input id="couponInput" type="text" class="n-field flex-1"
@@ -310,7 +315,9 @@
 
           <div class="flex justify-between">
             <span class="text-xs tracking-widest uppercase text-zinc-500">Shipping</span>
-            <span class="text-xs text-[#6dbf6d]">Free</span>
+            <span th:if="${shippingFee == 0}" class="text-xs text-[#6dbf6d]">Free</span>
+            <span th:unless="${shippingFee == 0}" id="shippingDisplay" class="text-xs text-zinc-400"
+                  th:text="${#numbers.formatDecimal(shippingFee,0,'POINT',0,'COMMA')}+' ₫'"></span>
           </div>
         </div>
 
@@ -319,7 +326,7 @@
         <div class="flex justify-between">
           <span class="text-xs tracking-widest uppercase text-[#c0c0bc]">Total</span>
           <span id="totalDisplay" class="text-base text-[#f5f5f3]"
-                th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}+' ₫'"></span>
+                th:text="${#numbers.formatDecimal(total + shippingFee,0,'POINT',0,'COMMA')}+' ₫'"></span>
         </div>
       </div>
 
@@ -329,7 +336,8 @@
   <!-- Embed subtotal for JS (BigDecimal serializes as plain number in Thymeleaf inline) -->
   <script th:inline="javascript">
     /*<![CDATA[*/
-    const SUBTOTAL = /*[[${total}]]*/ 0;
+    const SUBTOTAL    = /*[[${total}]]*/ 0;
+    const SHIP_FEE    = /*[[${shippingFee}]]*/ 0;
     const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
     const CSRF_TOKEN  = /*[[${_csrf.token}]]*/ '';
     const HAS_COUPON_CARDS = /*[[${isLoggedIn and !#lists.isEmpty(availableCoupons)}]]*/ false;
@@ -351,7 +359,7 @@
       couponCodeHidden.value = '';
       discountRow.style.setProperty('display', 'none', 'important');
       discountAmount.textContent = '';
-      totalDisplay.textContent = formatVND(SUBTOTAL);
+      totalDisplay.textContent = formatVND(SUBTOTAL + SHIP_FEE);
       couponMsg.textContent = '';
       couponMsg.className = 'mt-2 text-xs tracking-wide';
       // Deselect radio cards
@@ -376,19 +384,19 @@
 
         if (data.valid) {
           couponCodeHidden.value = code;
-          couponMsg.textContent  = 'Áp dụng thành công — Tiết kiệm ' + formatVND(data.savedAmount);
+          couponMsg.textContent  = 'Applied — You save ' + formatVND(data.savedAmount);
           couponMsg.className    = 'mt-2 text-xs tracking-wide ok';
           discountRow.style.removeProperty('display');
           discountAmount.textContent = '− ' + formatVND(data.savedAmount);
-          totalDisplay.textContent   = formatVND(data.discountedTotal);
+          totalDisplay.textContent   = formatVND(data.discountedTotal + SHIP_FEE);
         } else {
           resetCoupon();
-          couponMsg.textContent = data.message || 'Mã không hợp lệ hoặc đã hết hạn.';
+          couponMsg.textContent = data.message || 'Invalid or expired code.';
           couponMsg.className   = 'mt-2 text-xs tracking-wide err';
         }
       } catch (_) {
         resetCoupon();
-        couponMsg.textContent = 'Không thể kiểm tra mã. Vui lòng thử lại.';
+        couponMsg.textContent = 'Could not validate code. Please try again.';
         couponMsg.className   = 'mt-2 text-xs tracking-wide err';
       }
     }
@@ -431,7 +439,7 @@
       applyCouponBtn.addEventListener('click', async () => {
         const code = couponInput.value.trim().toUpperCase();
         if (!code) {
-          couponMsg.textContent = 'Vui lòng nhập mã giảm giá.';
+          couponMsg.textContent = 'Please enter a discount code.';
           couponMsg.className = 'mt-2 text-xs tracking-wide err';
           return;
         }

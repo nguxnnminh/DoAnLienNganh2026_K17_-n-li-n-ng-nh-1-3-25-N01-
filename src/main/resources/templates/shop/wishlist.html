@@ -3,14 +3,21 @@
 <div th:fragment="content">
   <style>
     .wish-card {
-      border: 1px solid #1a1a1a;
-      background: #0d0d0d;
+      border: 1px solid #242424;
+      background: #161616;
       display: flex;
       flex-direction: column;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, transform 0.3s cubic-bezier(.22,1,.36,1);
       position: relative;
+      overflow: hidden;
     }
-    .wish-card:hover { border-color: #333; }
+    .wish-card:hover { border-color: #3a3a3a; transform: translateY(-2px); }
+    .wish-card .wish-img-alt {
+      position: absolute; top: 0; left: 0; width: 100%; aspect-ratio: 3/4;
+      object-fit: cover; opacity: 0; transition: opacity 0.45s ease;
+      pointer-events: none;
+    }
+    .wish-card:hover .wish-img-alt { opacity: 1; }
 
     .wish-card img {
       width: 100%;
@@ -36,40 +43,30 @@
     }
     .wish-remove-btn:hover { border-color: #888; color: #f5f5f3; }
 
-    .empty-state {
-      border: 1px dashed #1e1e1e;
-      padding: 80px 20px;
-      text-align: center;
-    }
   </style>
 
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
 
     <!-- HEADER -->
-    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
-      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
-      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Wishlist</h1>
-      <p class="text-xs tracking-wide text-zinc-600 mt-3">
-        <span th:text="${#lists.size(wishlistItems)}">0</span> item(s)
+    <div class="flex justify-between items-end mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <div>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">Wishlist</h1>
+      </div>
+      <p class="text-xs tracking-widest uppercase text-zinc-500">
+        <span th:text="${#lists.size(wishlistItems)}">0</span>&nbsp;Items
       </p>
-    </div>
-
-    <!-- BREADCRUMB -->
-    <div class="flex items-center gap-3 mb-8 text-[0.62rem] tracking-widest uppercase">
-      <a th:href="@{/}" class="text-zinc-700 no-underline hover:text-[#f5f5f3] transition-colors">Home</a>
-      <span class="text-zinc-800">&mdash;</span>
-      <span class="text-zinc-500">Wishlist</span>
     </div>
 
     <!-- EMPTY STATE -->
-    <div th:if="${#lists.isEmpty(wishlistItems)}" class="empty-state">
-      <p class="font-display text-5xl tracking-wide text-zinc-900 mb-4">Nothing here yet</p>
-      <p class="text-[0.72rem] tracking-widest uppercase text-zinc-600 mb-6">
+    <div th:if="${#lists.isEmpty(wishlistItems)}" class="text-center py-20 md:py-28">
+      <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-700 mb-3">Nothing Saved</p>
+      <p class="text-xs tracking-widest uppercase text-zinc-700 mb-8">
         Browse the shop and save items you love.
       </p>
       <a th:href="@{/products}"
-         class="text-[0.7rem] tracking-widest uppercase text-zinc-500 no-underline transition-colors hover:text-[#f5f5f3]"
-         style="border-bottom:1px solid #333; padding-bottom:2px;">
+         class="h-11 md:h-12 px-8 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase
+                no-underline font-medium inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
         Browse Shop
       </a>
     </div>
@@ -91,10 +88,15 @@
         </form>
 
         <!-- Product image (links to detail) -->
-        <a th:href="@{/products/{slug}(slug=${item.product.slug})}" class="block">
+        <a th:href="@{/products/{slug}(slug=${item.product.slug})}" class="block" style="position:relative; display:block;">
           <img th:src="${item.product.images != null and !item.product.images.isEmpty()
                          ? item.product.images[0].imageUrl
                          : '/images/sample.jpg'}"
+               th:alt="${item.product.name}"
+               class="w-full object-cover" style="aspect-ratio:3/4; display:block;" />
+          <img th:if="${item.product.images != null and item.product.images.size() > 1}"
+               class="wish-img-alt"
+               th:src="${item.product.images[1].imageUrl}"
                th:alt="${item.product.name}" />
         </a>
 

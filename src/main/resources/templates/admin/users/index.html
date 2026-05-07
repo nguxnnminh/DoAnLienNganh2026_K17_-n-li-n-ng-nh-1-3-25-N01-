@@ -6,26 +6,28 @@
     <!-- PAGE HEADER -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Khách hàng</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Customers</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">
-                Tổng <strong th:text="${#lists.size(users)}" style="color:#374151;">0</strong> tài khoản
+                Total <strong th:text="${users?.totalElements ?: 0}" style="color:#374151;">0</strong> accounts
             </p>
         </div>
     </div>
 
-    <!-- SEARCH -->
+    <!-- SEARCH + ROLE FILTER -->
     <form method="get" th:action="@{/admin/users}" style="margin-bottom:20px;">
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <input type="text" name="search" th:value="${param.search}"
-                   placeholder="Tìm email, tên, SĐT..."
+            <input type="text" name="keyword" th:value="${keyword}"
+                   placeholder="Search by email, name, phone…"
                    class="form-control" style="max-width:320px; flex:1; min-width:180px;">
             <select name="role" class="form-control" style="max-width:160px;">
-                <option value="">Tất cả vai trò</option>
-                <option value="USER" th:selected="${param.role == 'USER'}">USER</option>
-                <option value="ADMIN" th:selected="${param.role == 'ADMIN'}">ADMIN</option>
+                <option value="">All roles</option>
+                <option th:each="r : ${roles}"
+                        th:value="${r.name()}"
+                        th:text="${r.name()}"
+                        th:selected="${role == r.name()}"></option>
             </select>
-            <button type="submit" class="btn btn-secondary">Lọc</button>
-            <a th:href="@{/admin/users}" class="btn btn-secondary">Xóa lọc</a>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            <a th:href="@{/admin/users}" class="btn btn-secondary">Clear</a>
         </div>
     </form>
 
@@ -36,11 +38,11 @@
                 <thead>
                     <tr>
                         <th style="width:60px;">ID</th>
-                        <th>Tài khoản</th>
-                        <th>SĐT</th>
-                        <th>Địa chỉ</th>
-                        <th style="text-align:center;">Vai trò</th>
-                        <th style="text-align:center;">Thao tác</th>
+                        <th>Account</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th style="text-align:center;">Role</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,7 +53,7 @@
                                 <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600;flex-shrink:0;"
                                      th:text="${user.fullName != null and !user.fullName.isEmpty() ? user.fullName.substring(0,1).toUpperCase() : user.email.substring(0,1).toUpperCase()}"></div>
                                 <div>
-                                    <div style="font-weight:500;" th:text="${user.fullName ?: 'Chưa cập nhật'}"></div>
+                                    <div style="font-weight:500;" th:text="${user.fullName ?: 'Not set'}"></div>
                                     <div style="font-size:12px; color:#9ca3af;" th:text="${user.email}"></div>
                                 </div>
                             </div>
@@ -67,29 +69,65 @@
                         <td>
                             <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
                                 <a th:href="@{/admin/users/{id}/edit(id=${user.id})}"
-                                   class="btn btn-sm btn-secondary">Sửa</a>
+                                   class="btn btn-sm btn-secondary">Edit</a>
 
                                 <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post" style="display:inline;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <button type="submit"
                                             class="btn btn-sm btn-danger"
-                                            data-confirm="Xóa tài khoản này? Hành động không thể hoàn tác.">
-                                        Xóa
+                                            data-confirm="Delete this account? This action cannot be undone.">
+                                        Delete
                                     </button>
                                 </form>
                             </div>
                         </td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(users)}">
+                    <tr th:if="${users == null or users.isEmpty()}">
                         <td colspan="6" style="text-align:center; padding:48px; color:#9ca3af;">
                             <div style="margin-bottom:8px;">
                                 <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto;display:block;opacity:0.4;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                             </div>
-                            Chưa có khách hàng nào.
+                            No customers found.
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- PAGINATION — window of ±2, preserves keyword + role filter -->
+        <div th:if="${users != null and users.totalPages > 1}"
+             style="padding:16px 20px; border-top:1px solid #f3f4f6; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div style="font-size:13px; color:#9ca3af;">
+                Page <strong style="color:#374151;" th:text="${users.number + 1}"></strong> /
+                <span th:text="${users.totalPages}"></span>
+                &nbsp;·&nbsp;<span th:text="${users.totalElements}"></span> accounts
+            </div>
+            <div class="pagination">
+                <a th:if="${users.number > 0}"
+                   th:href="@{/admin/users(page=${users.number - 1}, keyword=${keyword}, role=${role})}"
+                   class="page-btn">←</a>
+
+                <a th:if="${pageWindowStart > 0}"
+                   th:href="@{/admin/users(page=0, keyword=${keyword}, role=${role})}"
+                   class="page-btn">1</a>
+                <span th:if="${showStartEllipsis}" class="page-btn" style="border:none;cursor:default;color:#9ca3af;">…</span>
+
+                <th:block th:each="i : ${#numbers.sequence(pageWindowStart, pageWindowEnd)}">
+                    <a th:href="@{/admin/users(page=${i}, keyword=${keyword}, role=${role})}"
+                       th:text="${i + 1}"
+                       class="page-btn"
+                       th:classappend="${i == users.number} ? ' active' : ''"></a>
+                </th:block>
+
+                <span th:if="${showEndEllipsis}" class="page-btn" style="border:none;cursor:default;color:#9ca3af;">…</span>
+                <a th:if="${pageWindowEnd < users.totalPages - 1}"
+                   th:href="@{/admin/users(page=${users.totalPages - 1}, keyword=${keyword}, role=${role})}"
+                   class="page-btn" th:text="${users.totalPages}"></a>
+
+                <a th:if="${users.number < users.totalPages - 1}"
+                   th:href="@{/admin/users(page=${users.number + 1}, keyword=${keyword}, role=${role})}"
+                   class="page-btn">→</a>
+            </div>
         </div>
     </div>
 

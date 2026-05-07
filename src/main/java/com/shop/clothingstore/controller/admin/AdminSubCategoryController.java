@@ -34,7 +34,7 @@ public class AdminSubCategoryController extends AdminBaseController {
     @GetMapping
     public String list(@RequestParam(required = false) Long categoryId,
                        Model model) {
-        model.addAttribute("title", "Danh mục phụ");
+        model.addAttribute("title", "Subcategories");
         model.addAttribute("currentPage", "categories");
         List<SubCategory> subs = (categoryId != null)
                 ? subCategoryService.getByCategoryId(categoryId)
@@ -49,7 +49,7 @@ public class AdminSubCategoryController extends AdminBaseController {
     @GetMapping("/create")
     public String createForm(@RequestParam(required = false) Long categoryId,
                              Model model) {
-        model.addAttribute("title", "Thêm danh mục phụ");
+        model.addAttribute("title", "Add Subcategory");
         model.addAttribute("currentPage", "categories");
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("preselectedCategoryId", categoryId);
@@ -65,12 +65,12 @@ public class AdminSubCategoryController extends AdminBaseController {
                          @RequestParam(required = false) String slug,
                          RedirectAttributes ra) {
         if (name == null || name.isBlank()) {
-            ra.addFlashAttribute("error", "Tên danh mục phụ không được để trống.");
+            ra.addFlashAttribute("error", "Subcategory name cannot be empty.");
             return "redirect:/admin/subcategories/create";
         }
         Category category = categoryService.getCategoryById(categoryId).orElse(null);
         if (category == null) {
-            ra.addFlashAttribute("error", "Danh mục chính không hợp lệ.");
+            ra.addFlashAttribute("error", "Invalid main category.");
             return "redirect:/admin/subcategories/create";
         }
 
@@ -79,7 +79,7 @@ public class AdminSubCategoryController extends AdminBaseController {
                 : generateUniqueSlug(name);
 
         if (subCategoryService.getBySlug(finalSlug).isPresent()) {
-            ra.addFlashAttribute("error", "Slug '" + finalSlug + "' đã tồn tại.");
+            ra.addFlashAttribute("error", "Slug '" + finalSlug + "' already exists.");
             return "redirect:/admin/subcategories/create";
         }
 
@@ -92,9 +92,9 @@ public class AdminSubCategoryController extends AdminBaseController {
                 sc.setSizeType(com.shop.clothingstore.entity.SizeType.valueOf(sizeType));
             }
             subCategoryService.saveSubCategory(sc);
-            ra.addFlashAttribute("success", "Tạo danh mục phụ '" + name.trim() + "' thành công!");
+            ra.addFlashAttribute("success", "Subcategory '" + name.trim() + "' created successfully!");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/admin/subcategories";
     }
@@ -103,14 +103,14 @@ public class AdminSubCategoryController extends AdminBaseController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
         return subCategoryService.getSubCategoryById(id).map(sc -> {
-            model.addAttribute("title", "Sửa danh mục phụ");
+            model.addAttribute("title", "Edit Subcategory");
             model.addAttribute("currentPage", "categories");
             model.addAttribute("subCategory", sc);
             model.addAttribute("categories", categoryService.getAllCategories());
             model.addAttribute("sizeTypes", com.shop.clothingstore.entity.SizeType.values());
             return "admin/subcategories/edit";
         }).orElseGet(() -> {
-            ra.addFlashAttribute("error", "Không tìm thấy danh mục phụ.");
+            ra.addFlashAttribute("error", "Subcategory not found.");
             return "redirect:/admin/subcategories";
         });
     }
@@ -125,12 +125,12 @@ public class AdminSubCategoryController extends AdminBaseController {
                          RedirectAttributes ra) {
         SubCategory existing = subCategoryService.getSubCategoryById(id).orElse(null);
         if (existing == null) {
-            ra.addFlashAttribute("error", "Không tìm thấy danh mục phụ.");
+            ra.addFlashAttribute("error", "Subcategory not found.");
             return "redirect:/admin/subcategories";
         }
         Category category = categoryService.getCategoryById(categoryId).orElse(null);
         if (category == null) {
-            ra.addFlashAttribute("error", "Danh mục chính không hợp lệ.");
+            ra.addFlashAttribute("error", "Invalid main category.");
             return "redirect:/admin/subcategories/" + id + "/edit";
         }
 
@@ -140,7 +140,7 @@ public class AdminSubCategoryController extends AdminBaseController {
 
         if (!finalSlug.equals(existing.getSlug())
                 && subCategoryService.getBySlug(finalSlug).isPresent()) {
-            ra.addFlashAttribute("error", "Slug '" + finalSlug + "' đã tồn tại.");
+            ra.addFlashAttribute("error", "Slug '" + finalSlug + "' already exists.");
             return "redirect:/admin/subcategories/" + id + "/edit";
         }
 
@@ -153,9 +153,9 @@ public class AdminSubCategoryController extends AdminBaseController {
                             ? com.shop.clothingstore.entity.SizeType.valueOf(sizeType)
                             : null);
             subCategoryService.saveSubCategory(existing);
-            ra.addFlashAttribute("success", "Cập nhật danh mục phụ thành công!");
+            ra.addFlashAttribute("success", "Subcategory updated successfully!");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/admin/subcategories";
     }
@@ -165,9 +165,9 @@ public class AdminSubCategoryController extends AdminBaseController {
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
         try {
             subCategoryService.deleteSubCategory(id);
-            ra.addFlashAttribute("success", "Đã xóa danh mục phụ.");
+            ra.addFlashAttribute("success", "Subcategory deleted.");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Không thể xóa: danh mục phụ còn sản phẩm liên kết.");
+            ra.addFlashAttribute("error", "Cannot delete: subcategory still has linked products.");
         }
         return "redirect:/admin/subcategories";
     }

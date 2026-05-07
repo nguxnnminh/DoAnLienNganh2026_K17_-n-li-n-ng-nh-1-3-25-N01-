@@ -10,16 +10,21 @@
     .n-qty:focus { border-color:#777; }
 
     .cart-row {
-      display:flex;flex-direction:column;gap:16px;padding:24px 0;
-      border-bottom:1px solid #242424;transition:opacity .2s;
+      display:flex;flex-direction:column;gap:16px;padding:24px 12px;
+      margin:0 -12px;
+      border-bottom:1px solid #242424;
+      transition:background .2s, border-color .2s;
+      border-radius:3px;
     }
     @media(min-width:640px){
-      .cart-row { flex-direction:row;gap:24px;padding:28px 0;align-items:flex-start; }
+      .cart-row { flex-direction:row;gap:24px;padding:28px 12px;align-items:flex-start; }
     }
-    .cart-row:hover { opacity:.85; }
+    .cart-row:hover { background:rgba(245,245,243,0.025); border-color:#2e2e2e; }
 
-    .cart-img { width:100%;aspect-ratio:3/4;object-fit:cover;background:#111;display:block; }
-    @media(min-width:640px){ .cart-img { width:96px;height:122px;flex-shrink:0; } }
+    .cart-img { width:88px;height:112px;object-fit:cover;background:#111;display:block;flex-shrink:0;
+      transition:transform .35s cubic-bezier(.22,1,.36,1), filter .35s; }
+    @media(min-width:640px){ .cart-img { width:96px;height:122px; } }
+    .cart-row:hover .cart-img { transform:scale(1.04); filter:brightness(1.06); }
   </style>
 
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
@@ -37,11 +42,12 @@
 
     <!-- EMPTY -->
     <div th:if="${cartItems.isEmpty()}" class="text-center py-20 md:py-28">
-      <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-900 mb-10">Empty Bag</p>
+      <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-700 mb-3">Empty Bag</p>
+      <p class="text-xs tracking-widest uppercase text-zinc-700 mb-8">Your cart is empty. Start adding items.</p>
       <a th:href="@{/products}"
          class="h-11 md:h-12 px-8 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase
                 no-underline font-medium inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
-        Continue Shopping
+        Browse Shop
       </a>
     </div>
 
@@ -110,7 +116,9 @@
           </div>
           <div class="flex justify-between">
             <span class="text-xs tracking-widest uppercase text-zinc-500">Shipping</span>
-            <span class="text-xs text-[#6dbf6d]">Free</span>
+            <span th:if="${shippingFee == 0}" class="text-xs text-[#6dbf6d]">Free</span>
+            <span th:unless="${shippingFee == 0}" class="text-xs text-zinc-400"
+                  th:text="${#numbers.formatDecimal(shippingFee,0,'POINT',0,'COMMA')}+' ₫'"></span>
           </div>
         </div>
 
@@ -119,7 +127,7 @@
         <div class="flex justify-between mb-8">
           <span class="text-xs tracking-widest uppercase text-[#c0c0bc]">Total</span>
           <span class="text-base tracking-wide text-[#f5f5f3]"
-                th:text="${#numbers.formatDecimal(total,0,'POINT',0,'COMMA')}+' ₫'"></span>
+                th:text="${#numbers.formatDecimal(grandTotal,0,'POINT',0,'COMMA')}+' ₫'"></span>
         </div>
 
         <a th:href="@{/checkout}"

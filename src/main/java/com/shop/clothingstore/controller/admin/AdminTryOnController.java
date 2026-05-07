@@ -39,20 +39,20 @@ public class AdminTryOnController extends AdminBaseController {
             RedirectAttributes redirectAttributes) {
 
         if (garmentImage.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Vui lòng chọn ảnh garment để upload.");
+            redirectAttributes.addFlashAttribute("error", "Please select a garment image to upload.");
             return "redirect:/admin/products/" + id + "/edit";
         }
 
         try {
             tryOnService.preprocessAndEnable(id, garmentImage, garmentType);
             redirectAttributes.addFlashAttribute("success",
-                    "Đã bật Try-On và lưu garment image cho sản phẩm.");
+                    "Try-On enabled and garment image saved for product.");
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error",
-                    "Lỗi khi upload garment image: " + e.getMessage());
+                    "Garment image upload failed: " + e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
-                    "Lỗi: " + e.getMessage());
+                    "Error: " + e.getMessage());
         }
 
         return "redirect:/admin/products/" + id + "/edit";
@@ -68,9 +68,9 @@ public class AdminTryOnController extends AdminBaseController {
 
         try {
             tryOnService.disableTryOn(id);
-            redirectAttributes.addFlashAttribute("success", "Đã tắt Try-On cho sản phẩm.");
+            redirectAttributes.addFlashAttribute("success", "Try-On disabled for product.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
         }
 
         return "redirect:/admin/products/" + id + "/edit";

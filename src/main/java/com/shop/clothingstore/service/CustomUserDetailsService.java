@@ -21,18 +21,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
 
-        // ⚠️ QUAN TRỌNG: Spring gọi anonymousUser → bỏ qua
+        // Spring calls anonymousUser on every request → skip it
         if ("anonymousUser".equals(email)) {
             throw new UsernameNotFoundException("Anonymous user");
         }
 
-        // USER ENTITY CỦA BẠN
+        // Load user entity
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found")
                 );
 
-        // TRẢ VỀ USERDETAILS (SPRING)
+        // Return UserDetails for Spring Security
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())

@@ -11,6 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.shop.clothingstore.dto.api.ApiErrorResponse;
 
@@ -91,11 +92,24 @@ public class ApiExceptionHandler {
     }
 
     // =====================================================
-    // 404 - Resource not found
+    // 404 - Resource not found (original DTO-based exception)
     // =====================================================
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(
             ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ApiErrorResponse(404, "NOT_FOUND", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    // =====================================================
+    // 404 - Product not found (typed exception added in refactor)
+    // =====================================================
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleProductNotFound(
+            ProductNotFoundException ex,
             HttpServletRequest request) {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -113,6 +127,34 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 new ApiErrorResponse(409, "OUT_OF_STOCK", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    // =====================================================
+    // 422 - Invalid order state transition
+    // =====================================================
+    @ExceptionHandler(InvalidOrderStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidOrderState(
+            InvalidOrderStateException ex,
+            HttpServletRequest request) {
+
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+                new ApiErrorResponse(422, "INVALID_STATE_TRANSITION", ex.getMessage(), request.getRequestURI())
+        );
+    }
+
+    // =====================================================
+    // Passthrough — ResponseStatusException (Spring MVC errors)
+    // =====================================================
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiErrorResponse> handleResponseStatus(
+            ResponseStatusException ex,
+            HttpServletRequest request) {
+
+        int code = ex.getStatusCode().value();
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        return ResponseEntity.status(ex.getStatusCode()).body(
+                new ApiErrorResponse(code, "HTTP_" + code, reason, request.getRequestURI())
         );
     }
 

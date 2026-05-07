@@ -17,8 +17,8 @@ import com.shop.clothingstore.service.UserService;
 import com.shop.clothingstore.service.WishlistService;
 
 /**
- * REST API cho Wishlist. FIXED: Trả DTO thay vì entity trực tiếp — tránh
- * circular reference và lộ data nội bộ.
+ * REST API for Wishlist. FIXED: Returns DTO instead of entity directly — avoids
+ * circular reference and internal data exposure.
  */
 @RestController
 @RequestMapping("/api/wishlist")

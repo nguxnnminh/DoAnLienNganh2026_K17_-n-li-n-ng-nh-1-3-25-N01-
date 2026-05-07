@@ -36,6 +36,30 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
 
     long countByStatus(OrderStatus status);
 
+    // Admin: filter by status (paginated)
+    Page<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status, Pageable pageable);
+
+    // Admin: combined search — keyword (name/phone) + optional order ID + status + date range
+    @Query("""
+        SELECT o FROM Order o
+        WHERE (:keyword IS NULL
+               OR LOWER(o.customerName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR o.phone LIKE CONCAT('%', :keyword, '%'))
+          AND (:orderId IS NULL OR o.id = :orderId)
+          AND (:status  IS NULL OR o.status = :status)
+          AND (:dateFrom IS NULL OR o.createdAt >= :dateFrom)
+          AND (:dateTo   IS NULL OR o.createdAt <= :dateTo)
+        ORDER BY o.createdAt DESC
+    """)
+    Page<Order> searchAdmin(
+            @Param("keyword") String keyword,
+            @Param("orderId") Long orderId,
+            @Param("status") OrderStatus status,
+            @Param("dateFrom") java.time.LocalDateTime dateFrom,
+            @Param("dateTo") java.time.LocalDateTime dateTo,
+            Pageable pageable
+    );
+
     // =====================================================
     // DASHBOARD KPI (GENERIC TOTAL AMOUNT)
     // =====================================================
@@ -83,6 +107,29 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate
     );
+
+    // =====================================================
+    // DASHBOARD — TOP SELLING / STATUS DISTRIBUTION
+    // =====================================================
+    @Query("""
+        SELECT i.productName, SUM(i.price * i.quantity), SUM(i.quantity)
+        FROM Order o
+        JOIN o.items i
+        WHERE o.status = :status
+        GROUP BY i.productName
+        ORDER BY SUM(i.price * i.quantity) DESC
+    """)
+    List<Object[]> getTopSellingProducts(
+            @Param("status") OrderStatus status,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT COALESCE(AVG(o.total), 0)
+        FROM Order o
+        WHERE o.status = :status
+    """)
+    BigDecimal getAvgOrderValue(@Param("status") OrderStatus status);
 
     // =====================================================
     // GENERIC TRANSACTION CHECK (NO PRODUCT COUPLING)

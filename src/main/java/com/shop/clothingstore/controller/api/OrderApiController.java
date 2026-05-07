@@ -2,12 +2,15 @@ package com.shop.clothingstore.controller.api;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.shop.clothingstore.dto.api.CheckoutRequest;
@@ -43,7 +46,6 @@ public class OrderApiController {
 
     // =====================================================
     // POST /api/orders/checkout
-    // FIX: truyền couponCode từ request vào CheckoutService
     // =====================================================
     @PostMapping("/checkout")
     public ResponseEntity<OrderResponse> checkout(
@@ -71,13 +73,56 @@ public class OrderApiController {
     public ResponseEntity<List<OrderResponse>> myOrders(Principal principal) {
         User user = getUser(principal);
         if (user == null) {
-            throw new IllegalStateException("Bạn cần đăng nhập để xem đơn hàng");
+            throw new IllegalStateException("Authentication required to view orders");
         }
 
         List<OrderResponse> orders = orderService.findOrdersByUser(user).stream()
                 .map(OrderResponse::from)
                 .toList();
         return ResponseEntity.ok(orders);
+    }
+
+    // =====================================================
+    // POST /api/orders/{id}/cancel
+    // User self-cancel while order is PENDING
+    // =====================================================
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Map<String, Object>> cancelOrder(
+            @PathVariable Long id,
+            Principal principal) {
+
+        User user = getUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Authentication required."));
+        }
+        try {
+            Order order = orderService.selfCancel(id, user);
+            return ResponseEntity.ok(Map.of("success", true, "status", order.getStatus().name()));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    // =====================================================
+    // POST /api/orders/{id}/cancel-request
+    // User requests cancellation with a reason while order is PROCESSING
+    // =====================================================
+    @PostMapping("/{id}/cancel-request")
+    public ResponseEntity<Map<String, Object>> requestCancel(
+            @PathVariable Long id,
+            @RequestParam String reason,
+            Principal principal) {
+
+        User user = getUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Authentication required."));
+        }
+        try {
+            Order order = orderService.requestCancel(id, user, reason);
+            return ResponseEntity.ok(Map.of("success", true, "status", order.getStatus().name()));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     private User getUser(Principal principal) {

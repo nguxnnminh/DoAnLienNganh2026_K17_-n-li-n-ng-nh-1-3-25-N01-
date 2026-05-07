@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.format.annotation.NumberFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ public class VariantDTO {
 
     @NotNull
     @Positive
+    @NumberFormat(pattern = "#")
     private BigDecimal price;
 
     @NotNull

@@ -4,19 +4,19 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Danh mục chính</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Categories</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">
-                Tổng <strong th:text="${#lists.size(categories)}" style="color:#374151;">0</strong> danh mục
+                Total <strong th:text="${#lists.size(categories)}" style="color:#374151;">0</strong> categories
             </p>
         </div>
         <div style="display:flex; gap:8px;">
             <a th:href="@{/admin/subcategories}" class="btn btn-secondary">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h7"/></svg>
-                Danh mục phụ
+                Subcategories
             </a>
             <a th:href="@{/admin/categories/create}" class="btn btn-primary">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Thêm danh mục
+                Add Category
             </a>
         </div>
     </div>
@@ -27,10 +27,10 @@
                 <thead>
                     <tr>
                         <th style="width:60px;">ID</th>
-                        <th>Tên danh mục</th>
+                        <th>Name</th>
                         <th>Slug</th>
-                        <th style="text-align:center;">Danh mục phụ</th>
-                        <th style="text-align:center;">Thao tác</th>
+                        <th style="text-align:center;">Subcategories</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,24 +45,24 @@
                         <td style="text-align:center;">
                             <a th:href="@{/admin/subcategories(categoryId=${cat.id})}"
                                style="font-size:13px; color:#2563eb; text-decoration:none; font-weight:500;">
-                                Xem phụ →
+                                View Subs →
                             </a>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
                                 <a th:href="@{/admin/categories/{id}/edit(id=${cat.id})}"
-                                   class="btn btn-sm btn-secondary">Sửa</a>
+                                   class="btn btn-sm btn-secondary">Edit</a>
                                 <form th:action="@{/admin/categories/{id}/delete(id=${cat.id})}" method="post" style="display:inline;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <button type="submit" class="btn btn-sm btn-danger"
-                                            data-confirm="Xóa danh mục này? Chỉ xóa được nếu không có danh mục phụ.">Xóa</button>
+                                            data-confirm="Delete this category? Only possible if no subcategories exist.">Delete</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(categories)}">
                         <td colspan="5" style="text-align:center; padding:48px; color:#9ca3af;">
-                            Chưa có danh mục nào.
+                            No categories yet.
                         </td>
                     </tr>
                 </tbody>

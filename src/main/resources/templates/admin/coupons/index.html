@@ -4,28 +4,28 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Mã giảm giá</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Coupons</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">
-                Tổng <strong th:text="${#lists.size(coupons)}" style="color:#374151;">0</strong> mã coupon
+                Total <strong th:text="${#lists.size(coupons)}" style="color:#374151;">0</strong> coupons
             </p>
         </div>
         <a th:href="@{/admin/coupons/create}" class="btn btn-primary">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Tạo mã giảm giá
+            Create Coupon
         </a>
     </div>
 
     <!-- SEARCH + FILTER -->
     <form method="get" th:action="@{/admin/coupons}" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
         <input type="text" name="search" th:value="${search}"
-               placeholder="Tìm mã coupon..." class="form-control" style="max-width:280px; flex:1; min-width:160px;">
+               placeholder="Search coupons..." class="form-control" style="max-width:280px; flex:1; min-width:160px;">
         <select name="status" class="form-control" style="max-width:160px;">
-            <option value="" th:selected="${status == null or status == ''}">Tất cả trạng thái</option>
-            <option value="active" th:selected="${status == 'active'}">Đang hoạt động</option>
-            <option value="inactive" th:selected="${status == 'inactive'}">Đã vô hiệu</option>
+            <option value="" th:selected="${status == null or status == ''}">All Statuses</option>
+            <option value="active" th:selected="${status == 'active'}">Active</option>
+            <option value="inactive" th:selected="${status == 'inactive'}">Inactive</option>
         </select>
-        <button type="submit" class="btn btn-secondary">Lọc</button>
-        <a th:href="@{/admin/coupons}" class="btn btn-secondary">Xóa lọc</a>
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <a th:href="@{/admin/coupons}" class="btn btn-secondary">Clear</a>
     </form>
 
     <div class="card">
@@ -33,13 +33,13 @@
             <table class="data-table" style="min-width:960px;">
                 <thead>
                     <tr>
-                        <th>Mã coupon</th>
-                        <th>Loại / Giá trị</th>
-                        <th style="text-align:right;">Đơn tối thiểu</th>
-                        <th style="text-align:center;">Lượt dùng</th>
-                        <th>Hết hạn</th>
-                        <th style="text-align:center;">Trạng thái</th>
-                        <th style="text-align:center;">Thao tác</th>
+                        <th>Coupon Code</th>
+                        <th>Type / Value</th>
+                        <th style="text-align:right;">Min. Order</th>
+                        <th style="text-align:center;">Uses</th>
+                        <th>Expiry</th>
+                        <th style="text-align:center;">Status</th>
+                        <th style="text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,32 +68,32 @@
                             <span th:if="${c.expiryDate != null}"
                                   th:text="${#temporals.format(c.expiryDate, 'dd/MM/yyyy HH:mm')}"
                                   th:style="${c.expiryDate.isBefore(#temporals.createNow())} ? 'color:#ef4444;' : ''"></span>
-                            <span th:if="${c.expiryDate == null}" style="color:#d1d5db;">Không giới hạn</span>
+                            <span th:if="${c.expiryDate == null}" style="color:#d1d5db;">Unlimited</span>
                         </td>
                         <td style="text-align:center;">
-                            <span th:if="${c.active}" class="badge badge-green">Hoạt động</span>
-                            <span th:unless="${c.active}" class="badge badge-red">Vô hiệu</span>
+                            <span th:if="${c.active}" class="badge badge-green">Active</span>
+                            <span th:unless="${c.active}" class="badge badge-red">Inactive</span>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
-                                <a th:href="@{/admin/coupons/{id}/edit(id=${c.id})}" class="btn btn-sm btn-secondary">Sửa</a>
+                                <a th:href="@{/admin/coupons/{id}/edit(id=${c.id})}" class="btn btn-sm btn-secondary">Edit</a>
                                 <form th:action="@{/admin/coupons/{id}/toggle(id=${c.id})}" method="post" style="display:inline;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <button type="submit" class="btn btn-sm"
                                             th:class="${c.active} ? 'btn btn-sm btn-secondary' : 'btn btn-sm btn-success'"
-                                            th:text="${c.active} ? 'Tắt' : 'Bật'"></button>
+                                            th:text="${c.active} ? 'Disable' : 'Enable'"></button>
                                 </form>
                                 <form th:action="@{/admin/coupons/{id}/delete(id=${c.id})}" method="post" style="display:inline;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <button type="submit" class="btn btn-sm btn-danger"
-                                            data-confirm="Xóa mã coupon này vĩnh viễn?">Xóa</button>
+                                            data-confirm="Permanently delete this coupon?">Delete</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(coupons)}">
                         <td colspan="7" style="text-align:center; padding:48px; color:#9ca3af;">
-                            Chưa có mã giảm giá nào.
+                            No coupons yet.
                         </td>
                     </tr>
                 </tbody>

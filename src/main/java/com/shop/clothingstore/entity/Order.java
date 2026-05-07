@@ -28,12 +28,18 @@ public class Order extends AbstractTransaction<OrderStatus, User> {
     @Column(precision = 19, scale = 2)
     private BigDecimal total;
 
+    @Column(precision = 19, scale = 2)
+    private BigDecimal shippingFee;
+
     private String customerName;
     private String phone;
     private String address;
 
     @Column(length = 500)
     private String note;
+
+    @Column(length = 500)
+    private String cancelReason;
 
     // ===== GETTER SETTER =====
     public List<OrderItem> getItems() {
@@ -82,6 +88,22 @@ public class Order extends AbstractTransaction<OrderStatus, User> {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public BigDecimal getShippingFee() {
+        return shippingFee;
+    }
+
+    public void setShippingFee(BigDecimal shippingFee) {
+        this.shippingFee = shippingFee;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 
     public Long getVersion() {

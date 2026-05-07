@@ -6,17 +6,17 @@
     <!-- HEADER -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Thêm sản phẩm mới</h1>
-            <p style="font-size:13px; color:#9ca3af; margin:0;">Điền đầy đủ thông tin sản phẩm</p>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Add New Product</h1>
+            <p style="font-size:13px; color:#9ca3af; margin:0;">Fill in all product information</p>
         </div>
         <a th:href="@{/admin/products}" class="btn btn-secondary">
-            ← Quay lại
+            ← Back
         </a>
     </div>
 
     <!-- ERROR -->
     <div th:if="${error}" style="background:#fee2e2; border:1px solid #fecaca; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-size:14px; color:#991b1b;">
-        <strong>Lỗi:</strong> <span th:text="${error}"></span>
+        <strong>Error:</strong> <span th:text="${error}"></span>
     </div>
 
     <form th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data" id="productForm" data-validate>
@@ -27,55 +27,55 @@
             <!-- LEFT COLUMN -->
             <div style="display:flex; flex-direction:column; gap:16px;">
 
-                <!-- THÔNG TIN CƠ BẢN -->
+                <!-- BASIC INFORMATION -->
                 <div class="card" style="padding:24px;">
-                    <div class="section-title">Thông tin cơ bản</div>
+                    <div class="section-title">Basic Information</div>
 
                     <div style="margin-bottom:16px;">
-                        <label class="form-label">Tên sản phẩm <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Product Name <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="name" required class="form-control"
-                               data-required="tên sản phẩm"
-                               th:value="${productDTO?.name}" placeholder="VD: Áo sơ mi trắng basic">
+                               data-required="product name"
+                               th:value="${productDTO?.name}" placeholder="e.g. Basic White Shirt">
                     </div>
 
                     <div>
-                        <label class="form-label">Mô tả sản phẩm</label>
+                        <label class="form-label">Product Description</label>
                         <textarea name="description" rows="4" class="form-control"
-                                  placeholder="Mô tả chi tiết về sản phẩm..."
+                                  placeholder="Detailed product description..."
                                   th:text="${productDTO?.description}"></textarea>
                     </div>
                 </div>
 
-                <!-- BIẾN THỂ -->
+                <!-- VARIANTS -->
                 <div class="card" style="padding:24px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-                        <div class="section-title" style="margin-bottom:0;">Biến thể sản phẩm</div>
+                        <div class="section-title" style="margin-bottom:0;">Product Variants</div>
                         <button type="button" id="addVariant" class="btn btn-sm btn-secondary">
-                            + Thêm biến thể
+                            + Add Variant
                         </button>
                     </div>
 
                     <div style="display:grid; grid-template-columns:1fr 1fr 1.2fr 1fr auto; gap:8px; margin-bottom:8px; padding:0 2px;">
                         <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Size</div>
-                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Màu sắc</div>
-                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Giá (₫)</div>
-                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Tồn kho</div>
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Color</div>
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Price (₫)</div>
+                        <div style="font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Stock</div>
                         <div></div>
                     </div>
 
                     <div id="variantsContainer" style="display:flex; flex-direction:column; gap:8px;">
                         <div class="variant-row" style="display:grid; grid-template-columns:1fr 1fr 1.2fr 1fr 36px; gap:8px; align-items:center;">
                             <input type="text" name="variants[0].size" placeholder="S, M, L..." class="form-control">
-                            <input type="text" name="variants[0].color" placeholder="Trắng, Đen..." class="form-control">
+                            <input type="text" name="variants[0].color" placeholder="White, Black..." class="form-control">
                             <input type="text" name="variants[0].price" placeholder="250.000" class="form-control price-input">
                             <input type="number" name="variants[0].stock" placeholder="0" min="0" class="form-control">
-                            <button type="button" class="btn btn-icon btn-danger remove-variant" title="Xóa biến thể">
+                            <button type="button" class="btn btn-icon btn-danger remove-variant" title="Remove Variant">
                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                     </div>
 
-                    <p class="form-hint" style="margin-top:12px;">Nhập giá dạng số, VD: 250000 hoặc 250.000</p>
+                    <p class="form-hint" style="margin-top:12px;">Enter numeric price, e.g. 250000</p>
                 </div>
 
             </div>
@@ -83,14 +83,14 @@
             <!-- RIGHT COLUMN -->
             <div style="display:flex; flex-direction:column; gap:16px;">
 
-                <!-- PHÂN LOẠI -->
+                <!-- CLASSIFICATION -->
                 <div class="card" style="padding:24px;">
-                    <div class="section-title">Phân loại</div>
+                    <div class="section-title">Classification</div>
 
                     <div style="margin-bottom:16px;">
-                        <label class="form-label">Danh mục chính <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Main Category <span style="color:#ef4444;">*</span></label>
                         <select id="categorySelect" class="form-control">
-                            <option value="">Chọn danh mục</option>
+                            <option value="">Select category</option>
                             <option th:each="cat : ${categories}"
                                     th:value="${cat.id}"
                                     th:text="${cat.name}"></option>
@@ -98,22 +98,22 @@
                     </div>
 
                     <div>
-                        <label class="form-label">Danh mục phụ <span style="color:#ef4444;">*</span></label>
-                        <select name="subCategoryId" id="subCategorySelect" disabled class="form-control" data-required="danh mục phụ">
-                            <option value="">Chọn danh mục chính trước</option>
+                        <label class="form-label">Subcategory <span style="color:#ef4444;">*</span></label>
+                        <select name="subCategoryId" id="subCategorySelect" disabled class="form-control" data-required="subcategory">
+                            <option value="">Select a main category first</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- ẢNH SẢN PHẨM -->
+                <!-- PRODUCT IMAGES -->
                 <div class="card" style="padding:24px;">
-                    <div class="section-title">Ảnh sản phẩm</div>
+                    <div class="section-title">Product Images</div>
 
                     <label style="display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed #d1d5db; border-radius:10px; padding:28px; cursor:pointer; transition:border-color 0.15s; gap:8px;"
                            id="uploadLabel" for="imageInput">
                         <svg width="28" height="28" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <span style="font-size:13px; color:#6b7280; font-weight:500;">Chọn ảnh sản phẩm</span>
-                        <span style="font-size:11px; color:#9ca3af;">PNG, JPG tối đa 10MB</span>
+                        <span style="font-size:13px; color:#6b7280; font-weight:500;">Select product image</span>
+                        <span style="font-size:11px; color:#9ca3af;">PNG, JPG · max 10MB</span>
                     </label>
                     <input type="file" name="images" id="imageInput" multiple accept="image/*" style="display:none;" onchange="previewImages(this)">
 
@@ -122,33 +122,33 @@
 
                 <!-- VIRTUAL TRY-ON -->
                 <div class="card" style="padding:24px;">
-                    <div class="section-title" style="margin-bottom:12px;">Virtual Try-On (Tùy chọn)</div>
+                    <div class="section-title" style="margin-bottom:12px;">Virtual Try-On (Optional)</div>
                     <p style="font-size:11px; color:#9ca3af; margin-bottom:12px;">
-                        Upload ảnh flat-lay (nền trắng) để bật thử đồ AI cho sản phẩm này.
+                        Upload a flat-lay image (white background) to enable AI try-on.
                     </p>
 
                     <div style="margin-bottom:12px;">
-                        <label class="form-label">Ảnh Garment (flat-lay)</label>
+                        <label class="form-label">Garment Image (flat-lay)</label>
                         <input type="file" name="garmentImage" accept="image/*" class="form-control" id="garmentInput" onchange="previewGarment(this)">
                         <div id="garmentPreview" style="margin-top:8px;"></div>
                     </div>
 
                     <div>
-                        <label class="form-label">Loại sản phẩm</label>
+                        <label class="form-label">Garment Type</label>
                         <select name="garmentType" class="form-control">
-                            <option value="UPPER_BODY">Áo (Upper Body)</option>
-                            <option value="LOWER_BODY">Quần (Lower Body)</option>
-                            <option value="FULL_BODY">Đầm/Bộ (Full Body)</option>
+                            <option value="UPPER_BODY">Shirt (Upper Body)</option>
+                            <option value="LOWER_BODY">Pants (Lower Body)</option>
+                            <option value="FULL_BODY">Dress/Full Body</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- HIỂN THỊ -->
+                <!-- VISIBILITY -->
                 <div class="card" style="padding:20px 24px;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
                         <div>
-                            <div style="font-size:14px; font-weight:500;">Hiển thị sản phẩm</div>
-                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Sản phẩm sẽ xuất hiện trong shop</div>
+                            <div style="font-size:14px; font-weight:500;">Show Product</div>
+                            <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Product will appear in the shop</div>
                         </div>
                         <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
                             <input type="checkbox" name="active" id="activeCheckbox" checked style="opacity:0; width:0; height:0;">
@@ -162,7 +162,7 @@
                 <!-- SUBMIT -->
                 <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    Tạo sản phẩm
+                    Create Product
                 </button>
             </div>
 
@@ -176,19 +176,19 @@
 
         catSel.addEventListener('change', async function(){
             const id = this.value;
-            if(!id){ subSel.innerHTML='<option value="">Chọn danh mục chính trước</option>'; subSel.disabled=true; return; }
-            subSel.innerHTML='<option>Đang tải...</option>';
+            if(!id){ subSel.innerHTML='<option value="">Select a main category first</option>'; subSel.disabled=true; return; }
+            subSel.innerHTML='<option>Loading...</option>';
             try {
                 const res = await fetch(`/api/subcategories/by-category/${id}`);
                 const subs = await res.json();
-                subSel.innerHTML='<option value="">Chọn danh mục phụ</option>';
+                subSel.innerHTML='<option value="">Select subcategory</option>';
                 subs.forEach(s => {
                     const o = document.createElement('option');
                     o.value = s.id; o.textContent = s.name;
                     subSel.appendChild(o);
                 });
                 subSel.disabled = false;
-            } catch(e){ subSel.innerHTML='<option>Lỗi tải dữ liệu</option>'; }
+            } catch(e){ subSel.innerHTML='<option>Failed to load data</option>'; }
         });
 
         // ===== ADD VARIANT =====
@@ -199,10 +199,10 @@
             row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1.2fr 1fr 36px; gap:8px; align-items:center;';
             row.innerHTML = `
                 <input type="text" name="variants[${vIdx}].size" placeholder="S, M, L..." class="form-control">
-                <input type="text" name="variants[${vIdx}].color" placeholder="Trắng, Đen..." class="form-control">
+                <input type="text" name="variants[${vIdx}].color" placeholder="White, Black..." class="form-control">
                 <input type="text" name="variants[${vIdx}].price" placeholder="250.000" class="form-control price-input">
                 <input type="number" name="variants[${vIdx}].stock" placeholder="0" min="0" class="form-control">
-                <button type="button" class="btn btn-icon btn-danger remove-variant" title="Xóa">
+                <button type="button" class="btn btn-icon btn-danger remove-variant" title="Remove">
                     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>`;
             document.getElementById('variantsContainer').appendChild(row);
@@ -226,10 +226,18 @@
         });
 
         // ===== PRICE STRIP ON SUBMIT =====
-        document.getElementById('productForm').addEventListener('submit', function(){
-            document.querySelectorAll('.price-input').forEach(i => {
+        function stripPriceInputs() {
+            document.querySelectorAll('#productForm .price-input').forEach(i => {
                 i.value = i.value.replace(/\D/g, '');
             });
+        }
+        document.getElementById('productForm').addEventListener('submit', stripPriceInputs);
+
+        /* Also strip when user presses Enter inside a price field */
+        document.getElementById('productForm').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.classList.contains('price-input')) {
+                stripPriceInputs();
+            }
         });
 
         // ===== IMAGE PREVIEW =====

@@ -198,12 +198,14 @@ public class DataInitializer {
             }
 
             if (userRepo.findByEmail("admin@test.com").isEmpty()) {
-                User a = new User();
-                a.setEmail("admin@test.com");
                 String adminPass = System.getenv("DEV_ADMIN_PASSWORD");
                 if (adminPass == null || adminPass.isBlank()) {
-                    adminPass = "Admin@Dev2024!";
+                    throw new IllegalStateException(
+                        "DEV_ADMIN_PASSWORD environment variable is required. " +
+                        "Set it before starting the application (e.g. export DEV_ADMIN_PASSWORD=YourPassword123!)");
                 }
+                User a = new User();
+                a.setEmail("admin@test.com");
                 a.setPassword(passwordEncoder.encode(adminPass));
                 a.setRole(Role.ADMIN);
                 userRepo.save(a);

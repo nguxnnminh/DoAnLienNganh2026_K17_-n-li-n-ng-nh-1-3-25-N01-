@@ -40,7 +40,7 @@ public class ReviewController {
             // createReview returns the ORDER id (not item id) — use it for the redirect
             Long orderId = reviewService.createReview(user.getId(), orderItemId, rating, comment);
 
-            redirectAttributes.addFlashAttribute("success", "Danh gia thanh cong!");
+            redirectAttributes.addFlashAttribute("success", "Review submitted successfully!");
             return "redirect:/orders/" + orderId;
 
         } catch (IllegalStateException e) {

@@ -28,7 +28,7 @@ public class AdminDashboardController extends AdminBaseController {
 
         model.addAttribute("title", "Dashboard");
 
-        // Dữ liệu cũ (biểu đồ + KPI)
+        // Legacy data (charts + KPI)
         var dashboard = dashboardService.getDashboardData();
 
         model.addAttribute("totalTransactions", dashboard.getTotalTransactions());
@@ -40,25 +40,31 @@ public class AdminDashboardController extends AdminBaseController {
         model.addAttribute("amountLabels", dashboard.getAmountLabels());
         model.addAttribute("amountData", dashboard.getAmountData());
 
-        // Dữ liệu báo cáo mới (BI)
+        // New BI report data
         DashboardReportDTO report = dashboardService.getFullReport();
         model.addAttribute("report", report);
 
-        // Cảnh báo tồn kho thấp
+        // Low stock alert
         model.addAttribute("lowStockCount", dashboardService.getLowStockCount());
         model.addAttribute("lowStockProducts", dashboardService.getLowStockProducts());
+
+        // Extended analytics
+        model.addAttribute("topProducts", dashboardService.getTopSellingProducts());
+        model.addAttribute("avgOrderValue", dashboardService.getAvgOrderValue());
+        model.addAttribute("processingTransactions", dashboardService.getProcessingCount());
+        model.addAttribute("shippingTransactions", dashboardService.getShippingCount());
 
         return "admin/dashboard";
     }
 
-    // Xuất Excel
+    // Export Excel
     @PostMapping("/admin/export-excel")
     public ResponseEntity<byte[]> exportExcel() throws IOException {
         byte[] excelBytes = reportService.exportDashboardToExcel();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", "bao-cao-dashboard.xlsx");
+        headers.setContentDispositionFormData("attachment", "dashboard-report.xlsx");
 
         return ResponseEntity.ok()
                 .headers(headers)

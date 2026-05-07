@@ -4,10 +4,10 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
         <div>
-            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Sửa danh mục chính</h1>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Edit Category</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;" th:text="'ID #' + ${category.id}"></p>
         </div>
-        <a th:href="@{/admin/categories}" class="btn btn-secondary">← Quay lại</a>
+        <a th:href="@{/admin/categories}" class="btn btn-secondary">← Back</a>
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 280px; gap:20px; align-items:start; max-width:900px;">
@@ -18,9 +18,9 @@
                 <div style="display:flex; flex-direction:column; gap:18px;">
 
                     <div>
-                        <label class="form-label">Tên danh mục <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label">Category Name <span style="color:#ef4444;">*</span></label>
                         <input type="text" name="name" class="form-control"
-                               data-required="tên danh mục"
+                               data-required="category name"
                                th:value="${category.name}" maxlength="100">
                     </div>
 
@@ -29,16 +29,16 @@
                         <input type="text" name="slug" class="form-control"
                                th:value="${category.slug}"
                                style="font-family:monospace; font-size:13px;">
-                        <p class="form-hint">Thay đổi slug sẽ làm hỏng các đường link cũ.</p>
+                        <p class="form-hint">Changing the slug will break existing links.</p>
                     </div>
 
                     <div class="divider"></div>
 
                     <div style="display:flex; justify-content:flex-end; gap:10px;">
-                        <a th:href="@{/admin/categories}" class="btn btn-secondary">Hủy</a>
+                        <a th:href="@{/admin/categories}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Lưu thay đổi
+                            Save Changes
                         </button>
                     </div>
                 </div>
@@ -47,28 +47,28 @@
 
         <div style="display:flex; flex-direction:column; gap:14px;">
             <div class="card" style="padding:20px;">
-                <div class="section-title">Thông tin</div>
+                <div class="section-title">Info</div>
                 <div style="font-size:13px; color:#6b7280; line-height:1.6;">
                     <div style="margin-bottom:8px;">
-                        <span style="color:#9ca3af;">Tạo lúc:</span><br>
+                        <span style="color:#9ca3af;">Created:</span><br>
                         <span th:text="${#temporals.format(category.createdAt, 'dd/MM/yyyy HH:mm')}">—</span>
                     </div>
                     <div>
-                        <span style="color:#9ca3af;">Cập nhật:</span><br>
+                        <span style="color:#9ca3af;">Updated:</span><br>
                         <span th:text="${category.updatedAt != null ? #temporals.format(category.updatedAt, 'dd/MM/yyyy HH:mm') : '—'}">—</span>
                     </div>
                 </div>
             </div>
 
             <div class="card" style="padding:20px; border-color:#fecaca;">
-                <div class="section-title" style="color:#dc2626;">Vùng nguy hiểm</div>
-                <p style="font-size:12px; color:#9ca3af; margin:0 0 14px;">Chỉ xóa được khi không còn danh mục phụ.</p>
+                <div class="section-title" style="color:#dc2626;">Danger Zone</div>
+                <p style="font-size:12px; color:#9ca3af; margin:0 0 14px;">Can only delete if no subcategories remain.</p>
                 <form th:action="@{/admin/categories/{id}/delete(id=${category.id})}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <button type="submit" class="btn btn-danger" style="width:100%; justify-content:center;"
-                            data-confirm="Xóa danh mục này?">
+                            data-confirm="Delete this category?">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        Xóa danh mục
+                        Delete Category
                     </button>
                 </form>
             </div>

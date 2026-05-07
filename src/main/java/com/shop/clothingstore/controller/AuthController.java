@@ -67,21 +67,21 @@ public class AuthController {
         // ===== normalize email =====
         String normalizedEmail = email.toLowerCase().trim();
 
-        // ===== check email tồn tại =====
+        // ===== check email exists =====
         if (userService.existsByEmail(normalizedEmail)) {
-            redirectAttributes.addFlashAttribute("error", "Email đã tồn tại");
+            redirectAttributes.addFlashAttribute("error", "Email already exists");
             return "redirect:/register";
         }
 
         // ===== check confirm password =====
         if (!password.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
+            redirectAttributes.addFlashAttribute("error", "Passwords do not match");
             return "redirect:/register";
         }
 
         // ===== validate password basic =====
         if (password.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
             return "redirect:/register";
         }
 
@@ -92,9 +92,17 @@ public class AuthController {
                 Role.USER
         );
 
+        // ===== send confirmation email =====
+        try {
+            emailService.sendRegistrationEmail(normalizedEmail);
+        } catch (Exception e) {
+            // Ignore email sending error during registration so user creation still succeeds
+            e.printStackTrace();
+        }
+
         // ===== SUCCESS TOAST =====
         redirectAttributes.addFlashAttribute("success",
-                "Đăng ký thành công! Vui lòng đăng nhập.");
+                "Registration successful! Please log in.");
 
         return "redirect:/login";
     }
@@ -119,7 +127,7 @@ public class AuthController {
 
         redirectAttributes.addFlashAttribute(
                 "success",
-                "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi."
+                "If the email exists, a password reset link has been sent."
         );
 
         if (userOpt.isPresent()) {
@@ -150,18 +158,17 @@ public class AuthController {
                 = passwordResetService.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Link không hợp lệ");
+            redirectAttributes.addFlashAttribute("error", "Invalid link");
             return "redirect:/login";
         }
 
         PasswordResetToken resetToken = tokenOpt.get();
 
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            redirectAttributes.addFlashAttribute("error", "Link đã hết hạn");
+            redirectAttributes.addFlashAttribute("error", "Link has expired");
             return "redirect:/login";
         }
 
-        // 👇 QUAN TRỌNG NHẤT
         model.addAttribute("token", token);
 
         return "auth/reset-password";
@@ -179,24 +186,24 @@ public class AuthController {
                 = passwordResetService.findByToken(token);
 
         if (tokenOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Link không hợp lệ");
+            redirectAttributes.addFlashAttribute("error", "Invalid link");
             return "redirect:/login";
         }
 
         PasswordResetToken resetToken = tokenOpt.get();
 
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            redirectAttributes.addFlashAttribute("error", "Link đã hết hạn");
+            redirectAttributes.addFlashAttribute("error", "Link has expired");
             return "redirect:/login";
         }
 
         if (!password.equals(confirmPassword)) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
+            redirectAttributes.addFlashAttribute("error", "Passwords do not match");
             return "redirect:/reset-password?token=" + token;
         }
 
         if (password.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải tối thiểu 6 ký tự");
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
             return "redirect:/reset-password?token=" + token;
         }
 
@@ -206,7 +213,7 @@ public class AuthController {
         userService.save(user);
         passwordResetService.deleteToken(resetToken);
 
-        redirectAttributes.addFlashAttribute("success", "Đặt lại mật khẩu thành công");
+        redirectAttributes.addFlashAttribute("success", "Password reset successfully");
 
         return "redirect:/login";
     }

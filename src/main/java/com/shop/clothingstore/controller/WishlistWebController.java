@@ -42,7 +42,7 @@ public class WishlistWebController {
                       HttpServletRequest request,
                       RedirectAttributes redirectAttributes) {
         wishlistService.addToWishlist(resolveUser(authentication), Objects.requireNonNull(productId));
-        redirectAttributes.addFlashAttribute("success", "Đã thêm vào Wishlist!");
+        redirectAttributes.addFlashAttribute("success", "Added to Wishlist!");
         return redirectBack(request);
     }
 
@@ -52,7 +52,7 @@ public class WishlistWebController {
                          HttpServletRequest request,
                          RedirectAttributes redirectAttributes) {
         wishlistService.removeFromWishlist(resolveUser(authentication), Objects.requireNonNull(productId));
-        redirectAttributes.addFlashAttribute("success", "Đã xóa khỏi Wishlist.");
+        redirectAttributes.addFlashAttribute("success", "Removed from Wishlist.");
         return redirectBack(request);
     }
 

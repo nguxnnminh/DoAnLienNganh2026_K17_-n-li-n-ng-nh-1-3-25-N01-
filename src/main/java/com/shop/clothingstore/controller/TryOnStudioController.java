@@ -10,7 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import com.shop.clothingstore.entity.Product;
-import com.shop.clothingstore.repository.ProductRepository;
+import com.shop.clothingstore.service.TryOnService;
 
 /**
  * Controller for the dedicated Virtual Try-On Studio page. Loads all
@@ -20,15 +20,15 @@ import com.shop.clothingstore.repository.ProductRepository;
 @Controller
 public class TryOnStudioController {
 
-    private final ProductRepository productRepository;
+    private final TryOnService tryOnService;
 
-    public TryOnStudioController(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public TryOnStudioController(TryOnService tryOnService) {
+        this.tryOnService = tryOnService;
     }
 
     @GetMapping("/tryon-studio")
     public String studio(Model model) {
-        List<Product> allTryOn = productRepository.findAllTryOnEnabled();
+        List<Product> allTryOn = tryOnService.findAllTryOnEnabled();
 
         // Group by garment type for the UI tabs
         Map<String, List<Product>> grouped = allTryOn.stream()
@@ -39,10 +39,8 @@ public class TryOnStudioController {
                 ));
 
         model.addAttribute("tryOnProducts", allTryOn);
-        model.addAttribute("groupedProducts", grouped);
         model.addAttribute("upperProducts", grouped.getOrDefault("UPPER_BODY", List.of()));
         model.addAttribute("lowerProducts", grouped.getOrDefault("LOWER_BODY", List.of()));
-        model.addAttribute("fullProducts", grouped.getOrDefault("FULL_BODY", List.of()));
 
         return "shop/tryon-studio";
     }

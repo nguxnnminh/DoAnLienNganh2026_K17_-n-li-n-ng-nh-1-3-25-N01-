@@ -4,22 +4,28 @@
   <style>
     /* ===== COUPON CARD ===== */
     .coupon-card {
-      border: 1px solid #1e1e1e;
-      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      background: linear-gradient(135deg, #141414, #0d0d0d);
       padding: 0;
       display: flex;
       overflow: hidden;
-      transition: border-color 0.3s, transform 0.2s;
+      transition: border-color .25s, transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s;
       position: relative;
+      will-change: transform;
     }
-    .coupon-card:hover { border-color: #333; transform: translateY(-2px); }
+    .coupon-card:hover {
+      border-color: #3a3a3a;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    }
     .coupon-card.is-used, .coupon-card.is-expired {
-      opacity: 0.45;
+      opacity: 0.55;
       pointer-events: none;
     }
     .coupon-card.is-used:hover, .coupon-card.is-expired:hover {
       transform: none;
-      border-color: #1e1e1e;
+      box-shadow: none;
+      border-color: #2a2a2a;
     }
 
     /* Left accent strip */
@@ -55,15 +61,16 @@
     }
 
     .coupon-code {
-      font-size: 0.7rem;
-      letter-spacing: 0.25em;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #888;
-      font-family: monospace;
-      background: #161616;
+      color: #d4a843;
+      font-family: 'DM Mono', monospace;
+      background: #0a0a0a;
       display: inline-block;
-      padding: 4px 10px;
-      border: 1px dashed #333;
+      padding: 5px 12px;
+      border: 1px solid #3a3a1a;
+      border-radius: 2px;
     }
 
     .coupon-desc {
@@ -79,10 +86,10 @@
     }
 
     .coupon-meta-item {
-      font-size: 0.62rem;
-      letter-spacing: 0.15em;
+      font-size: 0.63rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #555;
+      color: #777;
     }
 
     /* Badges */
@@ -134,23 +141,6 @@
     }
     .sort-select:focus { border-color: #555; }
 
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      border: 1px dashed #222;
-    }
-    .empty-state-icon {
-      font-size: 2.5rem;
-      margin-bottom: 16px;
-      opacity: 0.3;
-    }
-    .empty-state-text {
-      font-size: 0.75rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #555;
-    }
 
     @media (max-width: 640px) {
       .coupon-body { padding: 16px; }
@@ -162,11 +152,13 @@
   <div class="max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 py-10 md:py-16">
 
     <!-- HEADER -->
-    <div class="mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
-      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
-      <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">My Coupons</h1>
-      <p class="text-xs tracking-wide text-zinc-600 mt-3">
-        <span th:text="${totalAvailable}">0</span> available
+    <div class="flex justify-between items-end mb-8 md:mb-12 border-b border-zinc-900 pb-6 md:pb-8">
+      <div>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-2">Account</p>
+        <h1 class="font-display text-4xl md:text-6xl tracking-wide leading-none text-[#f5f5f3]">My Coupons</h1>
+      </div>
+      <p class="text-xs tracking-widest uppercase text-zinc-500">
+        <span th:text="${totalAvailable}">0</span>&nbsp;Available
       </p>
     </div>
 
@@ -194,8 +186,14 @@
     </div>
 
     <!-- COUPON LIST -->
-    <div th:if="${#lists.isEmpty(coupons)}" class="empty-state">
-      <p class="empty-state-text">No coupons yet</p>
+    <div th:if="${#lists.isEmpty(coupons)}" class="text-center py-20 md:py-28">
+      <p class="font-display text-5xl md:text-7xl tracking-wide text-zinc-700 mb-3">No Coupons Yet</p>
+      <p class="text-xs tracking-widest uppercase text-zinc-700 mb-8">You don't have any coupons available.</p>
+      <a th:href="@{/products}"
+         class="h-11 md:h-12 px-8 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase
+                no-underline font-medium inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
+        Browse Shop
+      </a>
     </div>
 
     <div th:unless="${#lists.isEmpty(coupons)}" class="flex flex-col gap-3">

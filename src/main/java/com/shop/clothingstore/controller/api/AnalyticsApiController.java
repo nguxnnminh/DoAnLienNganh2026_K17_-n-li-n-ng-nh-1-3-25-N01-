@@ -55,13 +55,13 @@ public class AnalyticsApiController {
     }
 
     // =====================================================
-    // GET /api/analytics/trending (sản phẩm mới + bán tốt)
+    // GET /api/analytics/trending (newest products + best sellers)
     // =====================================================
     @GetMapping("/trending")
     public ResponseEntity<List<ProductResponse>> trending(
             @RequestParam(defaultValue = "8") int limit) {
 
-        // Trending = sản phẩm mới nhất có lượt bán > 0
+        // Trending = newest products with at least one sale
         List<ProductResponse> result = productRepository
                 .findBestSellers(PageRequest.of(0, Math.min(limit, 50)))
                 .stream()
@@ -72,7 +72,7 @@ public class AnalyticsApiController {
     }
 
     // =====================================================
-    // GET /api/analytics/overview (KPI tổng quan)
+    // GET /api/analytics/overview (overall KPIs)
     // =====================================================
     @GetMapping("/overview")
     public ResponseEntity<Map<String, Object>> overview() {

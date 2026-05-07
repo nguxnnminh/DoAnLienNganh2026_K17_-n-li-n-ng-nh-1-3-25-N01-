@@ -9,6 +9,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderStatus;
@@ -32,6 +35,49 @@ public class OrderController {
         this.orderService = orderService;
         this.userService = userService;
         this.reviewService = reviewService;
+    }
+
+    // ===============================
+    // CANCEL ORDER (PENDING only)
+    // ===============================
+    @PostMapping("/orders/{id}/cancel")
+    public String cancelOrder(
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            User user = userService.findByEmail(principal.getName()).orElseThrow();
+            orderService.selfCancel(id, user);
+            redirectAttributes.addFlashAttribute("success", "Order cancelled successfully.");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Could not cancel order.");
+        }
+        return "redirect:/orders/" + id;
+    }
+
+    // ===============================
+    // REQUEST CANCELLATION (PROCESSING only)
+    // ===============================
+    @PostMapping("/orders/{id}/cancel-request")
+    public String requestCancelOrder(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "") String reason,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
+        try {
+            User user = userService.findByEmail(principal.getName()).orElseThrow();
+            orderService.requestCancel(id, user, reason);
+            redirectAttributes.addFlashAttribute("success", "Cancellation request submitted.");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Could not submit cancellation request.");
+        }
+        return "redirect:/orders/" + id;
     }
 
     // ===============================
@@ -78,10 +124,10 @@ public class OrderController {
                     .findByEmail(principal.getName())
                     .orElseThrow();
 
-            Order order = orderService.findById(id) // 🔥 sửa ở đây
+            Order order = orderService.findById(id)
                     .orElseThrow(() -> new RuntimeException("Order not found"));
 
-            // 🔐 Chỉ xem đơn của mình
+            // Only allow viewing own orders
             if (order.getActor() == null
                     || !order.getActor().getId().equals(user.getId())) {
                 return "redirect:/my-orders";

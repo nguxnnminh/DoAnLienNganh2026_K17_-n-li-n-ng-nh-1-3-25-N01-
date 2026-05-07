@@ -22,7 +22,7 @@ public class ChatbotApiController {
     }
 
     // POST /api/chatbot
-    // Body: { "message": "tôi muốn áo màu đen dưới 500k" }
+    // Body: { "message": "I'm looking for a black shirt under 500k" }
     @PostMapping
     public ResponseEntity<ChatbotResponse> chat(
             @RequestBody Map<String, String> request) {
@@ -31,7 +31,7 @@ public class ChatbotApiController {
 
         if (!chatbotService.isEnabledAndConfigured()) {
             return ResponseEntity.ok(ChatbotResponse.text(
-                    "Chatbot AI chưa được bật/cấu hình. Bạn hãy bật Ollama và set CHATBOT_AI_ENABLED=true rồi restart backend."
+                    "Chatbot AI is not enabled. Please start Ollama and set CHATBOT_AI_ENABLED=true, then restart the backend."
             ));
         }
 

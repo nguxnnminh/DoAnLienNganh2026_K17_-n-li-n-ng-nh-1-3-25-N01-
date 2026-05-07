@@ -111,21 +111,29 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
     /*
      * =====================================================
      * PRODUCT LIST WITH SPECIFICATION + ENTITYGRAPH
-     * Tránh N+1 khi dùng filter API
+     * Tránh N+1 khi dùng filter API (shop + admin).
+     * productVariants included so product.getTotalStock()
+     * doesn't trigger a lazy SELECT per product in admin.
+     * Hibernate fetches variants in one batch SELECT, not N.
      * =====================================================
      */
     @Override
     @EntityGraph(attributePaths = {
         "subCategory",
         "subCategory.category",
-        "images"
+        "images",
+        "productVariants"
     })
     @NonNull
     Page<Product> findAll(@Nullable Specification<Product> spec, @NonNull Pageable pageable);
 
     // =====================================================
     // RECOMMENDATION QUERIES
+    // EntityGraph fetches images + subCategory eagerly so the product-detail
+    // template does NOT trigger lazy loads for each related product card.
+    // productVariants are NOT fetched here — use product.minPrice in templates.
     // =====================================================
+    @EntityGraph(attributePaths = {"images", "subCategory", "subCategory.category"})
     @Query("""
         SELECT p FROM Product p
         WHERE p.subCategory.id = :subCategoryId
@@ -138,6 +146,7 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
             @Param("excludeId") Long excludeId,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = {"images", "subCategory", "subCategory.category"})
     @Query("""
         SELECT p FROM Product p
         WHERE p.subCategory.category.id = :categoryId
@@ -158,12 +167,27 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
 
     @Query("""
         SELECT p FROM Product p
-        LEFT JOIN p.productVariants v
         WHERE p.active = true
-        GROUP BY p
-        ORDER BY COALESCE(SUM(v.sold), 0) DESC
+        ORDER BY p.totalSold DESC, p.id DESC
     """)
     List<Product> findBestSellers(Pageable pageable);
+
+
+    /*
+     * =====================================================
+     * BEST SELLER PER CATEGORY (HOME PAGE)
+     * Lấy 1 sản phẩm bán chạy nhất theo slug category
+     * EntityGraph tránh N+1 cho images + subCategory
+     * =====================================================
+     */
+    @EntityGraph(attributePaths = {"images", "subCategory", "subCategory.category"})
+    @Query("""
+        SELECT p FROM Product p
+        WHERE p.subCategory.category.slug = :slug
+          AND p.active = true
+        ORDER BY p.totalSold DESC, p.id DESC
+    """)
+    List<Product> findBestSellerByCategorySlug(@Param("slug") String slug, Pageable pageable);
 
     // =====================================================
     // ANALYTICS: alias findBestSellers — dùng chung 1 query

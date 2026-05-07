@@ -53,10 +53,10 @@ public class AuthApiController {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         if (userService.existsByEmail(normalizedEmail)) {
-            throw new IllegalStateException("Email đã được sử dụng: " + normalizedEmail);
+            throw new IllegalStateException("Email already in use: " + normalizedEmail);
         }
 
-        // Tạo user object, set tất cả field rồi save 1 lần duy nhất
+        // Build user object and save in a single call
         User user = new User();
         user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -92,7 +92,7 @@ public class AuthApiController {
                     )
             );
         } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Email hoặc mật khẩu không đúng");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         User user = userService.findByEmail(normalizedEmail)

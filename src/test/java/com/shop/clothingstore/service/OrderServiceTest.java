@@ -24,7 +24,9 @@ import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderItem;
 import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.entity.ProductVariant;
+import com.shop.clothingstore.exception.InvalidOrderStateException;
 import com.shop.clothingstore.repository.OrderRepository;
+import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +37,18 @@ class OrderServiceTest {
 
     @Mock
     private ProductVariantRepository variantRepository;
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private ShipmentService shipmentService;
+
+    @Mock
+    private PaymentService paymentService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private OrderService orderService;
@@ -106,7 +120,7 @@ class OrderServiceTest {
     void updateStatus_completedToPending_throwsIllegalState() {
         order.setStatus(OrderStatus.COMPLETED);
         assertThatThrownBy(() -> orderService.updateOrderStatus(1L, OrderStatus.PENDING))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(InvalidOrderStateException.class);
         verify(orderRepository, never()).save(any());
     }
 
@@ -114,28 +128,28 @@ class OrderServiceTest {
     void updateStatus_completedToProcessing_throwsIllegalState() {
         order.setStatus(OrderStatus.COMPLETED);
         assertThatThrownBy(() -> orderService.updateOrderStatus(1L, OrderStatus.PROCESSING))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(InvalidOrderStateException.class);
     }
 
     @Test
     void updateStatus_cancelledToProcessing_throwsIllegalState() {
         order.setStatus(OrderStatus.CANCELLED);
         assertThatThrownBy(() -> orderService.updateOrderStatus(1L, OrderStatus.PROCESSING))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(InvalidOrderStateException.class);
     }
 
     @Test
     void updateStatus_shippingToPending_throwsIllegalState() {
         order.setStatus(OrderStatus.SHIPPING);
         assertThatThrownBy(() -> orderService.updateOrderStatus(1L, OrderStatus.PENDING))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(InvalidOrderStateException.class);
     }
 
     @Test
     void updateStatus_processingToPending_throwsIllegalState() {
         order.setStatus(OrderStatus.PROCESSING);
         assertThatThrownBy(() -> orderService.updateOrderStatus(1L, OrderStatus.PENDING))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(InvalidOrderStateException.class);
     }
 
     // =====================================================

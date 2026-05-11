@@ -38,8 +38,11 @@
             --c-white: #f5f5f3;
             --c-gray: #1e1e1e;
             --c-gray2: #303030;
-            --c-muted: #909090;
-            --c-accent: #e8e0d0;
+            --c-muted: #b5b5af;
+            --c-muted-2: #8f8f89;
+            --c-accent: #c8a52b;
+            --c-accent-soft: rgba(200, 165, 43, 0.12);
+            --c-focus: #f0d36a;
             --header-h: 72px;
             --header-h-mobile: 56px;
         }
@@ -58,9 +61,91 @@
             overflow-x: hidden;
         }
 
+        .nova-copy {
+            color: var(--c-muted);
+            font-size: 0.92rem;
+            line-height: 1.75;
+        }
+
+        .nova-meta {
+            color: var(--c-muted-2);
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .nova-link {
+            color: var(--c-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nova-link:hover { color: var(--c-white); }
+
+        .text-zinc-500 { color: #b6b6b0 !important; }
+        .text-zinc-600 { color: #9f9f99 !important; }
+        .text-zinc-700 { color: #85857f !important; }
+        .text-zinc-800 { color: #5f5f59 !important; }
+
         @keyframes bodyIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 2px solid var(--c-white);
+            outline-offset: 3px;
+        }
+
+        .skip-link {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 10000;
+            background: var(--c-white);
+            color: var(--c-black);
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transform: translateY(-160%);
+            transition: transform 0.2s ease;
+        }
+
+        .skip-link:focus {
+            transform: translateY(0);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            body {
+                opacity: 1;
+                animation: none;
+            }
         }
 
         /* ===== DESKTOP HEADER ===== */
@@ -217,8 +302,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             transition: color 0.15s;
             -webkit-tap-highlight-color: transparent;
         }
@@ -332,7 +417,7 @@
         }
 
         .drawer-close-btn {
-            width: 36px; height: 36px;
+            width: 44px; height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -517,6 +602,28 @@
             padding: 60px 0 40px;
         }
 
+        .footer-heading {
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            color: #9b9b94;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .footer-link {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            color: #b0b0aa;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover { color: var(--c-white); }
+
         /* Mobile footer */
         @media (max-width: 1023px) {
             .footer-grid {
@@ -598,6 +705,8 @@
 
 <body>
 
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
     <!-- ============================== ANNOUNCEMENT BAR (Desktop only) ============================== -->
     <div id="announcementBar" class="hidden lg:flex"
         style="background:#111; height:36px; align-items:center; position:fixed; top:0; left:0; right:0; z-index:101; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);">
@@ -644,21 +753,21 @@
                     </div>
                 </div>
                 <a th:href="@{/products}" class="nav-link">Collection</a>
-                <a th:href="@{/products}" class="nav-link">Lookbook</a>
+                <a th:href="@{/products}" class="nav-link">New Arrivals</a>
                 <a th:href="@{/tryon-studio}" class="nav-link">Try-On</a>
             </nav>
 
             <div style="display:flex; align-items:center; gap:24px; justify-self:end;">
                 <!-- My Orders + My Coupons group (authenticated only) -->
                 <div th:if="${#authorization.expression('isAuthenticated()')}" style="display:flex; align-items:center; gap:20px; padding-right:24px; border-right:1px solid #232323;">
-                    <a th:href="@{/my-orders}" class="icon-btn" title="My Orders">
+                    <a th:href="@{/my-orders}" class="icon-btn" title="My Orders" aria-label="My orders">
                         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="2" y="3" width="20" height="18" rx="2" />
                             <line x1="8" y1="9" x2="16" y2="9" />
                             <line x1="8" y1="13" x2="13" y2="13" />
                         </svg>
                     </a>
-                    <a th:href="@{/my-coupons}" class="icon-btn" title="My Coupons">
+                    <a th:href="@{/my-coupons}" class="icon-btn" title="My Coupons" aria-label="My coupons">
                         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M2 9V6a2 2 0 012-2h16a2 2 0 012 2v3" />
                             <path d="M2 15v3a2 2 0 002 2h16a2 2 0 002-2v-3" />
@@ -670,14 +779,14 @@
 
                 <!-- Wishlist icon (authenticated only) -->
                 <a th:if="${#authorization.expression('isAuthenticated()')}"
-                   th:href="@{/wishlist}" class="icon-btn" title="Wishlist" style="position:relative;">
+                   th:href="@{/wishlist}" class="icon-btn" title="Wishlist" aria-label="Wishlist" style="position:relative;">
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                     </svg>
                 </a>
 
                 <!-- Cart icon -->
-                <a th:href="@{/cart}" class="icon-btn" style="position:relative;">
+                <a th:href="@{/cart}" class="icon-btn" style="position:relative;" aria-label="Cart">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                         <line x1="3" y1="6" x2="21" y2="6" />
@@ -688,13 +797,13 @@
 
                 <!-- User icon + dropdown (Profile + Logout only) -->
                 <div class="user-dropdown-wrap" style="position:relative;">
-                    <div th:if="${#authorization.expression('isAuthenticated()')}" class="icon-btn" style="cursor:pointer;">
+                    <div th:if="${#authorization.expression('isAuthenticated()')}" class="icon-btn" style="cursor:pointer;" role="button" tabindex="0" aria-label="Account menu">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                         </svg>
                     </div>
-                    <a th:unless="${#authorization.expression('isAuthenticated()')}" th:href="@{/login}" class="icon-btn">
+                    <a th:unless="${#authorization.expression('isAuthenticated()')}" th:href="@{/login}" class="icon-btn" aria-label="Sign in">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
@@ -791,7 +900,7 @@
             </a>
 
             <a th:href="@{/products}" class="drawer-nav-item">
-                <span>Lookbook</span>
+                <span>New Arrivals</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <polyline points="9 18 15 12 9 6" />
                 </svg>
@@ -878,12 +987,12 @@
     </div>
 
     <!-- ============================== MAIN ============================== -->
-    <main>
+    <main id="main-content" tabindex="-1">
         <!-- TOAST -->
-        <div th:if="${success}" class="toast toast-success" id="toastSuccess">
+        <div th:if="${success}" class="toast toast-success" id="toastSuccess" role="status" aria-live="polite">
             <span th:text="${success}"></span>
         </div>
-        <div th:if="${error}" class="toast toast-error" id="toastError">
+        <div th:if="${error}" class="toast toast-error" id="toastError" role="alert" aria-live="assertive">
             <span th:text="${error}"></span>
         </div>
 
@@ -899,58 +1008,40 @@
 
                 <div class="footer-col">
                     <div style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; letter-spacing:0.1em; color:var(--c-white); margin-bottom:12px;">NOVA</div>
-                    <p style="font-size:0.7rem; letter-spacing:0.15em; color:#777; text-transform:uppercase; line-height:2; margin-bottom:20px;">
-                        Essentials for the<br>modern generation.
+                    <p class="nova-copy" style="max-width:270px; margin-bottom:20px;">
+                        Everyday streetwear essentials with AI fit preview, fast Vietnam delivery, and 14-day returns.
                     </p>
-                    <!-- Social links -->
-                    <div style="display:flex; gap:16px; align-items:center;">
-                        <a th:href="@{/products}" style="color:#555; transition:color .2s; display:flex;"
-                           onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'" title="Instagram">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
-                                <rect x="2" y="2" width="20" height="20" rx="5"/>
-                                <circle cx="12" cy="12" r="4"/>
-                                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
-                            </svg>
-                        </a>
-                        <a th:href="@{/products}" style="color:#555; transition:color .2s; display:flex;"
-                           onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'" title="TikTok">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
-                                <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
-                            </svg>
-                        </a>
-                        <a th:href="@{/products}" style="color:#555; transition:color .2s; display:flex;"
-                           onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'" title="Facebook">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
-                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                            </svg>
-                        </a>
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                        <a th:href="@{/contact}" class="footer-link" style="min-height:0;">Contact</a>
+                        <span aria-hidden="true" style="color:#444;">/</span>
+                        <a th:href="@{/tryon-studio}" class="footer-link" style="min-height:0;">AI Try-On</a>
                     </div>
                 </div>
 
                 <div class="footer-col">
-                    <p style="font-size:0.6rem; letter-spacing:0.3em; color:#666; text-transform:uppercase; margin-bottom:16px;">Shop</p>
+                    <p class="footer-heading">Shop</p>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <a th:href="@{/products/top}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Top</a>
-                        <a th:href="@{/products/bottom}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Bottom</a>
-                        <a th:href="@{/products/accessories}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Accessories</a>
+                        <a th:href="@{/products/top}" class="footer-link">Top</a>
+                        <a th:href="@{/products/bottom}" class="footer-link">Bottom</a>
+                        <a th:href="@{/products/accessories}" class="footer-link">Accessories</a>
                     </div>
                 </div>
 
                 <div class="footer-col">
-                    <p style="font-size:0.6rem; letter-spacing:0.3em; color:#666; text-transform:uppercase; margin-bottom:16px;">Help</p>
+                    <p class="footer-heading">Help</p>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <a th:href="@{/products}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Contact</a>
-                        <a th:href="@{/products}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Returns</a>
-                        <a th:href="@{/products}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Sizing</a>
+                        <a th:href="@{/contact}" class="footer-link">Contact</a>
+                        <a th:href="@{/returns}" class="footer-link">Returns</a>
+                        <a th:href="@{/sizing}" class="footer-link">Sizing</a>
                     </div>
                 </div>
 
                 <div class="footer-col">
-                    <p style="font-size:0.6rem; letter-spacing:0.3em; color:#666; text-transform:uppercase; margin-bottom:16px;">Follow</p>
+                    <p class="footer-heading">Explore</p>
                     <div style="display:flex; flex-direction:column; gap:10px;">
-                        <a th:href="@{/products}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Instagram</a>
-                        <a th:href="@{/products}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">TikTok</a>
-                        <a th:href="@{/products}" style="font-size:0.7rem; letter-spacing:0.15em; color:#888; text-transform:uppercase; text-decoration:none;">Facebook</a>
+                        <a th:href="@{/products}" class="footer-link">New Arrivals</a>
+                        <a th:href="@{/tryon-studio}" class="footer-link">AI Try-On</a>
+                        <a th:href="@{/my-coupons}" class="footer-link">Coupons</a>
                     </div>
                 </div>
             </div>
@@ -966,7 +1057,7 @@
     <div id="chatbot-container" style="position:fixed; bottom:28px; right:28px; z-index:500;">
 
         <!-- TOGGLE BUTTON -->
-        <button id="chatbot-toggle" onclick="toggleChat()" style="
+        <button id="chatbot-toggle" onclick="toggleChat()" aria-label="Open chat assistant" aria-controls="chatbot-window" aria-expanded="false" style="
             width:52px; height:52px;
             background:var(--c-white); color:var(--c-black);
             border:none; cursor:pointer;
@@ -982,7 +1073,7 @@
         </button>
 
         <!-- CHAT WINDOW -->
-        <div id="chatbot-window" style="
+        <div id="chatbot-window" role="dialog" aria-label="Nova chat assistant" style="
             position:absolute; bottom:68px; right:0;
             width:340px;
             background:#171717;
@@ -1014,7 +1105,7 @@
                         </p>
                     </div>
                 </div>
-                <button onclick="toggleChat()" style="
+                <button onclick="toggleChat()" aria-label="Close chat assistant" style="
                     background:none; border:none; color:#444; cursor:pointer;
                     width:28px; height:28px; display:flex; align-items:center; justify-content:center;
                     transition:color 0.2s;
@@ -1028,7 +1119,7 @@
             </div>
 
             <!-- MESSAGES -->
-            <div id="chat-messages" style="
+            <div id="chat-messages" aria-live="polite" style="
                 height:calc(100vh - 220px); max-height:420px; min-height:180px;
                 overflow-y:auto; padding:16px 14px;
                 display:flex; flex-direction:column; gap:10px;
@@ -1058,6 +1149,7 @@
                 background:#1a1a1a;
                 display:flex; gap:8px; align-items:center;
             ">
+                <label for="chat-input" class="sr-only">Message Nova assistant</label>
                 <input id="chat-input" type="text" placeholder="Type a message..." style="
                     flex:1; background:#111; border:1px solid #2a2a2a;
                     color:var(--c-white); padding:9px 13px;
@@ -1068,7 +1160,7 @@
                 onfocus="this.style.borderColor='#444'"
                 onblur="this.style.borderColor='#2a2a2a'"
                 onkeydown="if(event.key==='Enter') sendChat()" />
-                <button onclick="sendChat()" style="
+                <button onclick="sendChat()" aria-label="Send message" style="
                     background:var(--c-white); color:#111;
                     border:none; width:36px; height:36px; flex-shrink:0;
                     display:flex; align-items:center; justify-content:center;
@@ -1087,6 +1179,53 @@
 
     <!-- ============================== SCRIPTS ============================== -->
     <script>
+        window.novaTrack = window.novaTrack || function(eventName, detail = {}) {
+            window.dispatchEvent(new CustomEvent('nova:analytics', {
+                detail: { eventName, ...detail, timestamp: Date.now() }
+            }));
+        };
+
+        let activeFocusTrap = null;
+        let activeFocusFallback = null;
+
+        function focusableElements(container) {
+            if (!container) return [];
+            return Array.from(container.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )).filter(el => el.offsetParent !== null);
+        }
+
+        function setFocusTrap(container, fallback) {
+            activeFocusTrap = container || null;
+            activeFocusFallback = fallback || null;
+        }
+
+        function clearFocusTrap() {
+            activeFocusTrap = null;
+            activeFocusFallback = null;
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (drawer?.classList.contains('open')) closeDrawer();
+                const chatWindow = document.getElementById('chatbot-window');
+                if (chatWindow?.style.display === 'flex') closeChat();
+            }
+
+            if (event.key !== 'Tab' || !activeFocusTrap) return;
+            const focusables = focusableElements(activeFocusTrap);
+            if (!focusables.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+
         // ===== DESKTOP HEADER SCROLL =====
         const desktopHeader = document.getElementById('siteHeader');
         const annoBar = document.getElementById('announcementBar');
@@ -1108,12 +1247,17 @@
             overlay?.classList.add('open');
             drawer?.classList.add('open');
             document.body.style.overflow = 'hidden';
+            setFocusTrap(drawer, document.getElementById('mobileHamburger'));
+            setTimeout(() => focusableElements(drawer)[0]?.focus(), 40);
         }
 
         function closeDrawer() {
             overlay?.classList.remove('open');
             drawer?.classList.remove('open');
             document.body.style.overflow = '';
+            const fallback = activeFocusFallback;
+            clearFocusTrap();
+            fallback?.focus?.();
         }
 
         document.getElementById('mobileHamburger')?.addEventListener('click', openDrawer);
@@ -1149,9 +1293,27 @@
         });
 
         // ===== CHATBOT =====
+        function closeChat() {
+            const w = document.getElementById('chatbot-window');
+            w.style.display = 'none';
+            document.getElementById('chatbot-toggle')?.setAttribute('aria-expanded', 'false');
+            const fallback = activeFocusFallback;
+            clearFocusTrap();
+            fallback?.focus?.();
+        }
+
         function toggleChat() {
             const w = document.getElementById('chatbot-window');
-            w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
+            const isOpening = w.style.display !== 'flex';
+            w.style.display = isOpening ? 'flex' : 'none';
+            document.getElementById('chatbot-toggle')?.setAttribute('aria-expanded', String(isOpening));
+            if (isOpening) {
+                setFocusTrap(w, document.getElementById('chatbot-toggle'));
+                setTimeout(() => document.getElementById('chat-input')?.focus(), 40);
+                window.novaTrack('chat_open');
+            } else {
+                clearFocusTrap();
+            }
         }
 
         async function sendChat() {

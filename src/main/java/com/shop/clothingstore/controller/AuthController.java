@@ -3,6 +3,8 @@ package com.shop.clothingstore.controller;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -23,6 +25,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
@@ -80,8 +84,8 @@ public class AuthController {
         }
 
         // ===== validate password basic =====
-        if (password.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
+        if (password.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters");
             return "redirect:/register";
         }
 
@@ -97,7 +101,7 @@ public class AuthController {
             emailService.sendRegistrationEmail(normalizedEmail);
         } catch (Exception e) {
             // Ignore email sending error during registration so user creation still succeeds
-            e.printStackTrace();
+            log.warn("Registration email failed for {}", normalizedEmail, e);
         }
 
         // ===== SUCCESS TOAST =====
@@ -202,8 +206,8 @@ public class AuthController {
             return "redirect:/reset-password?token=" + token;
         }
 
-        if (password.length() < 6) {
-            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters");
+        if (password.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters");
             return "redirect:/reset-password?token=" + token;
         }
 

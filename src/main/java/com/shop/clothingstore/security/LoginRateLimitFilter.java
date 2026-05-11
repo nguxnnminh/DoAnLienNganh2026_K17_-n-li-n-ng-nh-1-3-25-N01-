@@ -45,7 +45,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
         if (METHOD_POST.equalsIgnoreCase(request.getMethod())) {
             String uri = request.getRequestURI();
-            String clientIp = resolveClientIp(request);
+            String clientIp = request.getRemoteAddr();
 
             if (LOGIN_PATH.equals(uri)) {
                 if (!rateLimiter.isAllowed(LOGIN_KEY_PREFIX + clientIp)) {
@@ -76,14 +76,5 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         // Only apply to /api/** paths to keep the filter out of the web UI chain
         return !request.getRequestURI().startsWith("/api/");
-    }
-
-    private String resolveClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            // Take the first (leftmost) IP — that's the originating client
-            return xForwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

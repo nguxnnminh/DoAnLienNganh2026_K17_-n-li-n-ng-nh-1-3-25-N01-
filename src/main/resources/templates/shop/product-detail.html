@@ -5,6 +5,7 @@
     /* ── VARIANT BUTTONS ─── shared selector system ─────────── */
     .n-var {
       padding:10px 18px;
+      min-height:44px;
       background:transparent;
       border:1px solid #303030;
       color:#aaa;
@@ -17,6 +18,80 @@
     }
     .n-var:hover,.n-var.active { background:#f5f5f3;color:#111111;border-color:#f5f5f3; }
     .n-var:disabled { opacity:.25;cursor:not-allowed; }
+
+    .color-btn {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .color-swatch {
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(245,245,243,.35);
+      background:var(--swatch,#777);
+      box-shadow:0 0 0 1px rgba(0,0,0,.4);
+      flex-shrink:0;
+    }
+    .size-guide-link {
+      min-height:44px;
+      display:inline-flex;
+      align-items:center;
+      border:none;
+      background:none;
+      color:#d8c278;
+      font-family:'DM Sans',sans-serif;
+      font-size:.72rem;
+      letter-spacing:.13em;
+      text-transform:uppercase;
+      cursor:pointer;
+      padding:0;
+      transition:color .2s;
+    }
+    .size-guide-link:hover { color:#f0d36a; }
+    .size-guide-panel {
+      display:none;
+      border:1px solid #303030;
+      background:#0d0d0d;
+      padding:14px;
+      margin-top:12px;
+      color:#aaa;
+      font-size:.82rem;
+      line-height:1.65;
+    }
+    .size-guide-panel.open { display:block; }
+    .pdp-assist-card {
+      border:1px solid #3d3520;
+      background:rgba(200,165,43,.08);
+      padding:16px;
+      margin-bottom:18px;
+    }
+    .pdp-confidence-grid {
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+      margin:16px 0;
+      color:#b6b6b0;
+      font-size:.8rem;
+      line-height:1.45;
+    }
+    @media(min-width:640px){
+      .pdp-confidence-grid { grid-template-columns:repeat(3,1fr); }
+    }
+    .pdp-confidence-grid span {
+      border:1px solid #242424;
+      background:#0d0d0d;
+      padding:10px 12px;
+    }
+    .tryon-modal-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:24px;
+      align-items:start;
+    }
+    @media(max-width:640px){
+      .tryon-modal-grid { grid-template-columns:1fr; }
+    }
 
     /* ── THUMBNAILS ──────────────────────────────────────────── */
     .thumb {
@@ -70,7 +145,7 @@
         <img id="mainImage"
              class="w-full aspect-[4/5] object-cover block transition-opacity duration-300"
              th:src="${product.images!=null and !product.images.isEmpty()?product.images[0].imageUrl:'/images/no-image.png'}"
-             alt="" />
+             th:alt="${product.name}" />
         <div class="absolute bottom-5 right-5 text-xs tracking-widest3 uppercase text-zinc-700">
           01 / <span th:text="${product.images!=null?product.images.size():1}">1</span>
         </div>
@@ -78,7 +153,8 @@
       <div class="flex gap-0.5 mt-0.5 overflow-x-auto"
            th:if="${product.images!=null and product.images.size()>1}">
         <img th:each="img,iter : ${product.images}" th:src="${img.imageUrl}" th:data-src="${img.imageUrl}"
-             class="thumb" th:classappend="${iter.index==0?' active-thumb':''}" />
+             class="thumb" th:classappend="${iter.index==0?' active-thumb':''}"
+             th:alt="${product.name + ' image ' + (iter.index + 1)}" />
       </div>
     </div>
 
@@ -101,8 +177,14 @@
           th:text="${product.name}">Product Name</h1>
 
       <!-- Price -->
-      <p id="priceText" class="text-base md:text-lg text-zinc-600 mb-8 tracking-wide">
-        Select size &amp; color
+      <p id="priceText" class="text-base md:text-lg text-[#c0c0bc] mb-2 tracking-wide"
+         th:attr="data-base-price-text=${product.minPrice != null and product.minPrice > 0 ? 'From ' + #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA') + ' ₫' : 'Select size and color'}">
+        <span th:if="${product.minPrice != null and product.minPrice > 0}"
+              th:text="${'From ' + #numbers.formatDecimal(product.minPrice,0,'POINT',0,'COMMA') + ' ₫'}"></span>
+        <span th:unless="${product.minPrice != null and product.minPrice > 0}">Select size &amp; color</span>
+      </p>
+      <p class="text-xs tracking-widest uppercase text-zinc-500 mb-8">
+        Select a size and color to see price, stock, and delivery options.
       </p>
 
       <div class="h-px bg-zinc-900 mb-8"></div>
@@ -110,33 +192,63 @@
       <!-- SIZE -->
       <div class="mb-7">
         <div class="flex justify-between items-center mb-4">
-          <p class="text-xs tracking-widest3 uppercase text-zinc-600">Size</p>
-          <a th:href="@{/products}" class="text-xs tracking-widest uppercase text-zinc-700 no-underline transition-colors hover:text-zinc-400">Guide</a>
+          <p class="text-xs tracking-widest3 uppercase text-zinc-500">Size</p>
+          <button type="button" class="size-guide-link" onclick="toggleSizeGuide()" aria-controls="sizeGuidePanel" aria-expanded="false" id="sizeGuideToggle">
+            Size Guide
+          </button>
         </div>
         <div class="flex gap-2 flex-wrap">
           <button th:each="s : ${sizes}" type="button" th:data-size="${s}" th:text="${s}"
-                  class="n-var size-btn"></button>
+                  class="n-var size-btn" aria-pressed="false"></button>
+        </div>
+        <div id="sizeGuidePanel" class="size-guide-panel">
+          NOVA uses a relaxed fit. Choose your usual size for a clean silhouette, or size up once for an oversized streetwear fit.
+          <a th:href="@{/sizing}" class="nova-link" style="color:#f0d36a;">Open full sizing guide</a>.
         </div>
       </div>
 
       <!-- COLOR -->
       <div class="mb-8">
-        <p class="text-xs tracking-widest3 uppercase text-zinc-600 mb-4">Color</p>
+        <p class="text-xs tracking-widest3 uppercase text-zinc-500 mb-4">Color</p>
         <div class="flex gap-2 flex-wrap">
-          <button th:each="c : ${colors}" type="button" th:data-color="${c}" th:text="${c}"
-                  class="n-var color-btn"></button>
+          <button th:each="c : ${colors}" type="button" th:data-color="${c}"
+                  class="n-var color-btn" aria-pressed="false">
+            <span class="color-swatch" aria-hidden="true"></span>
+            <span th:text="${c}">Color</span>
+          </button>
         </div>
       </div>
 
       <!-- Stock -->
-      <p id="stockMsg" class="text-xs tracking-widest uppercase min-h-[18px] mb-4"></p>
+      <p id="stockMsg" class="text-xs tracking-widest uppercase min-h-[18px] mb-4" role="status" aria-live="polite"></p>
+
+      <!-- VIRTUAL TRY-ON BUTTON -->
+      <div th:if="${product.tryOnEnabled and product.garmentProcessedUrl != null}" class="pdp-assist-card">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+          <div>
+            <p class="text-xs tracking-widest uppercase text-[#f0d36a] mb-1">AI fit confidence</p>
+            <p class="text-sm leading-relaxed text-zinc-500">Upload one full-body photo to preview this piece before adding it to cart.</p>
+          </div>
+          <button type="button" id="tryOnBtn" onclick="openTryOnModal()"
+                  class="min-h-[44px] px-5 bg-[#f5f5f3] text-[#0a0a0a]
+                         font-body text-xs tracking-widest uppercase font-medium cursor-pointer
+                         transition-colors duration-200 hover:bg-[#d8d8d4] flex items-center justify-center gap-2 shrink-0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+            </svg>
+            Check Fit With AI
+          </button>
+        </div>
+        <p class="text-[0.72rem] leading-relaxed text-zinc-600 mt-3">Your photo is used only to generate the try-on preview on this device/session.</p>
+      </div>
 
       <!-- ADD TO CART -->
-      <form method="post" th:action="@{/cart/add}">
+      <form method="post" th:action="@{/cart/add}" id="addToCartForm">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <input type="hidden" id="variantIdInput" name="variantId" />
         <div class="flex gap-2 mb-3">
-          <input type="number" name="quantity" min="1" value="1"
+          <label for="quantityInput" class="sr-only">Quantity</label>
+          <input id="quantityInput" type="number" name="quantity" min="1" value="1"
                  class="w-[68px] border border-zinc-800 bg-transparent text-[#f5f5f3]
                         text-center font-body text-sm px-2 py-3 outline-none
                         transition-colors focus:border-zinc-500" />
@@ -149,6 +261,12 @@
           </button>
         </div>
       </form>
+
+      <div class="pdp-confidence-grid">
+        <span>Free shipping over 500k</span>
+        <span>14-day returns on eligible items</span>
+        <span>COD and secure checkout</span>
+      </div>
 
       <!-- WISHLIST — outside cart form, uses AJAX to stay on page -->
       <div class="mt-2">
@@ -177,35 +295,21 @@
         </a>
       </div>
 
-      <!-- VIRTUAL TRY-ON BUTTON -->
-      <div th:if="${product.tryOnEnabled and product.garmentProcessedUrl != null}" class="mt-3">
-        <button type="button" id="tryOnBtn" onclick="openTryOnModal()"
-                class="w-full h-11 bg-transparent border border-zinc-800 text-zinc-500
-                       font-body text-xs tracking-widest uppercase cursor-pointer
-                       transition-all duration-200 hover:border-zinc-600 hover:text-zinc-300
-                       flex items-center justify-center gap-2">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
-          </svg>
-          Virtual Try-On
-        </button>
-      </div>
-
       <!-- ACCORDION -->
       <div class="mt-10">
-        <button class="acc-btn" onclick="toggleAcc(this)">
+        <button type="button" class="acc-btn" onclick="toggleAcc(this)" aria-expanded="false">
           Description
           <span class="text-lg leading-none transition-transform duration-300 inline-block">+</span>
         </button>
         <div class="acc-body"><p th:text="${product.description}">Product description.</p></div>
 
-        <button class="acc-btn" onclick="toggleAcc(this)">
+        <button type="button" class="acc-btn" onclick="toggleAcc(this)" aria-expanded="false">
           Details &amp; Materials
           <span class="text-lg leading-none transition-transform duration-300 inline-block">+</span>
         </button>
         <div class="acc-body"><p>100% premium cotton. Garment dyed. Oversized fit. Crafted for longevity.</p></div>
 
-        <button class="acc-btn" onclick="toggleAcc(this)">
+        <button type="button" class="acc-btn" onclick="toggleAcc(this)" aria-expanded="false">
           Shipping &amp; Returns
           <span class="text-lg leading-none transition-transform duration-300 inline-block">+</span>
         </button>
@@ -293,6 +397,47 @@
     const productId = /*[[${product.id}]]*/0;
     const tryOnEnabled = /*[[${product.tryOnEnabled}]]*/false;
 
+    const swatchMap = {
+      black: '#111111',
+      white: '#f5f5f3',
+      gray: '#9ca3af',
+      grey: '#9ca3af',
+      charcoal: '#333333',
+      navy: '#172554',
+      beige: '#d6c2a2',
+      cream: '#efe5cf',
+      olive: '#556b2f',
+      khaki: '#b59f72',
+      brown: '#6f4e37',
+      camel: '#b78b54',
+      sand: '#c8b89a',
+      red: '#9f1239',
+      blue: '#2563eb',
+      pink: '#f3a6b8',
+      natural: '#d8cfb8'
+    };
+
+    function resolveSwatch(color) {
+      const key = String(color || '').toLowerCase();
+      return Object.entries(swatchMap).find(([name]) => key.includes(name))?.[1] || '#777';
+    }
+
+    document.querySelectorAll('.color-btn').forEach(btn => {
+      btn.style.setProperty('--swatch', resolveSwatch(btn.dataset.color));
+    });
+
+    document.getElementById('addToCartForm')?.addEventListener('submit', () => {
+      window.novaTrack?.('add_to_cart_submit', { productId, variantId: document.getElementById('variantIdInput')?.value || null });
+    });
+
+    function toggleSizeGuide() {
+      const panel = document.getElementById('sizeGuidePanel');
+      const toggle = document.getElementById('sizeGuideToggle');
+      const open = panel.classList.toggle('open');
+      toggle?.setAttribute('aria-expanded', String(open));
+      window.novaTrack?.('size_guide_toggle', { open, productId });
+    }
+
     document.querySelectorAll('.thumb').forEach(t => {
       t.addEventListener('click', () => {
         const mainImg = document.getElementById('mainImage');
@@ -314,9 +459,10 @@
       const stockEl = document.getElementById('stockMsg');
       const addBtn  = document.getElementById('addBtn');
       const varId   = document.getElementById('variantIdInput');
+      const basePriceText = priceEl?.dataset.basePriceText || 'Select size and color';
 
       if (!size || !color) {
-        priceEl.textContent = 'Select size & color'; priceEl.style.color = '';
+        priceEl.textContent = basePriceText; priceEl.style.color = '#c0c0bc';
         addBtn.disabled = true; stockEl.textContent = ''; return;
       }
       const match = variantsData.find(v => v.size === size && v.color === color);
@@ -328,8 +474,8 @@
           stockEl.textContent = 'Sold out'; stockEl.style.color = '#bf6d6d';
         } else {
           addBtn.disabled = false; addBtn.textContent = 'Add to Cart';
-          stockEl.textContent = match.stock <= 5 ? `Only ${match.stock} left` : '';
-          stockEl.style.color = '#c8a52b';
+          stockEl.textContent = match.stock <= 5 ? `Only ${match.stock} left` : 'In stock. Ships in 1-3 business days.';
+          stockEl.style.color = '#f0d36a';
         }
       } else {
         priceEl.textContent = 'Combination unavailable'; priceEl.style.color = '#666';
@@ -338,14 +484,31 @@
     }
 
     document.querySelectorAll('.size-btn').forEach(b =>
-      b.addEventListener('click', () => { document.querySelectorAll('.size-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); updateVariant(); }));
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.size-btn').forEach(x => {
+          x.classList.remove('active');
+          x.setAttribute('aria-pressed', 'false');
+        });
+        b.classList.add('active');
+        b.setAttribute('aria-pressed', 'true');
+        updateVariant();
+      }));
     document.querySelectorAll('.color-btn').forEach(b =>
-      b.addEventListener('click', () => { document.querySelectorAll('.color-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); updateVariant(); }));
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.color-btn').forEach(x => {
+          x.classList.remove('active');
+          x.setAttribute('aria-pressed', 'false');
+        });
+        b.classList.add('active');
+        b.setAttribute('aria-pressed', 'true');
+        updateVariant();
+      }));
 
     function toggleAcc(btn) {
       const body = btn.nextElementSibling;
       const icon = btn.querySelector('span:last-child');
       const open = body.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(open));
       icon.style.transform = open ? 'rotate(45deg)' : 'rotate(0deg)';
       icon.style.transition = 'transform .3s cubic-bezier(.22,1,.36,1)';
     }
@@ -428,8 +591,43 @@
     /* ══════════════════════════════════════════════════════ */
     let savedPersonId = localStorage.getItem('tryon_personId') || null;
     let savedPersonUrl = localStorage.getItem('tryon_personUrl') || null;
+    let tryOnLastFocus = null;
+
+    function getTryOnFocusable() {
+      const modal = document.getElementById('tryOnModal');
+      if (!modal) return [];
+      return Array.from(modal.querySelectorAll('button:not([disabled]), input:not([disabled]), label[for], a[href], [tabindex]:not([tabindex="-1"])'))
+        .filter(el => el.offsetParent !== null);
+    }
+
+    function handleTryOnKeydown(event) {
+      if (event.key === 'Escape') {
+        closeTryOnModal();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = getTryOnFocusable();
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function setTryOnStatus(message, isError = false) {
+      const status = document.getElementById('tryonStatus');
+      if (!status) return;
+      status.textContent = message || '';
+      status.style.color = isError ? '#bf6d6d' : '#888';
+    }
 
     function openTryOnModal() {
+      tryOnLastFocus = document.activeElement;
       document.getElementById('tryOnModal').style.display = 'flex';
       document.body.style.overflow = 'hidden';
       // If we already have a person image, show it
@@ -441,11 +639,17 @@
       // Reset result area
       document.getElementById('tryonResultArea').style.display = 'none';
       document.getElementById('tryonLoading').style.display = 'none';
+      setTryOnStatus('');
+      document.addEventListener('keydown', handleTryOnKeydown);
+      setTimeout(() => getTryOnFocusable()[0]?.focus(), 60);
+      window.novaTrack?.('tryon_modal_open', { productId });
     }
 
     function closeTryOnModal() {
       document.getElementById('tryOnModal').style.display = 'none';
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleTryOnKeydown);
+      tryOnLastFocus?.focus?.();
     }
 
     function handlePersonUpload(input) {
@@ -462,10 +666,14 @@
       // Upload to server
       const formData = new FormData();
       formData.append('personImage', file);
+      const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+      const headers = {};
+      if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
 
       document.getElementById('tryonUploadLabel').textContent = 'Uploading...';
 
-      fetch('/api/tryon/upload-person', { method: 'POST', body: formData })
+      fetch('/api/tryon/upload-person', { method: 'POST', body: formData, headers })
         .then(r => r.json())
         .then(data => {
           if (data.personId) {
@@ -474,18 +682,22 @@
             localStorage.setItem('tryon_personId', savedPersonId);
             localStorage.setItem('tryon_personUrl', savedPersonUrl);
             document.getElementById('tryonUploadLabel').textContent = '✓ Saved — Change photo';
+            setTryOnStatus('Photo saved. Generate a preview when you are ready.');
+            window.novaTrack?.('tryon_photo_uploaded', { productId });
           } else {
             document.getElementById('tryonUploadLabel').textContent = 'Error: ' + (data.error || 'Unknown');
+            setTryOnStatus('Upload failed: ' + (data.error || 'Unknown'), true);
           }
         })
         .catch(err => {
           document.getElementById('tryonUploadLabel').textContent = 'Upload error: ' + err.message;
+          setTryOnStatus('Upload error: ' + err.message, true);
         });
     }
 
     function startTryOn() {
       if (!savedPersonId) {
-        alert('Please upload a portrait photo first.');
+        setTryOnStatus('Please upload a full-body photo first.', true);
         return;
       }
 
@@ -493,6 +705,8 @@
       document.getElementById('tryonLoading').style.display = 'flex';
       document.getElementById('tryonResultArea').style.display = 'none';
       document.getElementById('tryonGenerateBtn').disabled = true;
+      setTryOnStatus('Generating your preview. This can take a minute.');
+      window.novaTrack?.('tryon_generate_start', { productId });
 
       // Animate progress steps
       const steps = document.querySelectorAll('.tryon-step');
@@ -509,8 +723,12 @@
       const formData = new FormData();
       formData.append('personId', savedPersonId);
       formData.append('productId', productId);
+      const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+      const headers = {};
+      if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
 
-      fetch('/api/tryon/generate', { method: 'POST', body: formData })
+      fetch('/api/tryon/generate', { method: 'POST', body: formData, headers })
         .then(r => r.json())
         .then(data => {
           clearInterval(stepInterval);
@@ -520,15 +738,19 @@
           if (data.resultUrl) {
             document.getElementById('tryonResultImg').src = data.resultUrl + '?t=' + Date.now();
             document.getElementById('tryonResultArea').style.display = 'block';
+            setTryOnStatus('Preview generated.');
+            window.novaTrack?.('tryon_generate_success', { productId });
           } else {
-            alert('Error: ' + (data.error || 'Could not generate try-on image.'));
+            setTryOnStatus('Error: ' + (data.error || 'Could not generate try-on image.'), true);
+            window.novaTrack?.('tryon_generate_error', { productId });
           }
         })
         .catch(err => {
           clearInterval(stepInterval);
           document.getElementById('tryonLoading').style.display = 'none';
           document.getElementById('tryonGenerateBtn').disabled = false;
-          alert('Connection error: ' + err.message);
+          setTryOnStatus('Connection error: ' + err.message, true);
+          window.novaTrack?.('tryon_generate_error', { productId, reason: 'connection' });
         });
     }
   </script>
@@ -536,6 +758,9 @@
   <!-- ── TRY-ON MODAL ────────────────────────────────────── -->
   <div th:if="${product.tryOnEnabled and product.garmentProcessedUrl != null}"
        id="tryOnModal"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="tryOnModalTitle"
        style="display:none; position:fixed; inset:0; z-index:9999;
               background:rgba(0,0,0,0.88); backdrop-filter:blur(6px);
               align-items:center; justify-content:center; padding:20px;">
@@ -545,24 +770,24 @@
                 padding:36px; position:relative;">
 
       <!-- Close -->
-      <button onclick="closeTryOnModal()"
+      <button type="button" onclick="closeTryOnModal()" aria-label="Close virtual try-on"
               style="position:absolute; top:18px; right:18px; background:none; border:none;
-                     color:#555; cursor:pointer; font-size:18px; line-height:1;
-                     transition:color .2s;" onmouseover="this.style.color='#aaa'" onmouseout="this.style.color='#555'">
+                     color:#aaa; cursor:pointer; font-size:18px; line-height:1; width:44px; height:44px;
+                     transition:color .2s;" onmouseover="this.style.color='#f5f5f3'" onmouseout="this.style.color='#aaa'">
         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
           <path d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
 
       <!-- Header -->
-      <h3 style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; color:#e8e8e4;
+      <h3 id="tryOnModalTitle" style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; color:#e8e8e4;
                  margin:0 0 2px; letter-spacing:0.02em; font-weight:400;">
         Virtual Try-On
       </h3>
       <p style="font-size:0.65rem; color:#555; letter-spacing:0.2em; text-transform:uppercase;
                 margin:0 0 28px;">AI-Powered &middot; OOTDiffusion</p>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+      <div class="tryon-modal-grid">
 
         <!-- LEFT: Person upload -->
         <div>
@@ -627,6 +852,10 @@
                    object-fit:contain;" />
               <p style="font-size:8px; color:#444; margin:8px 0 0; letter-spacing:0.15em;
                         text-transform:uppercase;">AI Generated Preview</p>
+              <button type="button" onclick="closeTryOnModal(); document.getElementById('addBtn')?.focus();"
+                      style="margin-top:12px; min-height:44px; width:100%; background:#f5f5f3; color:#0a0a0a; border:none; font-family:'DM Sans',sans-serif; font-size:0.68rem; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;">
+                Choose Size &amp; Add to Cart
+              </button>
             </div>
 
             <!-- Default state -->
@@ -635,6 +864,8 @@
           </div>
         </div>
       </div>
+
+      <p id="tryonStatus" role="status" aria-live="polite" style="font-size:0.72rem; color:#888; margin:18px 0 0; line-height:1.6;"></p>
 
       <!-- Generate button -->
       <button id="tryonGenerateBtn" onclick="startTryOn()"

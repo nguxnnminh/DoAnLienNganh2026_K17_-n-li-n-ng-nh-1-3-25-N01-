@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -47,10 +49,7 @@ public class FileStorageService {
         }
 
         String originalName = file.getOriginalFilename();
-        String extension = "";
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf(".") + 1).toLowerCase();
-        }
+        String extension = extractExtension(originalName);
 
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             throw new IllegalArgumentException(
@@ -69,7 +68,7 @@ public class FileStorageService {
         // =====================================================
         // UPLOAD
         // =====================================================
-        Path uploadPath = Paths.get(baseUploadDir, folder);
+        Path uploadPath = resolveFolder(folder);
 
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
@@ -103,15 +102,21 @@ public class FileStorageService {
             throw new IllegalArgumentException("Bytes must not be empty");
         }
 
-        String extension = "png"; // safe default for garment preprocessing
-        if (filename != null && filename.contains(".")) {
-            extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+        if (bytes.length > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("File too large. Maximum 5MB.");
+        }
+
+        String extension = extractExtension(filename);
+        if (extension.isBlank()) {
+            extension = "png";
         }
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
             extension = "png";
         }
 
-        Path uploadPath = Paths.get(baseUploadDir, folder);
+        validateMagicBytes(bytes);
+
+        Path uploadPath = resolveFolder(folder);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
@@ -132,7 +137,7 @@ public class FileStorageService {
         }
 
         String relativePath = fileUrl.replaceFirst("^/images/", "");
-        Path filePath = Paths.get(baseUploadDir, relativePath);
+        Path filePath = resolveFile(relativePath);
 
         if (Files.exists(filePath)) {
             Files.delete(filePath);
@@ -148,5 +153,39 @@ public class FileStorageService {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    private String extractExtension(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "";
+        }
+        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        return extension.matches("[a-z0-9]+") ? extension : "";
+    }
+
+    private void validateMagicBytes(byte[] bytes) {
+        String magic = bytesToHex(Arrays.copyOf(bytes, Math.min(bytes.length, 8))).toLowerCase(Locale.ROOT);
+        boolean validMagic = ALLOWED_MAGIC_BYTES.stream().anyMatch(magic::startsWith);
+        if (!validMagic) {
+            throw new IllegalArgumentException("Invalid file signature. The file extension may have been spoofed.");
+        }
+    }
+
+    private Path resolveFolder(String folder) {
+        Path base = Paths.get(baseUploadDir).toAbsolutePath().normalize();
+        Path resolved = base.resolve(folder == null ? "" : folder).normalize();
+        if (!resolved.startsWith(base)) {
+            throw new IllegalArgumentException("Invalid upload folder");
+        }
+        return resolved;
+    }
+
+    private Path resolveFile(String relativePath) {
+        Path base = Paths.get(baseUploadDir).toAbsolutePath().normalize();
+        Path resolved = base.resolve(relativePath == null ? "" : relativePath).normalize();
+        if (!resolved.startsWith(base)) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
+        return resolved;
     }
 }

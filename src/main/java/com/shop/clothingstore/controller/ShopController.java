@@ -76,6 +76,21 @@ public class ShopController {
         return "shop/home";
     }
 
+    @GetMapping("/contact")
+    public String contact() {
+        return "shop/contact";
+    }
+
+    @GetMapping("/returns")
+    public String returns() {
+        return "shop/returns";
+    }
+
+    @GetMapping("/sizing")
+    public String sizing() {
+        return "shop/sizing";
+    }
+
     // =====================================================
     // SORT HELPER
     // =====================================================

@@ -37,6 +37,11 @@
     .tryon-card {
       cursor: pointer;
       border: 1px solid transparent;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      text-align: left;
+      font: inherit;
       transition: all 0.2s;
       position: relative;
     }
@@ -133,63 +138,66 @@
     <div class="border-r border-zinc-900 px-4 md:px-8 lg:px-10 py-8">
 
       <!-- Tabs -->
-      <div class="flex gap-6 mb-6 border-b border-zinc-900 pb-0">
-        <button class="tab-btn active" onclick="switchTab('upper')">Tops</button>
-        <button class="tab-btn" onclick="switchTab('lower')">Bottoms</button>
-        <button class="tab-btn" onclick="switchTab('all')">All</button>
+      <div class="flex gap-6 mb-6 border-b border-zinc-900 pb-0" role="tablist" aria-label="Try-on product categories">
+        <button type="button" class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-upper" onclick="switchTab('upper', this)">Tops</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-lower" onclick="switchTab('lower', this)">Bottoms</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-all" onclick="switchTab('all', this)">All</button>
       </div>
 
       <!-- Upper Body Panel -->
-      <div id="panel-upper" class="tab-panel active grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-        <div th:each="p : ${upperProducts}" class="tryon-card"
+      <div id="panel-upper" class="tab-panel active grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" role="tabpanel">
+        <button type="button" th:each="p : ${upperProducts}" class="tryon-card"
              th:data-id="${p.id}" th:data-type="${p.garmentType}"
              th:data-name="${p.name}"
              th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
              th:data-price="${p.minPrice}"
+             aria-pressed="false"
              onclick="selectProduct(this)">
-          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" th:alt="${p.name}" />
           <div class="tryon-card-info">
             <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
             <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
                th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
           </div>
-        </div>
+        </button>
         <p th:if="${upperProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No tops available</p>
       </div>
 
       <!-- Lower Body Panel -->
-      <div id="panel-lower" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-        <div th:each="p : ${lowerProducts}" class="tryon-card"
+      <div id="panel-lower" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" role="tabpanel">
+        <button type="button" th:each="p : ${lowerProducts}" class="tryon-card"
              th:data-id="${p.id}" th:data-type="${p.garmentType}"
              th:data-name="${p.name}"
              th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
              th:data-price="${p.minPrice}"
+             aria-pressed="false"
              onclick="selectProduct(this)">
-          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" th:alt="${p.name}" />
           <div class="tryon-card-info">
             <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
             <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
                th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
           </div>
-        </div>
+        </button>
         <p th:if="${lowerProducts.isEmpty()}" class="col-span-full text-zinc-700 text-xs tracking-widest uppercase py-10 text-center">No bottoms available</p>
       </div>
 
       <!-- All Panel -->
-      <div id="panel-all" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-        <div th:each="p : ${tryOnProducts}" class="tryon-card"
+      <div id="panel-all" class="tab-panel grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2" role="tabpanel">
+        <button type="button" th:each="p : ${tryOnProducts}" class="tryon-card"
              th:data-id="${p.id}" th:data-type="${p.garmentType}"
              th:data-name="${p.name}"
              th:data-img="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}"
              th:data-price="${p.minPrice}"
+             aria-pressed="false"
              onclick="selectProduct(this)">
-          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" alt="" />
+          <img th:src="${p.images != null and !p.images.isEmpty() ? p.images[0].imageUrl : '/images/no-image.png'}" th:alt="${p.name}" />
           <div class="tryon-card-info">
             <p class="text-[0.68rem] tracking-widest uppercase text-zinc-400 leading-tight" th:text="${p.name}"></p>
             <p class="text-[0.62rem] tracking-wide text-zinc-600 mt-0.5"
                th:text="${p.minPrice != null and p.minPrice > 0} ? ${#numbers.formatDecimal(p.minPrice,0,'POINT',0,'COMMA')} + ' ₫' : '—'"></p>
           </div>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -201,22 +209,22 @@
       <!-- Person Photo Upload -->
       <div class="mb-5">
         <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Photo</p>
-        <div class="upload-zone" id="studioUploadZone" onclick="document.getElementById('studioPersonInput').click()">
+        <label class="upload-zone" id="studioUploadZone" for="studioPersonInput">
           <img id="studioPersonPreview" style="display:none; max-height:180px; width:auto; object-fit:contain; margin-bottom:10px;" />
-          <label id="studioUploadLabel"
+          <span id="studioUploadLabel"
                  style="font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:#666; cursor:pointer;">
             Upload full-body photo
-          </label>
+          </span>
           <input type="file" id="studioPersonInput" accept="image/*" style="display:none;" onchange="handleStudioUpload(this)">
           <p style="font-size:8px; color:#333; margin:6px 0 0; letter-spacing:0.05em;">Standing pose, simple background</p>
-        </div>
+        </label>
       </div>
 
       <!-- Selected Slots -->
       <div class="mb-5">
         <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Selected Items</p>
 
-        <div class="outfit-slot mb-2" id="slot-upper" onclick="scrollToTab('upper')">
+        <div class="outfit-slot mb-2" id="slot-upper" role="button" tabindex="0" onclick="scrollToTab('upper')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();scrollToTab('upper')}">
           <div id="slot-upper-empty" class="w-full text-center">
             <p class="text-[0.6rem] tracking-widest uppercase text-zinc-700">Top — select a top</p>
           </div>
@@ -226,13 +234,13 @@
               <p id="slot-upper-name" class="text-[0.65rem] tracking-widest uppercase text-zinc-400 truncate"></p>
               <p id="slot-upper-price" class="text-[0.58rem] tracking-wide text-zinc-600 mt-0.5"></p>
             </div>
-            <button onclick="event.stopPropagation(); clearSlot('upper')" class="text-zinc-700 hover:text-zinc-400 transition-colors" style="background:none;border:none;cursor:pointer;">
+            <button type="button" aria-label="Clear selected top" onclick="event.stopPropagation(); clearSlot('upper')" class="text-zinc-700 hover:text-zinc-400 transition-colors" style="background:none;border:none;cursor:pointer;">
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
         </div>
 
-        <div class="outfit-slot mb-2" id="slot-lower" onclick="scrollToTab('lower')">
+        <div class="outfit-slot mb-2" id="slot-lower" role="button" tabindex="0" onclick="scrollToTab('lower')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();scrollToTab('lower')}">
           <div id="slot-lower-empty" class="w-full text-center">
             <p class="text-[0.6rem] tracking-widest uppercase text-zinc-700">Bottom — select a bottom</p>
           </div>
@@ -242,7 +250,7 @@
               <p id="slot-lower-name" class="text-[0.65rem] tracking-widest uppercase text-zinc-400 truncate"></p>
               <p id="slot-lower-price" class="text-[0.58rem] tracking-wide text-zinc-600 mt-0.5"></p>
             </div>
-            <button onclick="event.stopPropagation(); clearSlot('lower')" class="text-zinc-700 hover:text-zinc-400 transition-colors" style="background:none;border:none;cursor:pointer;">
+            <button type="button" aria-label="Clear selected bottom" onclick="event.stopPropagation(); clearSlot('lower')" class="text-zinc-700 hover:text-zinc-400 transition-colors" style="background:none;border:none;cursor:pointer;">
               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
@@ -258,6 +266,7 @@
               onmouseout="this.style.background='#f5f5f3'">
         Generate Try-On
       </button>
+      <p id="studioStatus" role="status" aria-live="polite" class="text-xs leading-relaxed text-zinc-500 mt-3"></p>
 
       <!-- Loading -->
       <div id="studioLoading" style="display:none; text-align:center; padding:20px 0;">
@@ -287,11 +296,22 @@
     const selectedItems = { upper: null, lower: null };
 
     // ── Tab switching ─────────────────────────────────
-    function switchTab(tab) {
+    function setStudioStatus(message, isError = false) {
+      const status = document.getElementById('studioStatus');
+      if (!status) return;
+      status.textContent = message || '';
+      status.style.color = isError ? '#bf6d6d' : '#9ca3af';
+    }
+
+    function switchTab(tab, btn) {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       document.getElementById('panel-' + tab).classList.add('active');
-      event.target.classList.add('active');
+      btn?.classList.add('active');
+      btn?.setAttribute('aria-selected', 'true');
     }
 
     function scrollToTab(tab) {
@@ -326,7 +346,10 @@
       // Deselect previous in this slot
       if (selectedItems[slot]) {
         document.querySelectorAll('.tryon-card').forEach(c => {
-          if (c.dataset.id === selectedItems[slot].id) c.classList.remove('selected');
+          if (c.dataset.id === selectedItems[slot].id) {
+            c.classList.remove('selected');
+            c.setAttribute('aria-pressed', 'false');
+          }
         });
       }
 
@@ -335,8 +358,13 @@
 
       // Highlight card across all panels
       document.querySelectorAll('.tryon-card').forEach(c => {
-        if (c.dataset.id === id) c.classList.add('selected');
+        if (c.dataset.id === id) {
+          c.classList.add('selected');
+          c.setAttribute('aria-pressed', 'true');
+        }
       });
+      setStudioStatus(`${name} selected.`);
+      window.novaTrack?.('studio_item_selected', { productId: id, slot });
 
       // Update slot UI
       updateSlot(slot, name, img, price);
@@ -347,6 +375,7 @@
       const filled = document.getElementById('slot-' + slot + '-filled');
       filled.style.display = 'flex';
       document.getElementById('slot-' + slot + '-img').src = img;
+      document.getElementById('slot-' + slot + '-img').alt = name;
       document.getElementById('slot-' + slot + '-name').textContent = name;
       document.getElementById('slot-' + slot + '-price').textContent =
         price && parseFloat(price) > 0 ? Number(price).toLocaleString('vi-VN') + ' ₫' : '—';
@@ -357,7 +386,10 @@
       if (selectedItems[slot]) {
         const id = selectedItems[slot].id;
         document.querySelectorAll('.tryon-card').forEach(c => {
-          if (c.dataset.id === id) c.classList.remove('selected');
+          if (c.dataset.id === id) {
+            c.classList.remove('selected');
+            c.setAttribute('aria-pressed', 'false');
+          }
         });
         selectedItems[slot] = null;
       }
@@ -396,17 +428,19 @@
         .then(data => {
           if (data.personId) {
             studioPersonId = data.personId;
+            setStudioStatus('Photo uploaded. Select an item and generate a preview.');
+            window.novaTrack?.('studio_photo_uploaded');
           } else {
-            alert('Upload failed: ' + (data.error || 'Unknown error'));
+            setStudioStatus('Upload failed: ' + (data.error || 'Unknown error'), true);
           }
         })
-        .catch(err => alert('Upload error: ' + err.message));
+        .catch(err => setStudioStatus('Upload error: ' + err.message, true));
     }
 
     // ── Generate try-on ───────────────────────────────
     function generateStudioTryOn() {
       if (!studioPersonId) {
-        alert('Please upload a full-body photo first.');
+        setStudioStatus('Please upload a full-body photo first.', true);
         return;
       }
 
@@ -414,7 +448,7 @@
       const hasLower = !!selectedItems.lower;
 
       if (!hasUpper && !hasLower) {
-        alert('Please select at least one item to try on.');
+        setStudioStatus('Please select at least one item to try on.', true);
         return;
       }
 
@@ -428,6 +462,11 @@
       document.getElementById('studioResult').style.display  = 'none';
       document.getElementById('studioGenerateBtn').disabled  = true;
       document.getElementById('studioGenerateBtn').style.opacity = '0.4';
+      setStudioStatus('Generating your preview. This can take a minute.');
+      window.novaTrack?.('studio_tryon_generate_start', {
+        upperProductId: selectedItems.upper?.id || null,
+        lowerProductId: selectedItems.lower?.id || null
+      });
 
       const formData = new FormData();
       formData.append('personId', studioPersonId);
@@ -460,15 +499,19 @@
           if (data.resultUrl) {
             document.getElementById('studioResultImg').src = data.resultUrl + '?t=' + Date.now();
             document.getElementById('studioResult').style.display = 'block';
+            setStudioStatus('Preview generated.');
+            window.novaTrack?.('studio_tryon_generate_success');
           } else {
-            alert('Error: ' + (data.error || 'Try-on generation failed'));
+            setStudioStatus('Error: ' + (data.error || 'Try-on generation failed'), true);
+            window.novaTrack?.('studio_tryon_generate_error');
           }
         })
         .catch(err => {
           document.getElementById('studioLoading').style.display = 'none';
           document.getElementById('studioGenerateBtn').disabled = false;
           document.getElementById('studioGenerateBtn').style.opacity = '1';
-          alert('Connection error: ' + err.message);
+          setStudioStatus('Connection error: ' + err.message, true);
+          window.novaTrack?.('studio_tryon_generate_error', { reason: 'connection' });
         });
     }
   </script>

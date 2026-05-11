@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderItem;
 import com.shop.clothingstore.entity.OrderStatus;
+import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.exception.InvalidOrderStateException;
 import com.shop.clothingstore.repository.OrderRepository;
@@ -156,11 +157,13 @@ public class OrderService extends GenericServiceBase<Order, Long> {
                     variant.setSold(Math.max(0, variant.getSold() - item.getQuantity()));
                     variantRepository.save(variant);
                     log.debug("Stock restored | variantId={} | +{} units", variantId, item.getQuantity());
-                    Long productId = variant.getProduct().getId();
+                    Product product = variant.getProduct();
+                    if (product == null) return;
+                    Long productId = product.getId();
                     if (productId == null) return;
-                    productRepository.findById(productId).ifPresent(product -> {
-                        product.refreshTotalSold();
-                        productRepository.save(product);
+                    productRepository.findById(productId).ifPresent(foundProduct -> {
+                        foundProduct.refreshTotalSold();
+                        productRepository.save(foundProduct);
                     });
                 });
             }

@@ -38,7 +38,7 @@
     </div>
 
     <!-- RIGHT: FORM (light) -->
-    <div style="width:480px; flex-shrink:0; display:flex; flex-direction:column; justify-content:center; padding:64px 56px; background:#f5f5f3; border-left:1px solid #e0e0dc;">
+    <div style="width:min(100%, 480px); flex-shrink:0; display:flex; flex-direction:column; justify-content:center; padding:64px 56px; background:#f5f5f3; border-left:1px solid #e0e0dc;">
 
         <div style="margin-bottom:48px;">
             <p style="font-size:0.55rem; letter-spacing:0.45em; text-transform:uppercase; color:#aaa; margin-bottom:12px;">Join Nova</p>
@@ -49,19 +49,19 @@
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div>
-                <label class="auth-label">Email</label>
-                <input type="email" name="email" placeholder="your@email.com" required class="auth-input" />
+                <label class="auth-label" for="registerEmail">Email</label>
+                <input id="registerEmail" type="email" name="email" placeholder="your@email.com" required autocomplete="email" class="auth-input" />
             </div>
 
             <div>
-                <label class="auth-label">Password</label>
-                <input type="password" name="password" id="pw" placeholder="Min 8 characters" required class="auth-input" />
+                <label class="auth-label" for="pw">Password</label>
+                <input type="password" name="password" id="pw" placeholder="Min 8 characters" required autocomplete="new-password" class="auth-input" />
             </div>
 
             <div>
-                <label class="auth-label">Confirm Password</label>
-                <input type="password" name="confirmPassword" id="cpw" placeholder="Repeat password" required class="auth-input" />
-                <p id="pwErr" style="font-size:0.6rem; letter-spacing:0.1em; color:#c05050; margin-top:8px; display:none;">Passwords do not match</p>
+                <label class="auth-label" for="cpw">Confirm Password</label>
+                <input type="password" name="confirmPassword" id="cpw" placeholder="Repeat password" required autocomplete="new-password" class="auth-input" aria-describedby="pwErr" />
+                <p id="pwErr" role="alert" aria-live="assertive" style="font-size:0.6rem; letter-spacing:0.1em; color:#c05050; margin-top:8px; display:none;">Passwords do not match</p>
             </div>
 
             <button type="submit" id="subBtn" style="

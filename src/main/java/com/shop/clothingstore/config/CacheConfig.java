@@ -34,30 +34,35 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .expireAfterWrite(1, TimeUnit.HOURS)
                         .maximumSize(100)
+                        .recordStats()
                         .build());
 
         manager.registerCustomCache("subCategories",
                 Caffeine.newBuilder()
                         .expireAfterWrite(1, TimeUnit.HOURS)
                         .maximumSize(500)
+                        .recordStats()
                         .build());
 
         manager.registerCustomCache("bestSellers",
                 Caffeine.newBuilder()
                         .expireAfterWrite(15, TimeUnit.MINUTES)
                         .maximumSize(50)
+                        .recordStats()
                         .build());
 
         manager.registerCustomCache("tryOnProducts",
                 Caffeine.newBuilder()
                         .expireAfterWrite(30, TimeUnit.MINUTES)
                         .maximumSize(200)
+                        .recordStats()
                         .build());
 
         manager.registerCustomCache("dashboardData",
                 Caffeine.newBuilder()
                         .expireAfterWrite(5, TimeUnit.MINUTES)
                         .maximumSize(10)
+                        .recordStats()
                         .build());
 
         return manager;

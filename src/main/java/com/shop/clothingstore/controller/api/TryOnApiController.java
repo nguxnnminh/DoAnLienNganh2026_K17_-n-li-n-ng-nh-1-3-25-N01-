@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.shop.clothingstore.service.TryOnService;
+
+import jakarta.annotation.PreDestroy;
 
 /**
  * REST API for the user-facing Virtual Try-On feature.
@@ -48,6 +53,14 @@ import com.shop.clothingstore.service.TryOnService;
 public class TryOnApiController {
 
     private static final Logger log = LoggerFactory.getLogger(TryOnApiController.class);
+
+    private static final long MAX_PERSON_IMAGE_SIZE = 5 * 1024 * 1024;
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
+    private static final Set<String> ALLOWED_MAGIC_BYTES = Set.of(
+            "ffd8ff",
+            "89504e47",
+            "52494646"
+    );
 
     /**
      * How long to keep result images before auto-deleting (minutes)
@@ -91,17 +104,15 @@ public class TryOnApiController {
         }
 
         try {
+            String ext = validatePersonImage(personImage);
             Files.createDirectories(personUploadDir);
-
-            String ext = "jpg";
-            String original = personImage.getOriginalFilename();
-            if (original != null && original.contains(".")) {
-                ext = original.substring(original.lastIndexOf('.') + 1).toLowerCase();
-            }
 
             String personId = UUID.randomUUID().toString();
             String filename = personId + "." + ext;
-            Path filePath = personUploadDir.resolve(filename);
+            Path filePath = personUploadDir.resolve(filename).toAbsolutePath().normalize();
+            if (!filePath.startsWith(personUploadDir.toAbsolutePath().normalize())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid file path."));
+            }
 
             Files.copy(personImage.getInputStream(), filePath,
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -113,6 +124,8 @@ public class TryOnApiController {
                     "url", "/images/tryon-persons/" + filename
             ));
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
             log.error("Failed to save person image", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -215,12 +228,17 @@ public class TryOnApiController {
 
     // ── Private helpers ───────────────────────────────────
     private Path findPersonImage(String personId) {
+        if (personId == null || !personId.matches("^[0-9a-fA-F-]{36}$")) {
+            return null;
+        }
         try {
             if (Files.exists(personUploadDir)) {
-                return Files.list(personUploadDir)
-                        .filter(p -> p.getFileName().toString().startsWith(personId + "."))
-                        .findFirst()
-                        .orElse(null);
+                try (Stream<Path> files = Files.list(personUploadDir)) {
+                    return files
+                            .filter(p -> p.getFileName().toString().startsWith(personId + "."))
+                            .findFirst()
+                            .orElse(null);
+                }
             }
         } catch (IOException e) {
             log.error("Error scanning person upload dir", e);
@@ -230,6 +248,9 @@ public class TryOnApiController {
 
     private ResponseEntity<?> saveAndReturnResult(byte[] resultBytes, String baseName)
             throws IOException {
+        if (resultBytes == null || resultBytes.length == 0) {
+            throw new IOException("Try-on service returned an empty image.");
+        }
 
         Files.createDirectories(resultDir);
         String resultFilename = baseName + ".png";
@@ -259,5 +280,40 @@ public class TryOnApiController {
     private void scheduleDelete(Path path, int minutes) {
         cleaner.schedule(() -> deleteQuietly(path), minutes, TimeUnit.MINUTES);
         log.debug("Scheduled deletion of {} in {} min", path.getFileName(), minutes);
+    }
+
+    @PreDestroy
+    void shutdownCleaner() {
+        cleaner.shutdown();
+    }
+
+    private String validatePersonImage(MultipartFile image) throws IOException {
+        if (image.getSize() > MAX_PERSON_IMAGE_SIZE) {
+            throw new IllegalArgumentException("File too large. Maximum 5MB.");
+        }
+
+        String original = image.getOriginalFilename();
+        String ext = "";
+        if (original != null && original.contains(".")) {
+            ext = original.substring(original.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        }
+        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+            throw new IllegalArgumentException("Unsupported file format. Allowed: " + ALLOWED_EXTENSIONS);
+        }
+
+        String magic = bytesToHex(image.getInputStream().readNBytes(8)).toLowerCase(Locale.ROOT);
+        boolean validMagic = ALLOWED_MAGIC_BYTES.stream().anyMatch(magic::startsWith);
+        if (!validMagic) {
+            throw new IllegalArgumentException("Invalid file signature. The file extension may have been spoofed.");
+        }
+        return ext;
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }

@@ -26,7 +26,9 @@ import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderStatus;
 import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.ProductVariant;
+import com.shop.clothingstore.exception.OutOfStockException;
 import com.shop.clothingstore.repository.OrderRepository;
+import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.repository.ProductVariantRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +37,9 @@ class CheckoutServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private ProductVariantRepository variantRepository;
     @Mock private CouponService couponService;
+    @Mock private ProductRepository productRepository;
+    @Mock private PaymentService paymentService;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private CheckoutService checkoutService;
@@ -71,7 +76,7 @@ class CheckoutServiceTest {
     @Test
     void checkout_happyPath_createsOrderAndDeductsStock() {
         when(variantRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(variant));
-        when(couponService.applyCoupon(null, new BigDecimal("500000")))
+        when(couponService.applyCoupon(null, new BigDecimal("500000"), null))
                 .thenReturn(new BigDecimal("500000"));
 
         Order saved = new Order();
@@ -91,7 +96,7 @@ class CheckoutServiceTest {
     @Test
     void checkout_withCoupon_appliesDiscount() {
         when(variantRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(variant));
-        when(couponService.applyCoupon("SAVE10", new BigDecimal("500000")))
+        when(couponService.applyCoupon("SAVE10", new BigDecimal("500000"), null))
                 .thenReturn(new BigDecimal("450000"));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
             Order o = inv.getArgument(0);
@@ -102,13 +107,13 @@ class CheckoutServiceTest {
         checkoutService.checkout("Nguyen Van A", "0901234567",
                 "123 Le Loi", List.of(cartItem), null, "SAVE10", null);
 
-        verify(couponService).applyCoupon("SAVE10", new BigDecimal("500000"));
+        verify(couponService).applyCoupon("SAVE10", new BigDecimal("500000"), null);
     }
 
     @Test
     void checkout_withNote_savedOnOrder() {
         when(variantRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(variant));
-        when(couponService.applyCoupon(any(), any())).thenAnswer(inv -> inv.getArgument(1));
+        when(couponService.applyCoupon(any(), any(), any())).thenAnswer(inv -> inv.getArgument(1));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
             Order o = inv.getArgument(0);
             assertThat(o.getNote()).isEqualTo("Please gift wrap");
@@ -129,8 +134,7 @@ class CheckoutServiceTest {
 
         assertThatThrownBy(() -> checkoutService.checkout("A", "0901234567", "addr",
                 List.of(cartItem), null, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("du so luong");
+                .isInstanceOf(OutOfStockException.class);
 
         assertThat(variant.getStock()).isEqualTo(1);
         verify(orderRepository, never()).save(any());
@@ -171,7 +175,7 @@ class CheckoutServiceTest {
         variant.setPrice(new BigDecimal("250000"));
 
         when(variantRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(variant));
-        when(couponService.applyCoupon(any(), any())).thenAnswer(inv -> inv.getArgument(1));
+        when(couponService.applyCoupon(any(), any(), any())).thenAnswer(inv -> inv.getArgument(1));
         when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
             Order o = inv.getArgument(0);
             assertThat(o.getTotal()).isEqualByComparingTo("500000");
@@ -209,7 +213,7 @@ class CheckoutServiceTest {
 
         when(variantRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(variant));
         when(variantRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(variant2));
-        when(couponService.applyCoupon(any(), any())).thenAnswer(inv -> inv.getArgument(1));
+        when(couponService.applyCoupon(any(), any(), any())).thenAnswer(inv -> inv.getArgument(1));
         when(orderRepository.save(any())).thenReturn(new Order());
 
         checkoutService.checkout("A", "0901234567", "addr",

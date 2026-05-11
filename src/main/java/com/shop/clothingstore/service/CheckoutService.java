@@ -13,6 +13,7 @@ import com.shop.clothingstore.dto.CartItemDTO;
 import com.shop.clothingstore.entity.Order;
 import com.shop.clothingstore.entity.OrderItem;
 import com.shop.clothingstore.entity.OrderStatus;
+import com.shop.clothingstore.entity.Product;
 import com.shop.clothingstore.entity.ProductVariant;
 import com.shop.clothingstore.entity.User;
 import com.shop.clothingstore.exception.OutOfStockException;
@@ -110,9 +111,11 @@ public class CheckoutService {
                     .orElseThrow(() -> new IllegalStateException(
                     "Product variant not found: variantId=" + c.getVariantId()));
 
+            Product product = variant.getProduct();
+
             if (variant.getStock() < c.getQuantity()) {
                 throw new OutOfStockException(
-                        variant.getProduct().getName(),
+                        product != null ? product.getName() : c.getProductName(),
                         variant.getSize(),
                         variant.getColor());
             }
@@ -121,7 +124,9 @@ public class CheckoutService {
             variant.setSold(variant.getSold() + c.getQuantity());
             variantRepository.save(variant);
 
-            touchedProductIds.add(variant.getProduct().getId());
+            if (product != null) {
+                touchedProductIds.add(product.getId());
+            }
 
             // Price snapshot from DB — never trust the cart-session price
             BigDecimal currentPrice = variant.getPrice();

@@ -60,7 +60,7 @@
         <div th:each="item : ${cartItems}" class="cart-row">
           <img class="cart-img"
                th:src="${item.imageUrl!=null and !item.imageUrl.isEmpty()?item.imageUrl:'/images/no-image.png'}"
-               alt="" />
+               th:alt="${item.productName}" />
           <div class="flex-1 flex flex-col gap-3">
             <div class="flex justify-between items-start gap-4">
               <div>
@@ -91,6 +91,7 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="variantId" th:value="${item.variantId}" />
                 <button type="submit"
+                        th:attr="aria-label=${'Remove ' + item.productName + ' from cart'}"
                         class="bg-transparent border-none font-body text-xs tracking-widest uppercase
                                cursor-pointer transition-colors p-0"
                         style="color:#8a4040;"

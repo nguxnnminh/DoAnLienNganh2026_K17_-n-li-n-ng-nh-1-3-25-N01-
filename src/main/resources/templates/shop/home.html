@@ -89,15 +89,15 @@
       </h2>
       <div class="flex items-center gap-4 md:gap-8 flex-wrap">
         <a th:href="@{/products}"
-           class="h-11 md:h-12 px-8 md:px-10 bg-[#f5f5f3] text-[#0a0a0a]
+           class="min-h-[44px] md:h-12 px-8 md:px-10 bg-[#f5f5f3] text-[#0a0a0a]
                   text-xs tracking-widest uppercase font-medium no-underline
                   flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">
-          Shop Now
+          Shop New Arrivals
         </a>
-        <a th:href="@{/products}"
+        <a th:href="@{/tryon-studio}"
            class="text-xs tracking-widest uppercase text-zinc-500 no-underline
                   flex items-center gap-2 transition-colors duration-200 hover:text-[#f5f5f3]">
-          Lookbook
+          Try AI Fit Preview
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
@@ -196,10 +196,12 @@
            class="block no-underline text-inherit">
           <div class="pcard-wrap" style="aspect-ratio:3/4">
             <img class="pcard-img"
-                 th:src="${product.images!=null and !product.images.isEmpty()?product.images[0].imageUrl:'/images/no-image.png'}" alt="" />
+                 th:src="${product.images!=null and !product.images.isEmpty()?product.images[0].imageUrl:'/images/no-image.png'}"
+                 th:alt="${product.name}" />
             <img th:if="${product.images!=null and product.images.size()>1}"
-                 class="pcard-alt" th:src="${product.images[1].imageUrl}" alt="" />
-            <div class="pcard-over"><span class="text-xs tracking-widest uppercase">Quick View</span></div>
+                 class="pcard-alt" th:src="${product.images[1].imageUrl}"
+                 th:alt="${product.name + ' alternate view'}" />
+            <div class="pcard-over"><span class="text-xs tracking-widest uppercase">View Details</span></div>
             <div class="absolute top-4 left-4 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase px-3 py-1 font-medium"
                  th:text="${product.subCategory.category.name}">Category</div>
           </div>

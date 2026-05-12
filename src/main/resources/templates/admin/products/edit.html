@@ -270,6 +270,10 @@
     </div>
 
     <script th:inline="javascript">
+        (function(){
+        const controller = new AbortController();
+        window.__adminPageCleanup = function() { controller.abort(); };
+
         /* ── CATEGORY → SUBCATEGORY ──────────────────────── */
         const catSel = document.getElementById('categorySelect');
         const subSel = document.getElementById('subCategorySelect');
@@ -302,12 +306,12 @@
 
         catSel.addEventListener('change', () => loadSubCategories(catSel.value, null));
 
-        window.addEventListener('load', () => {
+        {
             if (selectedCategoryId) {
                 catSel.value = selectedCategoryId;
                 loadSubCategories(selectedCategoryId, selectedSubId);
             }
-        });
+        }
 
         /* ── ADD VARIANT ─────────────────────────────────── */
         document.getElementById('addVariant').addEventListener('click', function() {
@@ -339,7 +343,7 @@
                     row.style.display = 'none';
                 }, 200);
             }
-        });
+        }, { signal: controller.signal });
 
         /* ── PRICE FORMAT ────────────────────────────────── */
         function formatPrice(input) {
@@ -348,7 +352,7 @@
         }
         document.addEventListener('input', e => {
             if (e.target.classList.contains('price-input')) formatPrice(e.target);
-        });
+        }, { signal: controller.signal });
         /* Strip price formatting before the product form submits */
         function stripPriceInputs() {
             document.querySelectorAll('#productEditForm .price-input').forEach(i => {
@@ -363,7 +367,7 @@
                 stripPriceInputs();
             }
         });
-        window.addEventListener('load', () => {
+        {
             document.querySelectorAll('.price-input').forEach(i => {
                 // Strip ALL non-digit chars first (handles "389000", "389000.00",
                 // or any locale-formatted value like "389.000") then format display.
@@ -374,7 +378,7 @@
                     i.value = Number(raw).toLocaleString('vi-VN');
                 }
             });
-        });
+        }
 
         /* ── ACTIVE TOGGLE ───────────────────────────────── */
         document.getElementById('activeToggle').addEventListener('change', function() {
@@ -403,7 +407,7 @@
         });
 
         /* ── NEW IMAGE PREVIEW ───────────────────────────── */
-        function previewNewImages(input) {
+        window.previewNewImages = function(input) {
             const preview = document.getElementById('newImagePreview');
             preview.innerHTML = '';
             Array.from(input.files).forEach(file => {
@@ -416,7 +420,8 @@
                 };
                 reader.readAsDataURL(file);
             });
-        }
+        };
+        })();
     </script>
 
 </div>

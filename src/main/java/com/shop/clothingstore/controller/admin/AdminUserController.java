@@ -3,6 +3,7 @@ package com.shop.clothingstore.controller.admin;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,9 +25,11 @@ public class AdminUserController extends AdminBaseController {
     private static final int PAGE_SIZE = 20;
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
-    public AdminUserController(UserService userService) {
+    public AdminUserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // ─────────────────────────────────────────────────────────
@@ -55,6 +58,62 @@ public class AdminUserController extends AdminBaseController {
         addPageWindow(model, users);
 
         return "admin/users/index";
+    }
+
+    @GetMapping("/create")
+    public String showCreateForm(Model model) {
+        model.addAttribute("title", "Add User");
+        if (!model.containsAttribute("user")) {
+            User user = new User();
+            user.setRole(Role.USER);
+            model.addAttribute("user", user);
+        }
+        model.addAttribute("roles", Role.values());
+        return "admin/users/create";
+    }
+
+    @PostMapping("/create")
+    public String createUser(
+            @ModelAttribute("user") User user,
+            @RequestParam String password,
+            @RequestParam String confirmPassword,
+            RedirectAttributes redirectAttributes) {
+
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Email is required.");
+            redirectAttributes.addFlashAttribute("user", user);
+            return "redirect:/admin/users/create";
+        }
+        if (password == null || password.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 8 characters.");
+            redirectAttributes.addFlashAttribute("user", user);
+            return "redirect:/admin/users/create";
+        }
+        if (!password.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Passwords do not match.");
+            redirectAttributes.addFlashAttribute("user", user);
+            return "redirect:/admin/users/create";
+        }
+
+        try {
+            userService.createAdminManagedUser(
+                    user.getEmail(),
+                    passwordEncoder.encode(password),
+                    user.getRole(),
+                    user.getFullName(),
+                    user.getPhone(),
+                    user.getAddress());
+            redirectAttributes.addFlashAttribute("success", "User created successfully!");
+            return "redirect:/admin/users";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("user", user);
+            return "redirect:/admin/users/create";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Cannot create user.");
+            redirectAttributes.addFlashAttribute("user", user);
+            return "redirect:/admin/users/create";
+        }
     }
 
     // ─────────────────────────────────────────────────────────

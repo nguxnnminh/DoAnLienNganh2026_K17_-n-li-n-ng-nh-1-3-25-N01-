@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin :: html}">
+
+<div th:fragment="content">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Add User</h1>
+            <p style="font-size:13px; color:#9ca3af; margin:0;">Create an admin-managed customer or admin account</p>
+        </div>
+        <div class="module-tabs">
+            <a th:href="@{/admin/users}" class="module-tab">List</a>
+            <a th:href="@{/admin/users/create}" class="module-tab active">Add New</a>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start;">
+        <div class="card" style="padding:28px;">
+            <form th:object="${user}" th:action="@{/admin/users/create}" method="post" data-validate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div style="display:flex; flex-direction:column; gap:18px;">
+                    <div>
+                        <label class="form-label">Email <span style="color:#ef4444;">*</span></label>
+                        <input type="email" th:field="*{email}" class="form-control"
+                               data-required="email"
+                               placeholder="customer@example.com"
+                               autocomplete="email">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label class="form-label">Password <span style="color:#ef4444;">*</span></label>
+                            <input type="password" name="password" class="form-control"
+                                   data-required="password"
+                                   minlength="8"
+                                   autocomplete="new-password">
+                            <p class="form-hint">Minimum 8 characters</p>
+                        </div>
+                        <div>
+                            <label class="form-label">Confirm Password <span style="color:#ef4444;">*</span></label>
+                            <input type="password" name="confirmPassword" class="form-control"
+                                   data-required="password confirmation"
+                                   minlength="8"
+                                   autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Full Name</label>
+                        <input th:field="*{fullName}" class="form-control" placeholder="e.g. John Smith">
+                    </div>
+
+                    <div>
+                        <label class="form-label">Phone Number</label>
+                        <input th:field="*{phone}" class="form-control" placeholder="0901234567">
+                    </div>
+
+                    <div>
+                        <label class="form-label">Address</label>
+                        <textarea th:field="*{address}" rows="3" class="form-control"
+                                  placeholder="Shipping address..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Role</label>
+                        <select th:field="*{role}" class="form-control">
+                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                        </select>
+                        <p class="form-hint">Use ADMIN only for trusted staff accounts.</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px;">
+                        <a th:href="@{/admin/users}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Create User
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" style="padding:20px;">
+            <div class="section-title">Account Setup</div>
+            <div class="stat-row">
+                <span style="font-size:13px; color:#6b7280;">Email</span>
+                <strong style="font-size:13px;">Required</strong>
+            </div>
+            <div class="stat-row">
+                <span style="font-size:13px; color:#6b7280;">Password</span>
+                <strong style="font-size:13px;">Encoded</strong>
+            </div>
+            <div class="stat-row">
+                <span style="font-size:13px; color:#6b7280;">Default role</span>
+                <strong style="font-size:13px;">USER</strong>
+            </div>
+        </div>
+    </div>
+
+</div>
+</html>

@@ -9,9 +9,10 @@
             <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Add New Product</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">Fill in all product information</p>
         </div>
-        <a th:href="@{/admin/products}" class="btn btn-secondary">
-            ← Back
-        </a>
+        <div class="module-tabs">
+            <a th:href="@{/admin/products}" class="module-tab">List</a>
+            <a th:href="@{/admin/products/create}" class="module-tab active">Add New</a>
+        </div>
     </div>
 
     <!-- ERROR -->
@@ -170,6 +171,10 @@
     </form>
 
     <script>
+        (function(){
+        const controller = new AbortController();
+        window.__adminPageCleanup = function() { controller.abort(); };
+
         // ===== CATEGORY -> SUBCATEGORY =====
         const catSel = document.getElementById('categorySelect');
         const subSel = document.getElementById('subCategorySelect');
@@ -214,7 +219,7 @@
                 const rows = document.querySelectorAll('.variant-row');
                 if(rows.length > 1) e.target.closest('.variant-row').remove();
             }
-        });
+        }, { signal: controller.signal });
 
         // ===== PRICE FORMAT =====
         // Format as user types: show dots for thousands
@@ -223,7 +228,7 @@
                 const raw = e.target.value.replace(/\D/g,'');
                 e.target.value = raw ? Number(raw).toLocaleString('vi-VN') : '';
             }
-        });
+        }, { signal: controller.signal });
 
         // ===== PRICE STRIP ON SUBMIT =====
         function stripPriceInputs() {
@@ -241,7 +246,7 @@
         });
 
         // ===== IMAGE PREVIEW =====
-        function previewImages(input){
+        window.previewImages = function(input){
             const preview = document.getElementById('imagePreview');
             preview.innerHTML = '';
             Array.from(input.files).forEach(file => {
@@ -255,10 +260,10 @@
                 reader.readAsDataURL(file);
             });
             document.getElementById('uploadLabel').style.borderColor = '#2563eb';
-        }
+        };
 
         // ===== GARMENT PREVIEW =====
-        function previewGarment(input){
+        window.previewGarment = function(input){
             const preview = document.getElementById('garmentPreview');
             preview.innerHTML = '';
             if (input.files && input.files[0]) {
@@ -268,13 +273,14 @@
                 };
                 reader.readAsDataURL(input.files[0]);
             }
-        }
+        };
 
         // ===== ACTIVE TOGGLE =====
         document.getElementById('activeCheckbox').addEventListener('change', function() {
             document.getElementById('activeTrack').style.background = this.checked ? '#2563eb' : '#d1d5db';
             document.getElementById('activeThumb').style.left = this.checked ? '23px' : '3px';
         });
+        })();
     </script>
 
 </div>

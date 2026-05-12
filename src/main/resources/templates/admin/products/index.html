@@ -11,10 +11,10 @@
                 Total <strong th:text="${products?.totalElements ?: 0}" style="color:#374151;">0</strong> products
             </p>
         </div>
-        <a th:href="@{/admin/products/create}" class="btn btn-primary">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add Product
-        </a>
+        <div class="module-tabs">
+            <a th:href="@{/admin/products}" class="module-tab active">List</a>
+            <a th:href="@{/admin/products/create}" class="module-tab">Add New</a>
+        </div>
     </div>
 
     <!--

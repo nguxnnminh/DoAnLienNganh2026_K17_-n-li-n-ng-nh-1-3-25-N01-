@@ -16,6 +16,11 @@
   .dark .quick-action { background:#1a1a1a; border-color:#2a2a2a; }
   .dark .quick-action:hover { background:#222; }
   .qa-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .revenue-range-btn { border:1px solid #e5e7eb; background:#fff; color:#6b7280; border-radius:7px; padding:5px 10px; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s; }
+  .revenue-range-btn:hover { background:#f9fafb; color:#111; }
+  .revenue-range-btn.active { background:#b8960c; border-color:#b8960c; color:white; }
+  .dark .revenue-range-btn { background:#1a1a1a; border-color:#2a2a2a; color:#9ca3af; }
+  .dark .revenue-range-btn.active { background:#d4a22a; border-color:#d4a22a; color:#1a1400; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   .fade-up { animation: fadeUp 0.35s ease both; }
   .fade-up:nth-child(2) { animation-delay:0.06s; }
@@ -99,7 +104,7 @@
     <div class="kpi-label">Total Orders</div>
     <div class="kpi-value" th:text="${totalTransactions ?: 0}">0</div>
     <div class="kpi-sub" style="display:flex; align-items:center; gap:4px;">
-      <span style="color:#b8960c; font-weight:600;">↑</span> All statuses
+      Today: <strong th:text="${ordersToday ?: 0}" style="color:#374151;">0</strong>
     </div>
   </div>
 
@@ -154,10 +159,57 @@
       <svg width="64" height="64" fill="none" stroke="#ef4444" viewBox="0 0 24 24"><path stroke-width="1" d="M6 18L18 6M6 6l12 12"/></svg>
     </div>
     <div class="kpi-label" style="color:#dc2626;">Cancelled</div>
-    <div class="kpi-value" style="color:#dc2626;" th:text="${report != null ? report.cancelledOrders : 0}">0</div>
+    <div class="kpi-value" style="color:#dc2626;" th:text="${cancelledTransactions ?: 0}">0</div>
     <div class="kpi-sub">Orders cancelled</div>
   </div>
 
+</div>
+
+<!-- PERIOD REVENUE -->
+<div class="g-kpi">
+  <div class="kpi-card fade-up" style="border-color:#dcfce7; border-radius:12px;">
+    <div class="kpi-label" style="color:#15803d;">Revenue Today</div>
+    <div style="font-size:22px; font-weight:700; margin-top:8px; color:#15803d;">
+      <span th:text="${#numbers.formatDecimal(revenueToday ?: 0,0,'POINT',0,'COMMA')}">0</span> VND
+    </div>
+    <div class="kpi-sub">Completed orders today</div>
+  </div>
+
+  <div class="kpi-card fade-up" style="border-color:#dbeafe; border-radius:12px;">
+    <div class="kpi-label" style="color:#1d4ed8;">Revenue This Week</div>
+    <div style="font-size:22px; font-weight:700; margin-top:8px; color:#1d4ed8;">
+      <span th:text="${#numbers.formatDecimal(revenueThisWeek ?: 0,0,'POINT',0,'COMMA')}">0</span> VND
+    </div>
+    <div class="kpi-sub">Week starts Monday</div>
+  </div>
+
+  <div class="kpi-card fade-up" style="border-color:#ede9fe; border-radius:12px;">
+    <div class="kpi-label" style="color:#7c3aed;">Revenue This Month</div>
+    <div style="font-size:22px; font-weight:700; margin-top:8px; color:#7c3aed;">
+      <span th:text="${#numbers.formatDecimal(revenueThisMonth ?: 0,0,'POINT',0,'COMMA')}">0</span> VND
+    </div>
+    <div class="kpi-sub">Month-to-date revenue</div>
+  </div>
+
+  <div class="kpi-card fade-up" style="border-color:#fef3c7; border-radius:12px;">
+    <div class="kpi-label" style="color:#b45309;">Revenue This Year</div>
+    <div style="font-size:22px; font-weight:700; margin-top:8px; color:#b45309;">
+      <span th:text="${#numbers.formatDecimal(revenueThisYear ?: 0,0,'POINT',0,'COMMA')}">0</span> VND
+    </div>
+    <div class="kpi-sub">Year-to-date revenue</div>
+  </div>
+
+  <div class="kpi-card fade-up" style="border-color:#e5e7eb; border-radius:12px;">
+    <div class="kpi-label">Inventory Units</div>
+    <div class="kpi-value" th:text="${totalStock ?: 0}">0</div>
+    <div class="kpi-sub">Sold: <span th:text="${totalSold ?: 0}">0</span></div>
+  </div>
+
+  <div class="kpi-card fade-up" style="border-color:#fee2e2; border-radius:12px;">
+    <div class="kpi-label" style="color:#dc2626;">Cancel Requests</div>
+    <div class="kpi-value" style="color:#dc2626;" th:text="${cancelRequestedTransactions ?: 0}">0</div>
+    <div class="kpi-sub">Waiting for admin review</div>
+  </div>
 </div>
 
 <style>
@@ -190,6 +242,7 @@
     <div class="kpi-sub">
       Processing: <span th:text="${processingTransactions ?: 0}">0</span> &nbsp;·&nbsp;
       Shipping: <span th:text="${shippingTransactions ?: 0}">0</span>
+      &nbsp;·&nbsp; Cancel requested: <span th:text="${cancelRequestedTransactions ?: 0}">0</span>
     </div>
   </div>
 </div>
@@ -201,10 +254,16 @@
   <div class="card">
     <div class="card-header">
       <div>
-        <div style="font-size:14px; font-weight:600;">Daily Revenue</div>
-        <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Last 30 days · Completed orders</div>
+        <div style="font-size:14px; font-weight:600;">Revenue Trend</div>
+        <div style="font-size:12px; color:#9ca3af; margin-top:2px;">Completed orders</div>
       </div>
-      <a th:href="@{/admin/orders}" class="btn btn-sm btn-secondary">View Orders →</a>
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+        <button type="button" class="revenue-range-btn active" data-revenue-range="daily">Day</button>
+        <button type="button" class="revenue-range-btn" data-revenue-range="weekly">Week</button>
+        <button type="button" class="revenue-range-btn" data-revenue-range="monthly">Month</button>
+        <button type="button" class="revenue-range-btn" data-revenue-range="yearly">Year</button>
+        <a th:href="@{/admin/orders}" class="btn btn-sm btn-secondary">View Orders</a>
+      </div>
     </div>
     <div style="padding:24px 24px 16px;">
       <div style="height:220px; position:relative;">
@@ -244,7 +303,11 @@
         </div>
         <div style="display:flex; justify-content:space-between; font-size:11px;">
           <span style="display:flex; align-items:center; gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>Cancelled</span>
-          <strong th:text="${report != null ? report.cancelledOrders : 0}">0</strong>
+          <strong th:text="${cancelledTransactions ?: 0}">0</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px;">
+          <span style="display:flex; align-items:center; gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>Cancel Req.</span>
+          <strong th:text="${cancelRequestedTransactions ?: 0}">0</strong>
         </div>
       </div>
     </div>
@@ -438,26 +501,49 @@
 <!-- CHART.JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
-  document.addEventListener('DOMContentLoaded', function(){
+  (function(){
+    if (typeof Chart === 'undefined') return;
+    const revenueCanvas = document.getElementById('revenueChart');
+    const statusCanvas = document.getElementById('statusChart');
+    if (!revenueCanvas || !statusCanvas) return;
     const labels = /*[[${amountLabels}]]*/ [];
     const data   = /*[[${amountData}]]*/ [];
+    const ranges = {
+      daily: {
+        labels: /*[[${dailyRevenueLabels}]]*/ [],
+        data: /*[[${dailyRevenueData}]]*/ []
+      },
+      weekly: {
+        labels: /*[[${weeklyRevenueLabels}]]*/ [],
+        data: /*[[${weeklyRevenueData}]]*/ []
+      },
+      monthly: {
+        labels: /*[[${monthlyRevenueLabels}]]*/ [],
+        data: /*[[${monthlyRevenueData}]]*/ []
+      },
+      yearly: {
+        labels: /*[[${yearlyRevenueLabels}]]*/ [],
+        data: /*[[${yearlyRevenueData}]]*/ []
+      }
+    };
     const pending    = /*[[${pendingTransactions ?: 0}]]*/ 0;
     const processing = /*[[${processingTransactions ?: 0}]]*/ 0;
     const shipping   = /*[[${shippingTransactions ?: 0}]]*/ 0;
     const completed  = /*[[${completedTransactions ?: 0}]]*/ 0;
-    const cancelled  = /*[[${report != null ? report.cancelledOrders : 0}]]*/ 0;
+    const cancelled  = /*[[${cancelledTransactions ?: 0}]]*/ 0;
+    const cancelRequested = /*[[${cancelRequestedTransactions ?: 0}]]*/ 0;
     const isDark = document.documentElement.classList.contains('dark');
     const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
     const textColor = isDark ? '#6b7280' : '#9ca3af';
 
     // Status donut chart
-    new Chart(document.getElementById('statusChart'), {
+    new Chart(statusCanvas, {
       type: 'doughnut',
       data: {
-        labels: ['Pending', 'Processing', 'Shipping', 'Completed', 'Cancelled'],
+        labels: ['Pending', 'Processing', 'Shipping', 'Completed', 'Cancelled', 'Cancel requested'],
         datasets: [{
-          data: [pending, processing, shipping, completed, cancelled],
-          backgroundColor: ['#f59e0b','#3b82f6','#8b5cf6','#10b981','#ef4444'],
+          data: [pending, processing, shipping, completed, cancelled, cancelRequested],
+          backgroundColor: ['#f59e0b','#3b82f6','#8b5cf6','#10b981','#ef4444','#f97316'],
           borderWidth: 0,
           hoverOffset: 4
         }]
@@ -480,13 +566,13 @@
       }
     });
 
-    new Chart(document.getElementById('revenueChart'), {
+    const revenueChart = new Chart(revenueCanvas, {
       type: 'line',
       data: {
-        labels: labels,
+        labels: ranges.daily.labels.length ? ranges.daily.labels : labels,
         datasets: [{
-          label: 'Revenue (₫)',
-          data: data,
+          label: 'Revenue (VND)',
+          data: ranges.daily.data.length ? ranges.daily.data : data,
           borderColor: '#b8960c',
           backgroundColor: 'rgba(184,150,12,0.08)',
           borderWidth: 2,
@@ -496,7 +582,7 @@
           pointBackgroundColor: '#b8960c',
           pointBorderColor: '#fff',
           pointBorderWidth: 1.5,
-          pointHoverRadius: 5,
+          pointHoverRadius: 5
         }]
       },
       options: {
@@ -512,7 +598,7 @@
             bodyColor: isDark ? '#9ca3af' : '#6b7280',
             padding: 10,
             callbacks: {
-              label: ctx => '  ' + ctx.parsed.y.toLocaleString('vi-VN') + ' ₫'
+              label: ctx => '  ' + ctx.parsed.y.toLocaleString('vi-VN') + ' VND'
             }
           }
         },
@@ -533,7 +619,18 @@
         }
       }
     });
-  });
+
+    document.querySelectorAll('[data-revenue-range]').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const range = ranges[this.dataset.revenueRange] || ranges.daily;
+        document.querySelectorAll('[data-revenue-range]').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        revenueChart.data.labels = range.labels;
+        revenueChart.data.datasets[0].data = range.data;
+        revenueChart.update();
+      });
+    });
+  })();
 </script>
 
 </div>

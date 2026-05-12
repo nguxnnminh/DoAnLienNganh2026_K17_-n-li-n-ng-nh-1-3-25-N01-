@@ -39,6 +39,35 @@ public class UserService extends GenericServiceBase<User, Long> {
     }
 
     @Transactional
+    public User createAdminManagedUser(
+            String email,
+            String encodedPassword,
+            Role role,
+            String fullName,
+            String phone,
+            String address) {
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        String normalizedEmail = email.toLowerCase().trim();
+        if (existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        User user = new User();
+        user.setEmail(normalizedEmail);
+        user.setPassword(encodedPassword);
+        user.setRole(role != null ? role : Role.USER);
+        user.setFullName(fullName != null ? fullName.trim() : null);
+        user.setPhone(phone != null ? phone.trim() : null);
+        user.setAddress(address != null ? address.trim() : null);
+
+        return save(user);
+    }
+
+    @Transactional
     public void deleteUser(Long id) {
         User user = findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));

@@ -2,6 +2,7 @@ package com.shop.clothingstore.repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -36,6 +37,13 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
 
     long countByStatus(OrderStatus status);
 
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    long countByStatusAndCreatedAtBetween(
+            OrderStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate);
+
     // Admin: filter by status (paginated)
     Page<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status, Pageable pageable);
 
@@ -69,6 +77,19 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
         WHERE o.status = :status
     """)
     BigDecimal getTotalAmountByStatus(@Param("status") OrderStatus status);
+
+    @Query("""
+        SELECT COALESCE(SUM(o.total), 0)
+        FROM Order o
+        WHERE o.status = :status
+          AND o.createdAt >= :startDate
+          AND o.createdAt < :endDate
+    """)
+    BigDecimal getTotalAmountByStatusBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
@@ -106,6 +127,20 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
     List<Object[]> getTotalAmountSince(
             @Param("status") OrderStatus status,
             @Param("startDate") LocalDate startDate
+    );
+
+    @Query("""
+        SELECT o.createdAt, COALESCE(o.total, 0)
+        FROM Order o
+        WHERE o.status = :status
+          AND o.createdAt >= :startDate
+          AND o.createdAt < :endDate
+        ORDER BY o.createdAt
+    """)
+    List<Object[]> getRevenueRowsBetween(
+            @Param("status") OrderStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
     );
 
     // =====================================================

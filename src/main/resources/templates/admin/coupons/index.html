@@ -9,10 +9,10 @@
                 Total <strong th:text="${#lists.size(coupons)}" style="color:#374151;">0</strong> coupons
             </p>
         </div>
-        <a th:href="@{/admin/coupons/create}" class="btn btn-primary">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Create Coupon
-        </a>
+        <div class="module-tabs">
+            <a th:href="@{/admin/coupons}" class="module-tab active">List</a>
+            <a th:href="@{/admin/coupons/create}" class="module-tab">Add New</a>
+        </div>
     </div>
 
     <!-- SEARCH + FILTER -->

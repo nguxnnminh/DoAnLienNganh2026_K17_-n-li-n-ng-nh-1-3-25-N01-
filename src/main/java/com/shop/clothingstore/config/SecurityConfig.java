@@ -107,6 +107,7 @@ public class SecurityConfig {
                         "/", "/login", "/register",
                         "/products/**", "/product/**", "/cart/**", "/checkout/**",
                         "/tryon-studio",
+                        "/contact", "/returns", "/sizing",
                         "/forgot-password", "/reset-password",
                         "/css/**", "/js/**", "/images/**"
                 ).permitAll()

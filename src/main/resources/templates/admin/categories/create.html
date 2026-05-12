@@ -7,7 +7,10 @@
             <h1 style="font-size:20px; font-weight:600; letter-spacing:-0.3px; margin:0 0 4px;">Add Category</h1>
             <p style="font-size:13px; color:#9ca3af; margin:0;">Create a new category for products</p>
         </div>
-        <a th:href="@{/admin/categories}" class="btn btn-secondary">← Back</a>
+        <div class="module-tabs">
+            <a th:href="@{/admin/categories}" class="module-tab">List</a>
+            <a th:href="@{/admin/categories/create}" class="module-tab active">Add New</a>
+        </div>
     </div>
 
     <div style="max-width:560px;">

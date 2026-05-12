@@ -9,14 +9,12 @@
                 Total <strong th:text="${#lists.size(categories)}" style="color:#374151;">0</strong> categories
             </p>
         </div>
-        <div style="display:flex; gap:8px;">
-            <a th:href="@{/admin/subcategories}" class="btn btn-secondary">
+        <div class="module-tabs">
+            <a th:href="@{/admin/categories}" class="module-tab active">List</a>
+            <a th:href="@{/admin/categories/create}" class="module-tab">Add New</a>
+            <a th:href="@{/admin/subcategories}" class="module-tab">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h7"/></svg>
                 Subcategories
-            </a>
-            <a th:href="@{/admin/categories/create}" class="btn btn-primary">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                Add Category
             </a>
         </div>
     </div>

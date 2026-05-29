@@ -67,7 +67,7 @@
     .newsletter-btn:hover { background:#d8d8d4; border-color:#d8d8d4; }
 
     /* ── HERO SLIDER ── */
-    .hero-slider { position:relative; width:100%; height:90vh; min-height:560px; overflow:hidden; }
+    .hero-slider { position:relative; width:100%; max-width:100%; height:90vh; min-height:560px; overflow:hidden; }
     @media (min-width:768px){ .hero-slider { height:100vh; } }
     .hero-slide {
       position:absolute; inset:0;
@@ -105,6 +105,12 @@
       .hero-slide.active img { animation:none; }
       .hero-slide { transition:none; }
     }
+
+    /* ── GLOBAL OVERFLOW FIX ── */
+    section, .hero-slider { max-width:100%; }
+    @media (max-width:767px) {
+      h1.font-display { word-break:break-word; overflow-wrap:break-word; }
+    }
   </style>
 
   <!-- ── HERO SLIDER ─────────────────────────────── -->
@@ -116,8 +122,8 @@
       <div class="hero-grad"></div>
       <div class="relative z-10 px-4 md:px-12 pb-16 md:pb-24">
         <p class="text-xs tracking-widest3 uppercase text-zinc-400 mb-3">Spring / Summer 2026</p>
-        <h1 class="font-display text-[4.5rem] md:text-[10rem] lg:text-[13rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">NEW<br>DROP</h1>
-        <h2 class="font-display text-[2rem] md:text-[4.5rem] leading-none tracking-wide text-zinc-500 mb-8 md:mb-10">ESSENTIALS</h2>
+        <h1 class="font-display text-[4rem] md:text-[8rem] lg:text-[10rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">NEW<br>DROP</h1>
+        <h2 class="font-display text-[1.8rem] md:text-[3.5rem] lg:text-[4rem] leading-none tracking-wide text-zinc-500 mb-8 md:mb-10">ESSENTIALS</h2>
         <div class="flex items-center gap-4 md:gap-8 flex-wrap">
           <a th:href="@{/products}" class="min-h-[44px] md:h-12 px-8 md:px-10 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase font-medium no-underline flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">Shop New Arrivals</a>
           <a th:href="@{/tryon-studio}" class="text-xs tracking-widest uppercase text-zinc-400 no-underline flex items-center gap-2 transition-colors duration-200 hover:text-[#f5f5f3]">Try AI Fit Preview
@@ -132,8 +138,8 @@
       <div class="hero-grad"></div>
       <div class="relative z-10 px-4 md:px-12 pb-16 md:pb-24">
         <p class="text-xs tracking-widest3 uppercase text-zinc-400 mb-3">Statement Layers</p>
-        <h1 class="font-display text-[4.5rem] md:text-[10rem] lg:text-[13rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">THE<br>TOPS</h1>
-        <h2 class="font-display text-[2rem] md:text-[4.5rem] leading-none tracking-wide text-zinc-500 mb-8 md:mb-10">TEES · HOODIES · SHIRTS</h2>
+        <h1 class="font-display text-[4rem] md:text-[8rem] lg:text-[10rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">THE<br>TOPS</h1>
+        <h2 class="font-display text-[1.8rem] md:text-[3.5rem] lg:text-[4rem] leading-none tracking-wide text-zinc-500 mb-8 md:mb-10">TEES · HOODIES · SHIRTS</h2>
         <a th:href="@{/products/top}" class="min-h-[44px] md:h-12 px-8 md:px-10 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase font-medium no-underline inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">Explore Tops</a>
       </div>
     </div>
@@ -144,8 +150,8 @@
       <div class="hero-grad"></div>
       <div class="relative z-10 px-4 md:px-12 pb-16 md:pb-24">
         <p class="text-xs tracking-widest3 uppercase text-zinc-400 mb-3">Built To Move</p>
-        <h1 class="font-display text-[4.5rem] md:text-[10rem] lg:text-[13rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">THE<br>BOTTOMS</h1>
-        <h2 class="font-display text-[2rem] md:text-[4.5rem] leading-none tracking-wide text-zinc-500 mb-8 md:mb-10">PANTS · JEANS · SHORTS</h2>
+        <h1 class="font-display text-[4rem] md:text-[8rem] lg:text-[10rem] leading-[.88] text-[#f5f5f3] tracking-wide mb-2">THE<br>BOTTOMS</h1>
+        <h2 class="font-display text-[1.8rem] md:text-[3.5rem] lg:text-[4rem] leading-none tracking-wide text-zinc-500 mb-8 md:mb-10">PANTS · JEANS · SHORTS</h2>
         <a th:href="@{/products/bottom}" class="min-h-[44px] md:h-12 px-8 md:px-10 bg-[#f5f5f3] text-[#0a0a0a] text-xs tracking-widest uppercase font-medium no-underline inline-flex items-center transition-colors duration-200 hover:bg-[#d8d8d4]">Explore Bottoms</a>
       </div>
     </div>
@@ -275,7 +281,7 @@
   </section>
 
   <!-- ── MARQUEE ───────────────────────────────── -->
-  <div class="border-t border-b border-zinc-900 py-5 overflow-hidden whitespace-nowrap">
+  <div class="border-t border-b border-zinc-900 py-5 overflow-hidden whitespace-nowrap" style="max-width:100%;contain:layout;">
     <div class="inline-block" style="animation:ticker 36s linear infinite">
       <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">NOVA ESSENTIALS</span>
       <span class="font-display text-[2.5rem] tracking-widest text-[#666] mx-10">—</span>

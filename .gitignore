@@ -50,3 +50,16 @@ logs/
 ### Claude Code & Claude Kit (local AI assistant config) ###
 .claude/
 .claudee/
+
+### Flutter / Dart ###
+mobile-app/.dart_tool/
+mobile-app/build/
+mobile-app/.flutter-plugins
+mobile-app/.flutter-plugins-dependencies
+mobile-app/.packages
+mobile-app/.pub-cache/
+mobile-app/android/local.properties
+
+### Android Gradle ###
+mobile-app/android/.gradle/
+.gradle/

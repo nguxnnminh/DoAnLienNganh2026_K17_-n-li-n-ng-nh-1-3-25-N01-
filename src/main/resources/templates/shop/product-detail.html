@@ -134,6 +134,15 @@
     /* ── REVIEW STARS ────────────────────────────────────────── */
     .n-star { font-size:1.15rem;cursor:pointer;color:#444;transition:color .2s; }
     .n-star.lit { color:#e8e8e4; }
+
+    /* ── TRY-ON MODAL UPLOAD ZONE ───────────────────────────── */
+    .upload-zone {
+      border:1px solid #272727; padding:16px;
+      text-align:center; min-height:220px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:#0a0a0a; cursor:pointer;
+      transition:border-color .2s;
+    }
   </style>
 
   <!-- ── PRODUCT LAYOUT ────────────────────────────────────── -->
@@ -789,45 +798,38 @@
       </button>
 
       <!-- Header -->
-      <h3 id="tryOnModalTitle" style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; color:#e8e8e4;
-                 margin:0 0 2px; letter-spacing:0.02em; font-weight:400;">
+      <p class="text-[0.6rem] tracking-widest3 uppercase text-zinc-600 mb-1">AI Fit Preview</p>
+      <h3 id="tryOnModalTitle" class="font-display text-4xl tracking-wide leading-none text-[#f5f5f3] mb-1">
         Virtual Try-On
       </h3>
-      <p style="font-size:0.65rem; color:#555; letter-spacing:0.2em; text-transform:uppercase;
-                margin:0 0 28px;">AI-Powered &middot; OOTDiffusion</p>
+      <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-7">OOTDiffusion &middot; Powered by Nova</p>
 
       <div class="tryon-modal-grid">
 
         <!-- LEFT: Person upload -->
         <div>
-          <p style="font-size:0.65rem; color:#666; letter-spacing:0.2em; text-transform:uppercase;
-                    margin:0 0 10px;">Your Photo</p>
-          <div style="border:1px solid #272727; padding:16px;
-                      text-align:center; min-height:220px; display:flex;
-                      flex-direction:column; align-items:center; justify-content:center;
-                      background:#0a0a0a; transition:border-color .2s;"
+          <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Your Photo</p>
+          <div class="upload-zone" id="tryonUploadZone"
                onmouseover="this.style.borderColor='#444'" onmouseout="this.style.borderColor='#272727'">
             <img id="tryonPersonPreview" style="display:none; max-height:280px; width:auto;
                  margin-bottom:12px; object-fit:contain;" />
             <label for="tryonPersonInput" id="tryonUploadLabel"
-                   style="cursor:pointer; color:#888; font-family:'DM Sans',sans-serif;
-                          font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase;
-                          transition:color 0.2s; border-bottom:1px solid #444; padding-bottom:2px;"
-                   onmouseover="this.style.color='#ccc'" onmouseout="this.style.color='#888'">
+                   class="text-[0.65rem] tracking-widest uppercase text-zinc-500 cursor-pointer"
+                   style="border-bottom:1px solid #333; padding-bottom:2px; transition:color .2s;"
+                   onmouseover="this.style.color='#ccc'" onmouseout="this.style.color=''">
               Upload full-body photo
             </label>
             <input type="file" id="tryonPersonInput" accept="image/*"
                    style="display:none;" onchange="handlePersonUpload(this)">
-            <p style="font-size:9px; color:#444; margin:10px 0 0; letter-spacing:0.05em;">
-              Standing pose, well-lit, simple background
+            <p class="text-[0.55rem] tracking-widest uppercase text-zinc-800 mt-2">
+              Standing pose, simple background
             </p>
           </div>
         </div>
 
         <!-- RIGHT: Result -->
         <div>
-          <p style="font-size:0.65rem; color:#666; letter-spacing:0.2em; text-transform:uppercase;
-                    margin:0 0 10px;">Result</p>
+          <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-2">Result</p>
           <div style="border:1px solid #272727; padding:16px;
                       min-height:220px; display:flex; flex-direction:column;
                       align-items:center; justify-content:center; background:#0a0a0a;">
@@ -839,52 +841,49 @@
                           border-top-color:#888; border-radius:50%;
                           animation:spin 1s linear infinite;"></div>
               <div style="width:100%; display:flex; flex-direction:column; gap:5px;">
-                <div class="tryon-step" style="font-size:10px; color:#333; transition:color 0.5s;
-                     display:flex; align-items:center; gap:6px; letter-spacing:0.05em;">
+                <div class="tryon-step text-[0.6rem] tracking-widest uppercase text-zinc-800 transition-colors duration-500
+                     flex items-center gap-2">
                   <span style="font-size:6px;">&#9679;</span> Analyzing body structure
                 </div>
-                <div class="tryon-step" style="font-size:10px; color:#333; transition:color 0.5s;
-                     display:flex; align-items:center; gap:6px; letter-spacing:0.05em;">
+                <div class="tryon-step text-[0.6rem] tracking-widest uppercase text-zinc-800 transition-colors duration-500
+                     flex items-center gap-2">
                   <span style="font-size:6px;">&#9679;</span> Fitting garment
                 </div>
-                <div class="tryon-step" style="font-size:10px; color:#333; transition:color 0.5s;
-                     display:flex; align-items:center; gap:6px; letter-spacing:0.05em;">
+                <div class="tryon-step text-[0.6rem] tracking-widest uppercase text-zinc-800 transition-colors duration-500
+                     flex items-center gap-2">
                   <span style="font-size:6px;">&#9679;</span> Refining details
                 </div>
               </div>
-              <p style="font-size:9px; color:#444; margin:0;">This may take 30 \u2013 120 seconds</p>
+              <p class="text-[0.55rem] tracking-widest uppercase text-zinc-800">30 \u2013 120 seconds</p>
             </div>
 
             <!-- Result image -->
-            <div id="tryonResultArea" style="display:none; text-align:center;">
-              <img id="tryonResultImg" style="max-height:350px; width:auto;
-                   object-fit:contain;" />
-              <p style="font-size:8px; color:#444; margin:8px 0 0; letter-spacing:0.15em;
-                        text-transform:uppercase;">AI Generated Preview</p>
+            <div id="tryonResultArea" style="display:none; text-align:center; width:100%;">
+              <img id="tryonResultImg" style="max-height:350px; width:auto; object-fit:contain;" />
+              <p class="text-[0.55rem] tracking-widest uppercase text-zinc-800 mt-2">AI Generated Preview</p>
               <button type="button" onclick="closeTryOnModal(); document.getElementById('addBtn')?.focus();"
-                      style="margin-top:12px; min-height:44px; width:100%; background:#f5f5f3; color:#0a0a0a; border:none; font-family:'DM Sans',sans-serif; font-size:0.68rem; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;">
+                      class="mt-3 min-h-[44px] w-full bg-[#f5f5f3] text-[#0a0a0a] border-none
+                             font-body text-[0.68rem] tracking-widest uppercase cursor-pointer
+                             transition-colors duration-200 hover:bg-[#d8d8d4]">
                 Choose Size &amp; Add to Cart
               </button>
             </div>
 
             <!-- Default state -->
-            <p id="tryonPlaceholder" style="font-size:11px; color:#333; margin:0;
-               letter-spacing:0.05em;">Result will appear here</p>
+            <p class="text-[0.6rem] tracking-widest uppercase text-zinc-800">Result will appear here</p>
           </div>
         </div>
       </div>
 
-      <p id="tryonStatus" role="status" aria-live="polite" style="font-size:0.72rem; color:#888; margin:18px 0 0; line-height:1.6;"></p>
+      <p id="tryonStatus" role="status" aria-live="polite"
+         class="text-[0.68rem] tracking-wide text-zinc-600 mt-4 leading-relaxed"></p>
 
       <!-- Generate button -->
       <button id="tryonGenerateBtn" onclick="startTryOn()"
-              style="margin-top:24px; width:100%; padding:14px;
-                     background:#f5f5f3; color:#0a0a0a; border:none;
-                     font-family:'DM Sans',sans-serif;
-                     font-size:0.7rem; letter-spacing:0.18em; text-transform:uppercase; font-weight:500;
-                     cursor:pointer; transition:all 0.2s;"
-              onmouseover="this.style.background='#d8d8d4'"
-              onmouseout="this.style.background='#f5f5f3'">
+              class="mt-6 w-full py-[14px] bg-[#f5f5f3] text-[#0a0a0a] border-none
+                     font-body text-[0.7rem] tracking-widest uppercase font-medium
+                     cursor-pointer transition-colors duration-200 hover:bg-[#d8d8d4]"
+              style="display:block;">
         Generate Try-On
       </button>
     </div>

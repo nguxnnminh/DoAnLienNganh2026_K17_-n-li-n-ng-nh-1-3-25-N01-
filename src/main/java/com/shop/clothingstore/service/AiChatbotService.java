@@ -81,6 +81,17 @@ public class AiChatbotService {
     }
 
     public ChatbotResponse processMessage(String userMessage) {
+        return processMessage(userMessage, List.of());
+    }
+
+    /**
+     * Process a message with prior conversation history for multi-turn context.
+     *
+     * @param history previous turns as a list of {role, content} maps (oldest first);
+     *                only consulted on the AI path so follow-ups like "còn màu khác không?"
+     *                are understood. Rule-based answers stay stateless and instant.
+     */
+    public ChatbotResponse processMessage(String userMessage, List<Map<String, Object>> history) {
         if (userMessage == null || userMessage.isBlank()) {
             return ChatbotResponse.text("Xin chào! Mình có thể giúp bạn tìm sản phẩm, tư vấn size hoặc giải đáp về đơn hàng, vận chuyển, đổi trả. Bạn cần gì?");
         }
@@ -88,6 +99,8 @@ public class AiChatbotService {
         if (userMessage.length() > 2000) {
             userMessage = userMessage.substring(0, 2000);
         }
+
+        List<Map<String, Object>> convo = history != null ? history : List.of();
 
         // 1. Rule-based FAQs
         ChatbotResponse ruleResult = handleRuleBased(userMessage);
@@ -107,7 +120,7 @@ public class AiChatbotService {
             return ChatbotResponse.text("AI đang tạm quá tải. Hãy mô tả loại sản phẩm, màu sắc và khoảng giá — mình sẽ gợi ý ngay!");
         }
 
-        String planner = planAction(userMessage);
+        String planner = planAction(userMessage, convo);
         ActionPlan plan = parseActionPlan(planner).orElseGet(ActionPlan::general);
 
         if ("best_sellers".equals(plan.intent())) {
@@ -148,7 +161,7 @@ public class AiChatbotService {
             return ChatbotResponse.withProducts(buildSearchIntro(plan, products.size()), products);
         }
 
-        String answer = answerGeneral(userMessage);
+        String answer = answerGeneral(userMessage, convo);
         if (answer == null || answer.isBlank()) {
             return ChatbotResponse.text("Mình có thể giúp bạn tìm sản phẩm theo loại, màu sắc hoặc giá. Hãy mô tả thứ bạn đang tìm nhé!");
         }
@@ -541,13 +554,13 @@ public class AiChatbotService {
 
     // ─── AI planner ───────────────────────────────────────────────────────────
 
-    private String planAction(String userMessage) {
+    private String planAction(String userMessage, List<Map<String, Object>> history) {
         try {
             List<Map<String, Object>> messages = new ArrayList<>();
             messages.add(Map.of(
                     "role", "system",
                     "content", """
-Bạn là trợ lý bán hàng của website thời trang NOVA. Phân tích câu hỏi và trả về JSON hành động.
+Bạn là trợ lý bán hàng của website thời trang NOVA. Phân tích câu hỏi (có thể tham chiếu các tin nhắn trước) và trả về JSON hành động.
 
 Danh mục sản phẩm NOVA:
 - Top (áo): tee (áo thun, phông, t-shirt, polo), hoodie (áo nỉ, sweater, bomber, áo len, áo gió), shirt (sơ mi, áo caro, flannel)
@@ -573,6 +586,7 @@ Quy tắc:
 - limit mặc định 6, tối đa 8
 """.trim()
             ));
+            appendHistory(messages, history);
             messages.add(Map.of("role", "user", "content", userMessage));
             return ollama.chat(messages);
         } catch (AiRequestException e) {
@@ -584,7 +598,7 @@ Quy tắc:
         }
     }
 
-    private String answerGeneral(String userMessage) {
+    private String answerGeneral(String userMessage, List<Map<String, Object>> history) {
         try {
             List<Map<String, Object>> messages = new ArrayList<>();
             messages.add(Map.of(
@@ -604,8 +618,10 @@ Quy tắc trả lời:
 - Ngắn gọn, thân thiện, dùng tiếng Việt
 - Nếu không có thông tin chính xác, hướng dẫn khách vào mục tương ứng trên web
 - Không bịa đặt thông tin
+- Có thể tham chiếu ngữ cảnh các tin nhắn trước để trả lời câu hỏi nối tiếp
 """.trim()
             ));
+            appendHistory(messages, history);
             messages.add(Map.of("role", "user", "content", userMessage));
             return ollama.chat(messages);
         } catch (AiRequestException e) {
@@ -614,6 +630,27 @@ Quy tắc trả lời:
         } catch (Exception e) {
             log.warn("AI answerGeneral failed. err={}", e.getMessage());
             return "";
+        }
+    }
+
+    /**
+     * Append up to the last 6 prior turns (role=user|assistant) to the LLM message list.
+     * Defends against malformed history entries and caps size to bound the prompt.
+     */
+    private void appendHistory(List<Map<String, Object>> messages, List<Map<String, Object>> history) {
+        if (history == null || history.isEmpty()) {
+            return;
+        }
+        int start = Math.max(0, history.size() - 6);
+        for (int i = start; i < history.size(); i++) {
+            Map<String, Object> turn = history.get(i);
+            if (turn == null) continue;
+            Object role = turn.get("role");
+            Object content = turn.get("content");
+            if (role == null || content == null) continue;
+            String r = String.valueOf(role);
+            if (!"user".equals(r) && !"assistant".equals(r)) continue;
+            messages.add(Map.of("role", r, "content", String.valueOf(content)));
         }
     }
 

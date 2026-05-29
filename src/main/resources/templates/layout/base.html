@@ -700,6 +700,36 @@
                 right: 0 !important;
             }
         }
+
+        .chat-chip {
+            background: #1a1a1a;
+            border: 1px solid #2f2f2f;
+            color: #b8b8b4;
+            padding: 6px 11px;
+            font-size: 0.68rem;
+            letter-spacing: 0.03em;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            border-radius: 14px;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            white-space: nowrap;
+        }
+        .chat-chip:hover {
+            border-color: #555;
+            color: #fff;
+            background: #222;
+        }
+
+        @keyframes chatBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .chat-caret {
+            display: inline-block;
+            width: 6px;
+            height: 0.9em;
+            background: #c0c0bc;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: chatBlink 0.9s steps(1) infinite;
+        }
     </style>
 </head>
 
@@ -1138,7 +1168,16 @@
                         background:#212121; border:1px solid #2a2a2a;
                         padding:10px 13px; font-size:0.76rem; line-height:1.65;
                         color:#c0c0bc; border-radius:0 10px 10px 10px;
-                    ">What are you looking for today?</div>
+                    ">Xin chào! Mình là trợ lý NOVA 👋 Bạn cần tìm gì hôm nay?</div>
+                </div>
+
+                <!-- Quick-reply chips -->
+                <div id="chat-quick-replies" style="display:flex; flex-wrap:wrap; gap:6px; padding-left:30px;">
+                    <button type="button" onclick="quickAsk('Sản phẩm bán chạy')" class="chat-chip">🔥 Bán chạy</button>
+                    <button type="button" onclick="quickAsk('Tư vấn size cho tôi')" class="chat-chip">📏 Tư vấn size</button>
+                    <button type="button" onclick="quickAsk('Chính sách đổi trả')" class="chat-chip">🔄 Đổi trả</button>
+                    <button type="button" onclick="quickAsk('Phí vận chuyển bao nhiêu')" class="chat-chip">📦 Vận chuyển</button>
+                    <button type="button" onclick="quickAsk('Tìm áo hoodie dưới 500k')" class="chat-chip">🧥 Hoodie dưới 500k</button>
                 </div>
             </div>
 
@@ -1316,6 +1355,36 @@
             }
         }
 
+        // Quick-reply chip → send that question
+        function quickAsk(text) {
+            const input = document.getElementById('chat-input');
+            if (input) input.value = text;
+            sendChat();
+        }
+
+        // Typewriter effect — reveals bot text char-by-char (ChatGPT-like feel)
+        function typeWriter(el, text, done) {
+            const caret = document.createElement('span');
+            caret.className = 'chat-caret';
+            el.textContent = '';
+            el.appendChild(caret);
+            const msgs = document.getElementById('chat-messages');
+            let i = 0;
+            const speed = text.length > 160 ? 8 : 16; // ms/char — faster for long text
+            const tick = () => {
+                if (i < text.length) {
+                    caret.insertAdjacentText('beforebegin', text.charAt(i));
+                    i++;
+                    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+                    setTimeout(tick, speed);
+                } else {
+                    caret.remove();
+                    if (typeof done === 'function') done();
+                }
+            };
+            tick();
+        }
+
         async function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
@@ -1323,6 +1392,9 @@
             input.value = '';
 
             const msgs = document.getElementById('chat-messages');
+
+            // Hide quick-reply chips after the first user message
+            document.getElementById('chat-quick-replies')?.remove();
 
             // User bubble — right aligned, light bg
             msgs.innerHTML += `
@@ -1359,34 +1431,39 @@
 
                 document.getElementById(typingId)?.remove();
 
-                // Bot bubble — left aligned, dark bg with avatar
-                let botHtml = `
-                    <div style="display:flex;align-items:flex-end;gap:8px;max-width:88%;">
-                        <div style="width:22px;height:22px;background:#252525;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:0.7rem;color:#666;flex-shrink:0;margin-bottom:1px;">N</div>
-                        <div style="background:#212121;border:1px solid #2a2a2a;padding:10px 13px;font-size:0.76rem;line-height:1.65;color:#c0c0bc;border-radius:0 10px 10px 10px;">
-                            ${escapeHtml(data.message || 'Sorry, I didn\'t understand that.')}
-                        </div>
-                    </div>`;
+                // Bot bubble — left aligned, dark bg with avatar.
+                // Text container starts empty; typeWriter fills it char-by-char.
+                const botWrap = document.createElement('div');
+                botWrap.style.cssText = 'display:flex;align-items:flex-end;gap:8px;max-width:88%;';
+                botWrap.innerHTML = `
+                    <div style="width:22px;height:22px;background:#252525;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:0.7rem;color:#666;flex-shrink:0;margin-bottom:1px;">N</div>
+                    <div class="bot-text" style="background:#212121;border:1px solid #2a2a2a;padding:10px 13px;font-size:0.76rem;line-height:1.65;color:#c0c0bc;border-radius:0 10px 10px 10px;white-space:pre-wrap;"></div>`;
+                msgs.appendChild(botWrap);
+                const textEl = botWrap.querySelector('.bot-text');
 
-                if (data.products && data.products.length > 0) {
-                    botHtml += `<div style="display:flex;flex-direction:column;gap:6px;padding-left:30px;">`;
-                    for (const p of data.products) {
-                        const imgUrl = p.imageUrl || '/images/sample.jpg';
-                        const price = p.minPrice != null ? p.minPrice.toLocaleString('vi-VN') + '₫' : '';
-                        botHtml += `
-                            <a href="/product/${p.slug}" target="_blank" style="display:flex;gap:10px;align-items:center;background:#1a1a1a;border:1px solid #272727;padding:9px;text-decoration:none;transition:border-color 0.2s;"
-                               onmouseover="this.style.borderColor='#444'" onmouseout="this.style.borderColor='#272727'">
-                                <img src="${escapeHtml(imgUrl)}" style="width:44px;height:56px;object-fit:cover;background:#222;flex-shrink:0;" alt="">
-                                <div style="min-width:0;">
-                                    <div style="font-size:0.72rem;color:#e0e0dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.05em;">${escapeHtml(p.name)}</div>
-                                    <div style="font-size:0.68rem;color:#888;margin-top:3px;">${price}</div>
-                                </div>
-                            </a>`;
+                const renderProducts = () => {
+                    if (data.products && data.products.length > 0) {
+                        let prodHtml = `<div style="display:flex;flex-direction:column;gap:6px;padding-left:30px;">`;
+                        for (const p of data.products) {
+                            const imgUrl = p.imageUrl || '/images/sample.jpg';
+                            const price = p.minPrice != null ? p.minPrice.toLocaleString('vi-VN') + '₫' : '';
+                            prodHtml += `
+                                <a href="/product/${p.slug}" target="_blank" style="display:flex;gap:10px;align-items:center;background:#1a1a1a;border:1px solid #272727;padding:9px;text-decoration:none;transition:border-color 0.2s;"
+                                   onmouseover="this.style.borderColor='#444'" onmouseout="this.style.borderColor='#272727'">
+                                    <img src="${escapeHtml(imgUrl)}" style="width:44px;height:56px;object-fit:cover;background:#222;flex-shrink:0;" alt="">
+                                    <div style="min-width:0;">
+                                        <div style="font-size:0.72rem;color:#e0e0dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.05em;">${escapeHtml(p.name)}</div>
+                                        <div style="font-size:0.68rem;color:#888;margin-top:3px;">${price}</div>
+                                    </div>
+                                </a>`;
+                        }
+                        prodHtml += `</div>`;
+                        msgs.insertAdjacentHTML('beforeend', prodHtml);
+                        msgs.scrollTop = msgs.scrollHeight;
                     }
-                    botHtml += `</div>`;
-                }
+                };
 
-                msgs.innerHTML += botHtml;
+                typeWriter(textEl, data.message || 'Xin lỗi, mình chưa hiểu ý bạn.', renderProducts);
             } catch (err) {
                 document.getElementById(typingId)?.remove();
                 msgs.innerHTML += `

@@ -20,6 +20,8 @@ public interface CouponRepository extends BaseRepository<Coupon, Long> {
     // All active public (non-user-specific) coupons
     List<Coupon> findByActiveTrueAndUserSpecificFalse();
 
+    boolean existsByCodeIgnoreCase(String code);
+
     // Pessimistic write lock — use inside @Transactional when applying discount.
     // Prevents two concurrent checkouts from both reading usageCount=N
     // and both writing usageCount=N+1 (lost-update race condition).

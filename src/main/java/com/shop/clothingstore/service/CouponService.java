@@ -48,20 +48,16 @@ public class CouponService {
         return couponRepository.findById(id);
     }
 
-    @SuppressWarnings("null")
     public Coupon save(Coupon coupon) {
         return couponRepository.save(coupon);
     }
 
-    @SuppressWarnings("null")
     public void delete(Long id) {
         couponRepository.deleteById(id);
     }
 
     public boolean existsByCode(String code) {
-        return couponRepository.findByCodeAndActiveTrue(code.trim().toUpperCase()).isPresent()
-                || couponRepository.findAll().stream()
-                        .anyMatch(c -> c.getCode().equalsIgnoreCase(code.trim()));
+        return couponRepository.existsByCodeIgnoreCase(code.trim());
     }
 
     // =====================================================

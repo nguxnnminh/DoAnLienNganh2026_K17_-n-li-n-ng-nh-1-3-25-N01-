@@ -34,7 +34,8 @@ public class ReviewController {
             return "redirect:/login";
         }
 
-        User user = userService.findByEmail(authentication.getName()).orElseThrow();
+        User user = userService.findByEmail(authentication.getName())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
 
         try {
             // createReview returns the ORDER id (not item id) — use it for the redirect

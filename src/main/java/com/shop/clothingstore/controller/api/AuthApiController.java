@@ -53,7 +53,8 @@ public class AuthApiController {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         if (userService.existsByEmail(normalizedEmail)) {
-            throw new IllegalStateException("Email already in use: " + normalizedEmail);
+            log.warn("Registration attempt with existing email: {}", normalizedEmail);
+            throw new IllegalStateException("Registration failed. Please check your information.");
         }
 
         // Build user object and save in a single call

@@ -46,3 +46,7 @@ application-local.properties
 
 ### Logs ###
 logs/
+
+### Claude Code & Claude Kit (local AI assistant config) ###
+.claude/
+.claudee/

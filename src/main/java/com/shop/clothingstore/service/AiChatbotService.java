@@ -85,6 +85,10 @@ public class AiChatbotService {
             return ChatbotResponse.text("Xin chào! Mình có thể giúp bạn tìm sản phẩm, tư vấn size hoặc giải đáp về đơn hàng, vận chuyển, đổi trả. Bạn cần gì?");
         }
 
+        if (userMessage.length() > 2000) {
+            userMessage = userMessage.substring(0, 2000);
+        }
+
         // 1. Rule-based FAQs
         ChatbotResponse ruleResult = handleRuleBased(userMessage);
         if (ruleResult != null) return ruleResult;
@@ -104,7 +108,7 @@ public class AiChatbotService {
         }
 
         String planner = planAction(userMessage);
-        ActionPlan plan = parseActionPlan(planner).orElseGet(() -> ActionPlan.general(""));
+        ActionPlan plan = parseActionPlan(planner).orElseGet(ActionPlan::general);
 
         if ("best_sellers".equals(plan.intent())) {
             List<Product> products = productRepository.findBestSellers(PageRequest.of(0, clamp(plan.limit(), 1, 8)));
@@ -778,7 +782,7 @@ Quy tắc trả lời:
     }
 
     private record ActionPlan(String intent, String keyword, BigDecimal minPrice, BigDecimal maxPrice, int limit) {
-        static ActionPlan general(String messageHint) {
+        static ActionPlan general() {
             return new ActionPlan("general", null, null, null, 6);
         }
     }

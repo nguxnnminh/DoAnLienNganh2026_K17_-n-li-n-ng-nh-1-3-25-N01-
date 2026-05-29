@@ -52,13 +52,15 @@ public class OrderService extends GenericServiceBase<Order, Long> {
     private final ShipmentService shipmentService;
     private final PaymentService paymentService;
     private final NotificationService notificationService;
+    private final ReferralService referralService;
 
     public OrderService(OrderRepository orderRepository,
             ProductVariantRepository variantRepository,
             ProductRepository productRepository,
             ShipmentService shipmentService,
             PaymentService paymentService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            ReferralService referralService) {
         super(orderRepository);
         this.orderRepository = orderRepository;
         this.variantRepository = variantRepository;
@@ -66,6 +68,7 @@ public class OrderService extends GenericServiceBase<Order, Long> {
         this.shipmentService = shipmentService;
         this.paymentService = paymentService;
         this.notificationService = notificationService;
+        this.referralService = referralService;
     }
 
     // =====================================================
@@ -178,6 +181,15 @@ public class OrderService extends GenericServiceBase<Order, Long> {
         // Payment: mark paid when completed, refunded when cancelled
         if (newStatus == OrderStatus.COMPLETED) {
             paymentService.markPaid(saved);
+            // Referral: thưởng cho cặp giới thiệu khi đơn đầu của khách hoàn tất.
+            // Best-effort — lỗi thưởng KHÔNG được làm hỏng việc cập nhật đơn.
+            try {
+                if (saved.getActor() != null) {
+                    referralService.rewardOnFirstCompletedOrder(saved.getActor());
+                }
+            } catch (Exception e) {
+                log.warn("Referral reward failed for orderId={}: {}", orderId, e.getMessage());
+            }
         } else if (newStatus == OrderStatus.CANCELLED) {
             paymentService.markRefunded(saved);
         }

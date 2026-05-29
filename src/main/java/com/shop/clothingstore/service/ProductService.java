@@ -360,4 +360,60 @@ public class ProductService extends GenericServiceBase<Product, Long> {
                 pageable
         );
     }
+
+    // =====================================================
+    // FULL-TEXT SEARCH (MySQL/MariaDB FULLTEXT) + AUTOCOMPLETE
+    // Dùng cho ô tìm kiếm / gợi ý từ khóa. Thử MATCH AGAINST trước
+    // (xếp theo relevance), nếu lỗi/không có kết quả thì fallback
+    // LIKE qua Specification — đảm bảo luôn trả kết quả.
+    // =====================================================
+    @Transactional(readOnly = true)
+    public List<Product> fullTextSearch(String query, int limit) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        String q = query.trim();
+        int safeLimit = Math.max(1, Math.min(limit, 20));
+
+        // 1. Thử FULLTEXT (BOOLEAN MODE, hỗ trợ tiền tố: "ao*")
+        try {
+            String booleanQuery = buildBooleanQuery(q);
+            List<Long> ids = productRepository.fullTextSearchIds(booleanQuery, safeLimit);
+            if (!ids.isEmpty()) {
+                // Tải đầy đủ (kèm ảnh) rồi giữ đúng thứ tự relevance từ MATCH
+                List<Product> loaded = productRepository.findByIdInAndActiveTrue(ids);
+                Map<Long, Product> byId = loaded.stream()
+                        .collect(Collectors.toMap(Product::getId, p -> p, (a, b) -> a));
+                List<Product> ordered = new java.util.ArrayList<>();
+                for (Long id : ids) {
+                    Product p = byId.get(id);
+                    if (p != null) ordered.add(p);
+                }
+                if (!ordered.isEmpty()) return ordered;
+            }
+        } catch (Exception e) {
+            log.warn("Full-text MATCH search failed, fallback to LIKE. q='{}' err={}", q, e.getMessage());
+        }
+
+        // 2. Fallback LIKE qua Specification (luôn chạy, an toàn cho tiếng Việt)
+        ProductFilterDTO filter = new ProductFilterDTO();
+        filter.setKeyword(q);
+        return productRepository
+                .findAll(ProductSpecification.filter(filter), org.springframework.data.domain.PageRequest.of(0, safeLimit))
+                .getContent();
+    }
+
+    /**
+     * Chuyển câu tìm kiếm thành cú pháp BOOLEAN MODE: mỗi từ ≥1 ký tự thành tiền tố "+từ*".
+     * Lọc ký tự đặc biệt của FULLTEXT để tránh lỗi cú pháp.
+     */
+    private String buildBooleanQuery(String q) {
+        String[] tokens = q.replaceAll("[+\\-><()~*\"@]", " ").trim().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String t : tokens) {
+            if (t.isBlank()) continue;
+            sb.append('+').append(t).append('*').append(' ');
+        }
+        return sb.toString().trim();
+    }
 }

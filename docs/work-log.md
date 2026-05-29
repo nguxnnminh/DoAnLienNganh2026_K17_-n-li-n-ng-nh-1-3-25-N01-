@@ -76,6 +76,70 @@
 
 ---
 
+## 🚀 BẢNG 5 — 5 tính năng lớn mới (2026-05-29)
+
+> Mỗi tính năng: code → compile → test → E2E → review → fix. Xem kế hoạch: [feature-plan.md](feature-plan.md)
+
+### F1 — UI trang chủ: hero banner + slider
+| File | Đã làm | Giải thích |
+|------|--------|-----------|
+| `templates/shop/home.html` | Thay hero tĩnh bằng slider 3 slide tự xoay (5.5s), nút prev/next, dots, hiệu ứng ken-burns; CSS `.hero-slider/.hero-slide/.hero-dot`; JS điều khiển (pause khi hover/ẩn tab, tôn trọng prefers-reduced-motion) | Trang chủ ấn tượng hơn. Vanilla JS, không thư viện → clone về chạy ngay. **E2E:** homepage HTTP 200, có 3 slide ✅ |
+
+### F2 — Full-text search (MySQL/MariaDB FULLTEXT) + autocomplete
+| File | Đã làm | Giải thích |
+|------|--------|-----------|
+| `config/FullTextIndexInitializer.java` (MỚI) | Tạo FULLTEXT index `ft_products_name_desc` trên products(name,description) lúc khởi động nếu chưa có (idempotent), guard chống SQL injection | Máy clone về tự có index, không cần chạy SQL tay |
+| `repository/ProductRepository.java` | Thêm `fullTextSearchIds` (MATCH AGAINST BOOLEAN MODE, xếp relevance) + `findByIdInAndActiveTrue` (EntityGraph tránh lazy) | Truy vấn full-text + tải an toàn |
+| `service/ProductService.java` | `fullTextSearch(query, limit)` — thử MATCH, fallback LIKE; `buildBooleanQuery` | Luôn ra kết quả kể cả khi index lỗi/tiếng Việt |
+| `controller/api/ProductApiController.java` | Endpoint `GET /api/products/suggest?q=` | Autocomplete API |
+| `templates/shop/products.html` | Dropdown autocomplete (debounce 220ms, phím ↑↓ Enter Esc), CSS `.ac-*` | Gợi ý SP khi gõ. **E2E:** suggest('hoodie')→2 ✅ |
+
+### F3 — Review có ảnh đính kèm
+| File | Đã làm | Giải thích |
+|------|--------|-----------|
+| `entity/Review.java` | Thêm `@ElementCollection List<String> imageUrls` (bảng phụ `review_images`) | Lưu nhiều ảnh/review (ddl-auto tự tạo bảng) |
+| `service/ReviewService.java` | Overload `createReview(...imageUrls)`, giới hạn 5 ảnh | Lưu URL ảnh |
+| `controller/ReviewController.java` | Nhận `MultipartFile[] images`, validate (≤5MB, jpg/png/webp), upload qua FileStorageService | Upload an toàn |
+| `templates/shop/order-detail.html` | Form review thêm `enctype=multipart` + input file | Khách chọn ảnh |
+| `templates/shop/product-detail.html` | Hiển thị gallery ảnh trong mỗi review | Xem ảnh review |
+
+### F4 — SSE real-time notification
+| File | Đã làm | Giải thích |
+|------|--------|-----------|
+| `service/SseService.java` (MỚI) | Registry SseEmitter theo userId + kênh admin; push tới user/admin (best-effort, thread-safe ConcurrentHashMap/CopyOnWriteArrayList) | Đẩy thông báo real-time |
+| `controller/SseNotificationController.java` (MỚI) | `GET /notifications/stream` (web-chain, session-auth) | Trình duyệt EventSource kết nối |
+| `service/NotificationService.java` | Inject SseService; push tới user khi tạo notification + push "đơn mới" tới admin | Wire real-time vào nghiệp vụ |
+| `templates/layout/base.html` + `admin.html` | EventSource + toast (gate theo đăng nhập) | Hiện toast. **E2E:** /notifications/stream anonymous→302 (bảo vệ auth) ✅ |
+
+### F5 — Hệ thống mã giới thiệu (referral)
+| File | Đã làm | Giải thích |
+|------|--------|-----------|
+| `entity/User.java` | Thêm `referralCode` (unique), `referredById`, `referralRewarded` | Dữ liệu referral |
+| `service/ReferralService.java` (MỚI) | Sinh mã, gắn người giới thiệu (chống tự ref), trao thưởng đơn đầu | Logic referral |
+| `config/ReferralBackfillInitializer.java` (MỚI) | Gán mã cho user cũ lúc khởi động (idempotent) | Clone về user cũ vẫn có mã. **Verified:** backfill 2 user ✅ |
+| `service/UserService.java` | Overload `registerUser(...refCode, fullName)` — sinh mã + gắn ref + set tên trong 1 transaction | Đăng ký nguyên tử |
+| `service/OrderService.java` | Khi đơn COMPLETED → `rewardOnFirstCompletedOrder` (best-effort) | Trao coupon cho cả 2 |
+| `controller/AuthController.java` + `api/AuthApiController.java` | Nhận `?ref=CODE` / field ref | Liên kết người giới thiệu |
+| `templates/shop/profile.html` | Card hiển thị mã + link giới thiệu + nút copy | Khách chia sẻ. **E2E:** đăng ký ref→referred_by_id liên kết đúng ✅ |
+| `templates/auth/register.html` | Hidden input `ref` | Gửi mã khi đăng ký |
+
+---
+
+## 🛡️ BẢNG 6 — Fix theo code-review (6 lỗi HIGH)
+
+| # | File | Lỗi | Cách fix |
+|---|------|-----|----------|
+| 25b | `ReferralService.java` + `UserRepository.markReferralRewarded` | **Trao coupon TRÙNG** khi 2 đơn của 1 khách hoàn tất đồng thời (race) | Atomic check-and-set bằng `UPDATE ... WHERE referral_rewarded=false` (chỉ 1 luồng thắng) + `@Transactional(REQUIRES_NEW)` |
+| 25c | `NotificationService.java` (5 method notify*) | Lỗi lưu notification làm **rollback nghiệp vụ chính** (đặt đơn/đổi trạng thái) | `@Transactional(REQUIRES_NEW)` trên các public method → notification chạy TX riêng |
+| 25d | `SseService.java` `remove()` | Race TOCTOU giữa `isEmpty()` và `remove()` | Dùng `userEmitters.compute()` nguyên tử |
+| 25e | `SseService.java` `subscribe()` | Admin nhận **toast trùng** (đăng ký cả kênh user lẫn admin) | Admin chỉ đăng ký kênh admin |
+| 25f | `UserService` + `AuthApiController` | Đăng ký API lưu user 2 lần (fullName set sau) — mất nguyên tử | Overload `registerUser(...fullName)` set trước khi lưu, 1 transaction |
+| 25g | `FullTextIndexInitializer.java` | Pattern Statement nối chuỗi (nguy cơ injection nếu sau này dùng giá trị động) | Static guard validate định danh `[A-Za-z0-9_]+` |
+
+**Kết quả:** 81 test PASS (gồm 8 test mới `ReferralServiceTest`), compile sạch, app chạy + smoke test 5 tính năng OK.
+
+---
+
 ## 🔗 Liên kết
 - Chi tiết tính năng: [features.md](features.md)
 - Lịch sử BEFORE/AFTER: [changelog.md](changelog.md)

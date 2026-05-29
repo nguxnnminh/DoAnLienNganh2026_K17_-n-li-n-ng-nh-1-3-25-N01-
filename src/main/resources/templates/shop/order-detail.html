@@ -105,6 +105,7 @@
               </button>
 
               <form th:id="'rf-' + ${item.id}" th:action="@{/reviews/{id}(id=${item.id})}" method="post"
+                enctype="multipart/form-data"
                 class="hidden mt-4 p-5 border border-zinc-800 bg-[#161616]">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
@@ -115,6 +116,15 @@
 
                 <textarea name="comment" required rows="3" class="review-input mb-3"
                   placeholder="Share your thoughts..."></textarea>
+
+                <!-- Ảnh đính kèm (tùy chọn, tối đa 5 ảnh, mỗi ảnh ≤ 5MB) -->
+                <label class="block text-[0.55rem] tracking-widest uppercase text-zinc-500 mb-2">
+                  Đính kèm ảnh (tùy chọn)
+                </label>
+                <input type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple
+                  class="block w-full text-[0.6rem] text-zinc-500 mb-3
+                         file:mr-3 file:py-1.5 file:px-3 file:border-0 file:bg-zinc-800 file:text-zinc-300
+                         file:text-[0.55rem] file:uppercase file:tracking-widest file:cursor-pointer" />
 
                 <button type="submit"
                   class="px-6 py-2.5 bg-[#f5f5f3] text-[#0a0a0a] border-none font-body text-[0.6rem] tracking-widest uppercase font-medium cursor-pointer transition-colors duration-200 hover:bg-[#ccc]">

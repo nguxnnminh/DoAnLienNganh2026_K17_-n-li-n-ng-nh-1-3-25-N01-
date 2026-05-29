@@ -57,17 +57,14 @@ public class AuthApiController {
             throw new IllegalStateException("Registration failed. Please check your information.");
         }
 
-        // Build user object and save in a single call
-        User user = new User();
-        user.setEmail(normalizedEmail);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.USER);
-
-        if (request.getFullName() != null && !request.getFullName().isBlank()) {
-            user.setFullName(request.getFullName());
-        }
-
-        user = userService.save(user);
+        // Tạo user qua registerUser → tự sinh referralCode, gắn người giới thiệu (nếu có),
+        // set fullName, và phát sự kiện UserRegistered (welcome coupon) — tất cả trong 1 transaction.
+        User user = userService.registerUser(
+                normalizedEmail,
+                passwordEncoder.encode(request.getPassword()),
+                Role.USER,
+                request.getRef(),
+                request.getFullName());
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
 

@@ -56,7 +56,11 @@ public class AuthController {
 
     // ================= REGISTER =================
     @GetMapping("/register")
-    public String registerPage() {
+    public String registerPage(@RequestParam(name = "ref", required = false) String ref, Model model) {
+        // Giữ mã giới thiệu (nếu có) để form gửi kèm khi submit
+        if (ref != null && !ref.isBlank()) {
+            model.addAttribute("ref", ref.trim());
+        }
         return "auth/register";
     }
 
@@ -65,6 +69,7 @@ public class AuthController {
             @RequestParam String email,
             @RequestParam String password,
             @RequestParam String confirmPassword,
+            @RequestParam(name = "ref", required = false) String ref,
             RedirectAttributes redirectAttributes
     ) {
 
@@ -89,11 +94,12 @@ public class AuthController {
             return "redirect:/register";
         }
 
-        // ===== create user =====
+        // ===== create user (kèm mã giới thiệu nếu có) =====
         userService.registerUser(
                 normalizedEmail,
                 passwordEncoder.encode(password),
-                Role.USER
+                Role.USER,
+                ref
         );
 
         // ===== send confirmation email =====

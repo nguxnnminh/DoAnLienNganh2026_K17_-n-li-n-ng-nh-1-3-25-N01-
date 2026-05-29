@@ -77,6 +77,8 @@
 POST   /api/auth/login              Đăng nhập → JWT
 POST   /api/auth/register           Đăng ký
 GET    /api/products                Danh sách sản phẩm
+GET    /api/products/suggest         Autocomplete full-text search
+GET    /notifications/stream         SSE real-time notification (cần đăng nhập)
 GET    /api/categories              Danh mục
 GET    /api/cart                    Giỏ hàng
 POST   /api/orders/checkout         Đặt hàng
@@ -343,12 +345,14 @@ User: "Tìm áo hoodie dưới 300k màu đen"
 
 ## Roadmap
 
+- [x] **Real-time notification (SSE)** — toast real-time, admin nhận đơn mới ngay
+- [x] **Full-text search (MySQL FULLTEXT)** — MATCH AGAINST + autocomplete gợi ý
+- [x] **Cải thiện UI trang chủ** — hero banner slider 3 slide tự xoay
+- [x] **Review có ảnh đính kèm** — upload tối đa 5 ảnh/review
+- [x] **Hệ thống mã giới thiệu (referral)** — đơn đầu hoàn tất, cả 2 nhận coupon
 - [ ] Thanh toán online (SePay / VietQR)
-- [ ] Real-time notification (SSE)
-- [ ] Full-text search (MySQL FULLTEXT)
-- [ ] Cải thiện UI trang chủ (hero banner, slider)
-- [ ] Review có ảnh đính kèm
-- [ ] Hệ thống mã giới thiệu (referral)
+
+> Chi tiết 5 tính năng mới: [docs/feature-plan.md](docs/feature-plan.md) · [docs/work-log.md](docs/work-log.md)
 
 ---
 

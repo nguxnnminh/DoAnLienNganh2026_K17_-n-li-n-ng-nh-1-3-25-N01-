@@ -1,10 +1,12 @@
 package com.shop.clothingstore.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shop.clothingstore.entity.Notification;
@@ -18,22 +20,38 @@ public class NotificationService {
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final NotificationRepository notificationRepository;
+    private final SseService sseService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+            SseService sseService) {
         this.notificationRepository = notificationRepository;
+        this.sseService = sseService;
     }
 
     // ─────────────────────────────────────────────────────────────────
     // CREATE
     // ─────────────────────────────────────────────────────────────────
+    // REQUIRES_NEW trên các method public (gọi từ OrderService/CheckoutService — bean khác,
+    // nên proxy AOP áp dụng): thông báo chạy trong transaction RIÊNG, lỗi lưu notification
+    // KHÔNG làm rollback nghiệp vụ chính (đặt đơn / đổi trạng thái).
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderPlaced(User user, Order order) {
         create(user,
                 "Order placed successfully",
                 "Your order #" + order.getId() + " has been placed. We will process it as soon as possible.",
                 "ORDER_PLACED",
                 order.getId(), "Order");
+
+        // Real-time: báo cho tất cả admin đang online có đơn mới
+        sseService.pushToAdmins("new-order", Map.of(
+                "title", "Đơn hàng mới #" + order.getId(),
+                "message", "Khách " + (order.getCustomerName() != null ? order.getCustomerName() : "ẩn danh")
+                        + " vừa đặt đơn #" + order.getId(),
+                "orderId", order.getId()
+        ));
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyOrderStatusChanged(User user, Order order) {
         String statusLabel = switch (order.getStatus()) {
             case PROCESSING ->
@@ -57,6 +75,7 @@ public class NotificationService {
                 order.getId(), "Order");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyCancelRequested(User user, Order order) {
         create(user,
                 "Cancellation request for order #" + order.getId() + " submitted",
@@ -65,6 +84,7 @@ public class NotificationService {
                 order.getId(), "Order");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyCancelAccepted(User user, Order order) {
         create(user,
                 "Cancellation request for order #" + order.getId() + " accepted",
@@ -73,6 +93,7 @@ public class NotificationService {
                 order.getId(), "Order");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyCancelDenied(User user, Order order) {
         create(user,
                 "Cancellation request for order #" + order.getId() + " rejected",
@@ -139,6 +160,13 @@ public class NotificationService {
             n.setReferenceType(referenceType);
             notificationRepository.save(n);
             log.debug("Notification created | user={} | type={} | ref={}", user.getEmail(), type, referenceId);
+
+            // Real-time: đẩy ngay tới user đang online (nếu có kết nối SSE)
+            sseService.pushToUser(user.getId(), "notification", Map.of(
+                    "title", title,
+                    "message", message,
+                    "type", type
+            ));
         } catch (Exception e) {
             // Notification failure must not roll back the business transaction
             log.warn("Failed to create notification | user={} | type={} | {}", user.getEmail(), type, e.getMessage());

@@ -897,5 +897,31 @@
 </script>
 <script th:src="@{/js/admin-spa.js}"></script>
 
+<!-- ===== REAL-TIME NOTIFICATIONS (SSE) — admin nhận toast đơn mới ===== -->
+<div id="nova-toasts" style="position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+<script>
+    (function initAdminSse() {
+        if (!window.EventSource) return;
+        function toast(title, message) {
+            const wrap = document.getElementById('nova-toasts');
+            if (!wrap) return;
+            const el = document.createElement('div');
+            el.style.cssText = 'background:#fff;border:1px solid #e5e5e5;border-left:3px solid #16a34a;'
+                + 'padding:12px 16px;max-width:340px;box-shadow:0 12px 32px rgba(0,0,0,.18);border-radius:6px;'
+                + 'opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;';
+            el.innerHTML = '<p style="font-size:.78rem;font-weight:600;color:#111;margin-bottom:3px;">'
+                + (title || 'Thông báo') + '</p>'
+                + '<p style="font-size:.74rem;color:#555;line-height:1.5;">' + (message || '') + '</p>';
+            wrap.appendChild(el);
+            requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(10px)'; setTimeout(() => el.remove(), 350); }, 7000);
+        }
+        let es;
+        try { es = new EventSource('/notifications/stream'); } catch (e) { return; }
+        es.addEventListener('new-order', (ev) => { try { const d = JSON.parse(ev.data); toast(d.title, d.message); } catch (_) {} });
+        es.addEventListener('notification', (ev) => { try { const d = JSON.parse(ev.data); toast(d.title, d.message); } catch (_) {} });
+    })();
+</script>
+
 </body>
 </html>

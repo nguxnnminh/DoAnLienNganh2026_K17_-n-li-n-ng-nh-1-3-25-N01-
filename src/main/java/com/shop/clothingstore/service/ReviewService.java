@@ -32,6 +32,12 @@ public class ReviewService {
 
     @Transactional
     public Long createReview(Long actorId, Long orderItemId, double rating, String comment) {
+        return createReview(actorId, orderItemId, rating, comment, List.of());
+    }
+
+    @Transactional
+    public Long createReview(Long actorId, Long orderItemId, double rating, String comment,
+            List<String> imageUrls) {
 
         java.util.Objects.requireNonNull(actorId, "actorId must not be null");
         java.util.Objects.requireNonNull(orderItemId, "orderItemId must not be null");
@@ -66,6 +72,11 @@ public class ReviewService {
         review.setActor(user);
         review.setOrderItem(orderItem);
         review.setItemId(orderItem.getVariantId());
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            // Giới hạn tối đa 5 ảnh / review
+            review.setImageUrls(new java.util.ArrayList<>(
+                    imageUrls.stream().filter(java.util.Objects::nonNull).limit(5).toList()));
+        }
         reviewRepository.save(review);
 
         return order.getId();

@@ -75,6 +75,25 @@ public class ProductApiController {
     }
 
     // =====================================================
+    // GET /api/products/suggest?q=ao  (autocomplete full-text)
+    // Trả tối đa 8 gợi ý sản phẩm (id, name, slug, giá, ảnh) xếp theo relevance.
+    // =====================================================
+    @GetMapping("/suggest")
+    public ResponseEntity<List<ProductResponse>> suggest(
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(defaultValue = "8") int limit) {
+
+        if (q == null || q.trim().length() < 1) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<ProductResponse> result = productService.fullTextSearch(q, Math.min(limit, 8))
+                .stream()
+                .map(ProductResponse::summary)
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    // =====================================================
     // GET /api/products/{id}
     // =====================================================
     @GetMapping("/{id}")

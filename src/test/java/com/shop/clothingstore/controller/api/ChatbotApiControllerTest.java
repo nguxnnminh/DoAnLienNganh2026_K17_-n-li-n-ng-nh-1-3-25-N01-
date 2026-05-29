@@ -1,6 +1,8 @@
 package com.shop.clothingstore.controller.api;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,7 +51,7 @@ class ChatbotApiControllerTest {
     void chat_Greeting_ReturnsOkWithMessage() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Xin chào! Tôi là trợ lý mua sắm.");
         when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
-        when(chatbotService.processMessage("xin chào")).thenReturn(response);
+        when(chatbotService.processMessage(eq("xin chào"), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -65,7 +67,7 @@ class ChatbotApiControllerTest {
     void chat_ProductSearch_ReturnsOkWithProducts() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Tìm thấy 2 sản phẩm:");
         when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
-        when(chatbotService.processMessage("áo thun")).thenReturn(response);
+        when(chatbotService.processMessage(eq("áo thun"), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -79,7 +81,7 @@ class ChatbotApiControllerTest {
     void chat_EmptyBody_ReturnsWelcome() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Xin chào!");
         when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
-        when(chatbotService.processMessage("")).thenReturn(response);
+        when(chatbotService.processMessage(eq(""), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -93,7 +95,7 @@ class ChatbotApiControllerTest {
     void chat_NoMessageField_ReturnsOk() throws Exception {
         ChatbotResponse response = ChatbotResponse.text("Xin chào!");
         when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
-        when(chatbotService.processMessage("")).thenReturn(response);
+        when(chatbotService.processMessage(eq(""), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/chatbot")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +111,7 @@ class ChatbotApiControllerTest {
     @DisplayName("POST /api/chatbot is accessible without authentication")
     void chat_PublicEndpoint_NoAuthRequired() throws Exception {
         when(chatbotService.isEnabledAndConfigured()).thenReturn(true);
-        when(chatbotService.processMessage(anyString()))
+        when(chatbotService.processMessage(anyString(), any()))
                 .thenReturn(ChatbotResponse.text("OK"));
 
         mockMvc.perform(post("/api/chatbot")

@@ -127,6 +127,29 @@
           </form>
         </div>
 
+        <!-- REFERRAL -->
+        <div class="border border-zinc-900 p-6 md:p-10" th:if="${user.referralCode != null}">
+          <p class="text-[0.58rem] tracking-widest3 uppercase text-zinc-600 mb-3">Giới thiệu bạn bè</p>
+          <p class="text-xs text-zinc-500 leading-relaxed mb-6">
+            Chia sẻ mã của bạn. Khi bạn bè mua đơn đầu tiên, <span class="text-[#e8e8e4]">cả hai</span> nhận voucher giảm 50.000₫.
+          </p>
+
+          <label class="pf-label">Mã giới thiệu của bạn</label>
+          <div class="flex gap-2 mb-5 mt-2">
+            <input id="refCode" class="pf-input" type="text" th:value="${user.referralCode}" readonly
+                   style="flex:1; letter-spacing:.2em; font-weight:600;" />
+            <button type="button" onclick="copyRef('refCode', this)"
+              class="px-4 bg-zinc-800 text-[#e8e8e4] border-none text-[0.58rem] tracking-widest uppercase cursor-pointer hover:bg-zinc-700">Copy</button>
+          </div>
+
+          <label class="pf-label">Link giới thiệu</label>
+          <div class="flex gap-2 mt-2">
+            <input id="refLink" class="pf-input" type="text" th:value="${user.referralCode}" readonly style="flex:1; font-size:.62rem;" />
+            <button type="button" onclick="copyRef('refLink', this)"
+              class="px-4 bg-[#f5f5f3] text-[#0a0a0a] border-none text-[0.58rem] tracking-widest uppercase cursor-pointer hover:bg-[#d8d8d4]">Copy</button>
+          </div>
+        </div>
+
       </div>
 
       <!-- RIGHT: ACCOUNT SIDEBAR -->
@@ -199,5 +222,26 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // Build full referral link from the code + current origin
+    (function () {
+      const linkInput = document.getElementById('refLink');
+      const codeInput = document.getElementById('refCode');
+      if (linkInput && codeInput) {
+        linkInput.value = window.location.origin + '/register?ref=' + encodeURIComponent(codeInput.value.trim());
+      }
+    })();
+    function copyRef(id, btn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.select();
+      navigator.clipboard?.writeText(el.value).then(() => {
+        const old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = old; }, 1500);
+      }).catch(() => {});
+    }
+  </script>
 </div>
 </html>

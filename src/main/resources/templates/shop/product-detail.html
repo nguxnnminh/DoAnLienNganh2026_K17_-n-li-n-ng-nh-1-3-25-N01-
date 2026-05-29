@@ -384,6 +384,15 @@
                 th:class="${review.rating>=i?'n-star lit':'n-star'}">★</span>
         </div>
         <p class="text-sm text-zinc-500 leading-relaxed mb-4" th:text="${review.comment}"></p>
+        <!-- Ảnh đính kèm review (nếu có) -->
+        <div th:if="${review.imageUrls != null and !review.imageUrls.isEmpty()}"
+             class="flex flex-wrap gap-2 mb-4">
+          <a th:each="img : ${review.imageUrls}" th:href="${img}" target="_blank"
+             class="block w-16 h-16 overflow-hidden border border-zinc-800 bg-zinc-900">
+            <img th:src="${img}" alt="Review photo"
+                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+          </a>
+        </div>
         <p class="text-xs tracking-widest uppercase text-zinc-700"
            th:text="${review.actor?.fullName?:'Anonymous'}"></p>
       </div>

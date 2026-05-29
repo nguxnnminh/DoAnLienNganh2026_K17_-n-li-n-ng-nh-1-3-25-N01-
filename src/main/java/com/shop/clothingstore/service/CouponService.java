@@ -95,6 +95,38 @@ public class CouponService {
     }
 
     // =====================================================
+    // REFERRAL: cấp 1 coupon user-specific (giảm tiền cố định) cho user
+    // Dùng khi thưởng giới thiệu (cả người giới thiệu + người được giới thiệu)
+    // =====================================================
+    @Transactional
+    public void grantFixedCoupon(User user, String prefix, BigDecimal amount,
+            BigDecimal minOrder, int validityDays, String description) {
+        String code = prefix + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        Coupon coupon = new Coupon();
+        coupon.setCode(code);
+        coupon.setDescription(description);
+        coupon.setDiscountType(Coupon.DiscountType.FIXED);
+        coupon.setDiscountValue(amount);
+        coupon.setMinOrderAmount(minOrder);
+        coupon.setStartDate(LocalDateTime.now());
+        coupon.setExpiryDate(LocalDateTime.now().plusDays(validityDays));
+        coupon.setUsageLimit(1);
+        coupon.setUsageCount(0);
+        coupon.setActive(true);
+        coupon.setUserSpecific(true);
+        coupon = couponRepository.save(coupon);
+
+        UserCoupon userCoupon = new UserCoupon();
+        userCoupon.setUser(user);
+        userCoupon.setCoupon(coupon);
+        userCoupon.setUsed(false);
+        userCouponRepository.save(userCoupon);
+
+        log.info("Granted coupon | code={} | userId={} | amount={}", code, user.getId(), amount);
+    }
+
+    // =====================================================
     // USER-FACING: Get all coupons for "My Coupons" page
     // Returns both public + user-specific coupons
     // =====================================================

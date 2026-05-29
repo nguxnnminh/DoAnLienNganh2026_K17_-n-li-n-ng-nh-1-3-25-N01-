@@ -19,12 +19,15 @@ public class UserService extends GenericServiceBase<User, Long> {
 
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReferralService referralService;
 
     public UserService(UserRepository userRepository,
-                       ApplicationEventPublisher eventPublisher) {
+                       ApplicationEventPublisher eventPublisher,
+                       ReferralService referralService) {
         super(userRepository);
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
+        this.referralService = referralService;
     }
 
     @Transactional
@@ -108,10 +111,30 @@ public class UserService extends GenericServiceBase<User, Long> {
 
     @Transactional
     public User registerUser(String email, String encodedPassword, Role role) {
+        return registerUser(email, encodedPassword, role, null);
+    }
+
+    @Transactional
+    public User registerUser(String email, String encodedPassword, Role role, String refCode) {
+        return registerUser(email, encodedPassword, role, refCode, null);
+    }
+
+    /**
+     * Đăng ký user kèm mã giới thiệu (referral) + tên (tùy chọn). Tự sinh referralCode,
+     * gắn người giới thiệu nếu refCode hợp lệ, set fullName TRƯỚC khi lưu để đảm bảo
+     * mọi field được persist nguyên tử trong 1 transaction (tránh lưu 2 lần).
+     */
+    @Transactional
+    public User registerUser(String email, String encodedPassword, Role role, String refCode, String fullName) {
         User user = new User();
         user.setEmail(email);
         user.setPassword(encodedPassword);
         user.setRole(role);
+        if (fullName != null && !fullName.isBlank()) {
+            user.setFullName(fullName.trim());
+        }
+        referralService.ensureReferralCode(user);
+        referralService.applyReferralCode(user, refCode);
         user = save(user);
 
         // Publish event — listeners (e.g., welcome coupon) react asynchronously

@@ -197,6 +197,28 @@ public interface ProductRepository extends BaseRepository<Product, Long> {
     }
 
     // =====================================================
+    // FULL-TEXT SEARCH (MySQL/MariaDB FULLTEXT)
+    // Trả về danh sách ID sản phẩm khớp, xếp theo độ liên quan (relevance).
+    // Dùng BOOLEAN MODE để hỗ trợ tiền tố (q*). Service sẽ fallback LIKE nếu
+    // index chưa tồn tại hoặc câu lệnh lỗi.
+    // =====================================================
+    @Query(value = """
+            SELECT p.id
+            FROM products p
+            WHERE p.active = 1
+              AND MATCH(p.name, p.description) AGAINST(:q IN BOOLEAN MODE)
+            ORDER BY MATCH(p.name, p.description) AGAINST(:q IN BOOLEAN MODE) DESC, p.total_sold DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Long> fullTextSearchIds(@Param("q") String q, @Param("limit") int limit);
+
+    // Tải đầy đủ sản phẩm theo danh sách ID (kèm ảnh + variants + danh mục).
+    // productVariants cần cho ProductResponse.summary().getTotalStock() — tránh lazy load
+    // khi map sang DTO ngoài transaction.
+    @EntityGraph(attributePaths = {"images", "productVariants", "subCategory", "subCategory.category"})
+    List<Product> findByIdInAndActiveTrue(List<Long> ids);
+
+    // =====================================================
     // VIRTUAL TRY-ON: all try-on-enabled products
     // =====================================================
     @EntityGraph(attributePaths = {

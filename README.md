@@ -349,4 +349,5 @@ User: "Tìm áo hoodie dưới 300k màu đen"
 ---
 
 *Xem chi tiết tính năng: [docs/features.md](docs/features.md)*  
-*Lịch sử thay đổi: [docs/changelog.md](docs/changelog.md)*
+*Lịch sử thay đổi (BEFORE/AFTER): [docs/changelog.md](docs/changelog.md)*  
+*Nhật ký công việc chi tiết (bảng + vị trí file): [docs/work-log.md](docs/work-log.md)*

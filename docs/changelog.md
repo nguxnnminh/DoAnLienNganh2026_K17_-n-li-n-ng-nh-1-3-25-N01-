@@ -4,6 +4,8 @@
 > - Mỗi khi sửa hoặc thêm tính năng, **luôn ghi vào đây** theo format BEFORE/AFTER.
 > - Phần **PLANNED** là những gì sẽ làm tiếp theo.
 > - Phần **DONE** là những gì đã thay đổi kể từ khi bắt đầu dùng file này.
+>
+> 📋 **Xem bảng chi tiết vị trí file + giải thích từng thay đổi:** [work-log.md](work-log.md)
 
 ---
 

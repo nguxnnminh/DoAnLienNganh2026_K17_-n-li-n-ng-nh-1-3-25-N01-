@@ -38,12 +38,11 @@ public class ChatbotApiController {
 
         String message = request.getOrDefault("message", "");
 
-        if (!chatbotService.isEnabledAndConfigured()) {
-            return ResponseEntity.ok(ChatbotResponse.text(
-                    "Chatbot AI is not enabled. Please start Ollama and set CHATBOT_AI_ENABLED=true, then restart the backend."
-            ));
-        }
-
+        // NOTE: we deliberately do NOT gate on isEnabledAndConfigured() here.
+        // processMessage() already serves rule-based FAQ + product search WITHOUT
+        // Ollama, and only the free-form AI tier degrades gracefully when AI is
+        // off. This guarantees the chat always answers on any machine that just
+        // clones + runs the app, even without Ollama installed.
         List<Map<String, Object>> history = getHistory(session);
 
         ChatbotResponse response = chatbotService.processMessage(message, history);

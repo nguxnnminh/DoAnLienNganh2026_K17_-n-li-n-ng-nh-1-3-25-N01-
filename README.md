@@ -100,7 +100,7 @@ Swagger UI: `http://localhost:8080/swagger-ui.html`
 - **Java 17+** ([Temurin JDK 17](https://adoptium.net/temurin/releases/?version=17))
 - **MySQL 8** đang chạy
 - **Python 3.10+** (chỉ cần nếu dùng Virtual Try-On)
-- **Ollama** (chỉ cần nếu dùng AI Chatbot)
+- **Ollama** (TÙY CHỌN — chatbot vẫn chạy rule-based nếu không có; Ollama chỉ bật thêm AI trò chuyện tự do)
 - **GPU NVIDIA** với CUDA 11.8+ (chỉ cần cho Try-On inference)
 
 ### 1. Clone & cấu hình database
@@ -145,13 +145,23 @@ Server khởi động tại: **http://localhost:8080**
 
 ### 4. (Tùy chọn) Chạy AI Chatbot
 
+> **Quan trọng:** Chatbot **hoạt động ngay mà KHÔNG cần Ollama**. Mọi máy chỉ cần
+> clone + chạy app là chat đã trả lời được:
+> - ✅ Hỏi đáp (FAQ): vận chuyển, đổi trả, size, thanh toán, coupon, chất liệu
+> - ✅ Tìm sản phẩm theo loại / màu / khoảng giá (vd: "áo hoodie dưới 500k")
+> - ✅ Sản phẩm bán chạy
+>
+> Cài Ollama chỉ để **bật thêm** khả năng trò chuyện tự do bằng AI (hiểu câu hỏi
+> nối tiếp, trả lời ngôn ngữ tự nhiên). Không có Ollama, các câu hỏi tự do sẽ được
+> trả lời bằng gợi ý chung — chat **không bao giờ bị lỗi hay câm**.
+
 ```bash
 # Cài Ollama: https://ollama.com
 ollama pull llama3.2:3b
 ollama serve
 ```
 
-Chatbot tự bật khi Ollama đang chạy tại `http://localhost:11434`.
+Khi Ollama chạy tại `http://localhost:11434`, app tự động dùng AI cho các câu hỏi tự do.
 
 ### 5. (Tùy chọn) Chạy Virtual Try-On Server
 

@@ -17,6 +17,8 @@ public interface ProductVariantRepository extends BaseRepository<ProductVariant,
 
     List<ProductVariant> findByProduct(Product product);
 
+    Optional<ProductVariant> findByProductAndSizeAndColor(Product product, String size, String color);
+
     /**
      * Pessimistic lock: SELECT ... FOR UPDATE Dùng khi checkout để tránh race
      * condition overselling

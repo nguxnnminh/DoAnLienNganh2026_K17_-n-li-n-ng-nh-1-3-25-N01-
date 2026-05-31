@@ -3,9 +3,6 @@ package com.shop.clothingstore.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -35,28 +32,9 @@ import com.shop.clothingstore.repository.ProductRepository;
 import com.shop.clothingstore.service.storage.FileStorageService;
 
 /**
- * Orchestrates the Virtual Try-On workflow.
- *
- * <h3>Architecture (v3 — OOTDiffusion)</h3>
- * <ul>
- * <li><b>Primary engine:</b> OOTDiffusion (levihsu/OOTDiffusion HF Space)<br>
- * Processes upper + lower garments in a single session with shared UNet state.
- * No pixel compositing. Global outfit awareness.</li>
- * <li><b>Fallback engine:</b> IDM-VTON (yisol/IDM-VTON HF Space)<br>
- * Two separate calls + segmentation-based compositing (degraded quality).</li>
- * <li><b>Mock mode:</b> Instant offline preview for development.</li>
- * </ul>
- *
- * <h3>Key fixes vs v2</h3>
- * <ul>
- * <li>Fixed {@code @Async} wrapper bug: blocking call now runs inside
- * {@code supplyAsync()} so the thread pool is actually used.</li>
- * <li>Read timeout increased to 600s (OOTDiffusion outfit = two-step
- * session).</li>
- * <li>Python bridge now routes to OOTDiffusion first, IDM-VTON second, mock
- * last.</li>
- * <li>No sequential chaining on the Java side — single /tryon/outfit call.</li>
- * </ul>
+ * Orchestrates the Virtual Try-On workflow via the Python bridge (port 8081):
+ * Replicate IDM-VTON (cloud) with automatic fallback to local CatVTON on GPU.
+ * Full-outfit requests run two passes on the original person and composite them.
  */
 @Service
 public class TryOnService {
@@ -134,15 +112,7 @@ public class TryOnService {
     // ───────────────────────────────────────────────────────────────────
     // USER: Single-garment try-on (async)
     // ───────────────────────────────────────────────────────────────────
-    /**
-     * Async single-garment try-on. Runs on the tryOnExecutor thread pool —
-     * caller gets a CompletableFuture.
-     *
-     * FIX: Previously called generateTryOn() BEFORE wrapping in
-     * completedFuture, meaning the blocking call happened on the caller's
-     * thread, not the executor. Now uses supplyAsync so the executor actually
-     * runs the task.
-     */
+    /** Async single-garment try-on. Runs on the tryOnExecutor thread pool. */
     @Async("tryOnExecutor")
     public CompletableFuture<byte[]> generateTryOnAsync(Path personImagePath, Long productId) {
         return CompletableFuture.supplyAsync(() -> {
@@ -170,14 +140,6 @@ public class TryOnService {
         Path garmentPath = resolveGarmentPath(product.getGarmentProcessedUrl());
 
         byte[] personBytes = Files.readAllBytes(personImagePath);
-
-        // Disk cache: return cached result if this exact (person, product) pair was tried before.
-        Path cachedResult = resolveCachePath(personBytes, productId + ".jpg");
-        if (Files.exists(cachedResult)) {
-            log.info("Try-on cache hit | product={} | file={}", productId, cachedResult.getFileName());
-            return Files.readAllBytes(cachedResult);
-        }
-
         byte[] garmentBytes = Files.readAllBytes(garmentPath);
 
         HttpHeaders headers = new HttpHeaders();
@@ -200,7 +162,6 @@ public class TryOnService {
             byte[] result = response.getBody();
             if (response.getStatusCode().is2xxSuccessful() && result != null) {
                 log.info("Try-on result received | {} bytes", result.length);
-                saveToDiskCache(cachedResult, result);
                 return result;
             }
             throw new IOException("Python bridge returned: " + response.getStatusCode());
@@ -219,7 +180,7 @@ public class TryOnService {
      * Generate a full outfit try-on image (top + bottom combined).
      *
      * <p>
-     * The Python bridge runs IDM-VTON twice using the ORIGINAL person image,
+     * The Python bridge runs CatVTON twice using the ORIGINAL person image,
      * then composites the two results using clothing segmentation. This is the
      * correct approach — not sequential chaining.</p>
      *
@@ -228,13 +189,7 @@ public class TryOnService {
      * @param bottomProductId ID of the bottom garment product (LOWER_BODY)
      * @return bytes of the final composite PNG
      */
-    /**
-     * Async full-outfit try-on (top + bottom).
-     *
-     * FIX: Same @Async wrapper bug fixed as in generateTryOnAsync.
-     * supplyAsync() ensures the blocking OOTDiffusion call runs on the
-     * executor.
-     */
+    /** Async full-outfit try-on (top + bottom). */
     @Async("tryOnExecutor")
     public CompletableFuture<byte[]> generateOutfitTryOnAsync(
             Path personImagePath, Long topProductId, Long bottomProductId) {
@@ -258,13 +213,6 @@ public class TryOnService {
         Path bottomPath = resolveGarmentPath(bottom.getGarmentProcessedUrl());
 
         byte[] personBytes = Files.readAllBytes(personImagePath);
-
-        Path cachedResult = resolveCachePath(personBytes, topProductId + "_" + bottomProductId + ".jpg");
-        if (Files.exists(cachedResult)) {
-            log.info("Outfit try-on cache hit | top={} bottom={}", topProductId, bottomProductId);
-            return Files.readAllBytes(cachedResult);
-        }
-
         byte[] topBytes = Files.readAllBytes(topPath);
         byte[] bottomBytes = Files.readAllBytes(bottomPath);
 
@@ -291,7 +239,6 @@ public class TryOnService {
             byte[] result = response.getBody();
             if (response.getStatusCode().is2xxSuccessful() && result != null) {
                 log.info("Outfit try-on result received | {} bytes", result.length);
-                saveToDiskCache(cachedResult, result);
                 return result;
             }
             throw new IOException("Python bridge returned: " + response.getStatusCode());
@@ -418,40 +365,4 @@ public class TryOnService {
         };
     }
 
-    // ───────────────────────────────────────────────────────────────────
-    // Disk cache helpers
-    // ───────────────────────────────────────────────────────────────────
-
-    /**
-     * Returns the path to the disk-cache file for a given person image + suffix.
-     * Cache key = first-12-chars of MD5(personBytes) + "_" + suffix.
-     * Stored under {upload.dir}/tryon-cache/.
-     */
-    private Path resolveCachePath(byte[] personBytes, String suffix) {
-        String hash = personHash(personBytes);
-        Path cacheDir = Path.of(baseUploadDir, "tryon-cache");
-        return cacheDir.resolve(hash + "_" + suffix);
-    }
-
-    private void saveToDiskCache(Path target, byte[] data) {
-        try {
-            Files.createDirectories(target.getParent());
-            Files.write(target, data);
-            log.debug("Try-on result cached | file={}", target.getFileName());
-        } catch (IOException e) {
-            log.warn("Failed to write try-on disk cache | file={} | {}", target.getFileName(), e.getMessage());
-        }
-    }
-
-    private static String personHash(byte[] personBytes) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(personBytes);
-            // 12 hex chars (6 bytes) — short enough for filenames, collision-risk acceptable for a cache
-            return HexFormat.of().formatHex(digest).substring(0, 12);
-        } catch (NoSuchAlgorithmException e) {
-            // MD5 is guaranteed by the JDK spec — this branch is unreachable
-            throw new IllegalStateException("MD5 not available", e);
-        }
-    }
 }

@@ -24,15 +24,14 @@ public class AsyncConfig {
      * RestTemplate with explicit timeouts for the Python bridge.
      * <ul>
      *   <li>Connect timeout: 10 seconds — fail fast if the bridge is down</li>
-     *   <li>Read timeout: 300 seconds — Local OOTDiffusion outfit = two sequential calls
-     *       on local GPU (no network latency). 300s is generous for full outfit on CPU/GPU.</li>
+     *   <li>Read timeout: 300 seconds — CatVTON outfit = two HF Space calls. 300s covers slow queue.</li>
      * </ul>
      */
     @Bean(name = "tryOnRestTemplate")
     public RestTemplate tryOnRestTemplate() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10_000);  // 10 seconds
-        factory.setReadTimeout(300_000);    // 5 minutes (local OOTDiffusion two sequential calls)
+        factory.setReadTimeout(300_000);    // 5 minutes (CatVTON outfit = two HF Space calls)
         return new RestTemplate(factory);
     }
 

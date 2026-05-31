@@ -1,98 +1,100 @@
 """
-One-time setup: download all OOTDiffusion checkpoints.
-
-Run from python-tryon-server/ directory:
-    python download_models.py
-
-What it downloads:
-  1. levihsu/OOTDiffusion  → OOTDiffusion/checkpoints/checkpoints/  (~8GB)
-       ootd/ootd_hd/   ← half-body UNet (for tops)
-       ootd/ootd_dc/   ← full-body UNet (for bottoms/dress)
-       ootd/vae/       ← VAE
-       humanparsing/   ← ONNX parsing models
-       openpose/       ← body pose model
-  2. openai/clip-vit-large-patch14  → OOTDiffusion/checkpoints/checkpoints/clip-vit-large-patch14/  (~2GB)
+Download CatVTON weights - resumable, no symlinks.
+Run: python download_models.py
 """
+import os
 import sys
 from pathlib import Path
-from huggingface_hub import snapshot_download
 
-SCRIPT_DIR  = Path(__file__).parent
-OOTD_ROOT   = SCRIPT_DIR / "OOTDiffusion"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
-# snapshot_download of levihsu/OOTDiffusion puts files at:
-#   OOTDiffusion/checkpoints/checkpoints/ootd/
-#   OOTDiffusion/checkpoints/checkpoints/humanparsing/
-#   OOTDiffusion/checkpoints/checkpoints/openpose/
-# (double-nested because the HF repo contains a 'checkpoints/' subfolder)
-OUTER_CKPT  = OOTD_ROOT / "checkpoints"
-INNER_CKPT  = OUTER_CKPT / "checkpoints"   # ← main.py's OOTD_CKPT points here
-CLIP_DIR    = INNER_CKPT / "clip-vit-large-patch14"
+BASE_DIR = Path(__file__).parent
+
+# SD Inpainting base model
+SD_DIR = BASE_DIR / "weights" / "stable-diffusion-inpainting"
+# CatVTON attention weights
+CATVTON_DIR = BASE_DIR / "weights" / "CatVTON"
+# VAE
+VAE_DIR = BASE_DIR / "weights" / "sd-vae-ft-mse"
 
 
-def download(repo_id: str, local_dir: Path, desc: str):
-    print(f"\n{'='*60}")
-    print(f"  Downloading: {desc}")
-    print(f"  Source : huggingface.co/{repo_id}")
-    print(f"  Target : {local_dir}")
-    print(f"{'='*60}")
-    local_dir.mkdir(parents=True, exist_ok=True)
-    snapshot_download(
+def download_file(repo_id, filename, local_dir, token=None):
+    from huggingface_hub import hf_hub_download
+    dest = Path(local_dir) / filename
+    if dest.exists() and dest.stat().st_size > 1024:
+        print(f"  skip {filename}")
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    print(f"  downloading {filename}...")
+    hf_hub_download(
         repo_id=repo_id,
+        filename=filename,
         local_dir=str(local_dir),
         local_dir_use_symlinks=False,
+        token=token,
     )
-    print(f"  ✅ Done: {desc}\n")
+    print(f"  done {filename}")
+
+
+def download():
+    try:
+        from huggingface_hub import hf_hub_download, list_repo_files
+    except ImportError:
+        print("pip install huggingface_hub")
+        sys.exit(1)
+
+    token = os.getenv("HF_TOKEN")
+
+    # ── 1. VAE (~335MB) ──────────────────────────────────────────────
+    print("\n[1/3] VAE (stabilityai/sd-vae-ft-mse) ~335MB")
+    for f in ["config.json", "diffusion_pytorch_model.safetensors"]:
+        try:
+            download_file("stabilityai/sd-vae-ft-mse", f, VAE_DIR, token)
+        except Exception as e:
+            print(f"  WARN {f}: {e}")
+
+    # ── 2. SD Inpainting UNet + scheduler (~3.4GB) ────────────────────
+    print("\n[2/3] SD Inpainting (runwayml/stable-diffusion-inpainting) ~3.4GB")
+    sd_files = [
+        "scheduler/scheduler_config.json",
+        "unet/config.json",
+        "unet/diffusion_pytorch_model.bin",
+    ]
+    for f in sd_files:
+        try:
+            download_file("runwayml/stable-diffusion-inpainting", f, SD_DIR, token)
+        except Exception as e:
+            print(f"  WARN {f}: {e}")
+
+    # ── 3. CatVTON attention weights (~900MB) ─────────────────────────
+    print("\n[3/3] CatVTON (zhengchong/CatVTON) ~900MB")
+    try:
+        all_files = list(list_repo_files("zhengchong/CatVTON", token=token))
+    except Exception as e:
+        print(f"Cannot list CatVTON files: {e}")
+        sys.exit(1)
+
+    ok = skip = fail = 0
+    for i, f in enumerate(all_files, 1):
+        try:
+            dest = CATVTON_DIR / f
+            if dest.exists() and dest.stat().st_size > 100:
+                print(f"  [{i}/{len(all_files)}] skip {f}")
+                skip += 1
+                continue
+            download_file("zhengchong/CatVTON", f, CATVTON_DIR, token)
+            ok += 1
+        except KeyboardInterrupt:
+            print(f"\nInterrupted at {i}/{len(all_files)}. Run again to resume.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"  FAIL {f}: {e}")
+            fail += 1
+
+    print(f"\nDone: {ok} downloaded, {skip} skipped, {fail} failed")
+    if fail == 0:
+        print("All weights ready.")
 
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("  OOTDiffusion Model Downloader")
-    print(f"  Checkpoints target: {INNER_CKPT}")
-    print("=" * 60)
-
-    if not OOTD_ROOT.exists():
-        print("\n❌ ERROR: OOTDiffusion repo not found.")
-        print(f"   Expected at: {OOTD_ROOT}")
-        print("   Run first: git clone https://github.com/levihsu/OOTDiffusion OOTDiffusion")
-        sys.exit(1)
-
-    # 1. OOTDiffusion model weights (~8GB)
-    #    This downloads INTO OOTDiffusion/checkpoints/ which creates the
-    #    checkpoints/checkpoints/ double-nesting (because HF repo has checkpoints/ inside it)
-    download(
-        repo_id="levihsu/OOTDiffusion",
-        local_dir=OUTER_CKPT,
-        desc="OOTDiffusion weights (~8GB)"
-    )
-
-    # 2. CLIP ViT-L/14 — required for garment visual encoding
-    download(
-        repo_id="openai/clip-vit-large-patch14",
-        local_dir=CLIP_DIR,
-        desc="CLIP ViT-L/14 (~2GB)"
-    )
-
-    # Verify expected structure exists
-    print("\nVerifying checkpoint structure…")
-    checks = {
-        "OOTDiffusion HD UNet":  INNER_CKPT / "ootd" / "ootd_hd",
-        "OOTDiffusion DC UNet":  INNER_CKPT / "ootd" / "ootd_dc",
-        "Human Parsing (ONNX)":  INNER_CKPT / "humanparsing",
-        "OpenPose":              INNER_CKPT / "openpose",
-        "CLIP ViT":              CLIP_DIR,
-    }
-    all_ok = True
-    for name, path in checks.items():
-        ok = path.exists()
-        print(f"  {'✅' if ok else '❌'} {name}: {path}")
-        if not ok:
-            all_ok = False
-
-    print()
-    if all_ok:
-        print("✅ All models ready. Start the server:")
-        print("   python main.py")
-    else:
-        print("❌ Some checkpoints missing. Re-run this script or check your connection.")
-        sys.exit(1)
+    download()

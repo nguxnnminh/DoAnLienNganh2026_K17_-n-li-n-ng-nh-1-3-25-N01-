@@ -272,7 +272,7 @@
       <div id="studioLoading" style="display:none; text-align:center; padding:20px 0;">
         <div style="width:28px; height:28px; border:1.5px solid #272727; border-top-color:#888;
                     border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
-        <p style="font-size:10px; color:#444; letter-spacing:0.1em;">OOTDiffusion processing… 30–120 seconds</p>
+        <p style="font-size:10px; color:#444; letter-spacing:0.1em;">CatVTON processing… 30–120 seconds</p>
       </div>
 
       <!-- Result -->
@@ -281,6 +281,13 @@
         <div style="border:1px solid #272727; padding:8px; background:#0f0f0f;">
           <img id="studioResultImg" style="width:100%; object-fit:contain;" />
           <p style="font-size:7px; color:#333; margin:6px 0 0; letter-spacing:0.15em; text-transform:uppercase; text-align:center;">AI Generated Preview</p>
+          <a id="studioDownloadBtn" href="#" download="tryon-preview.jpg"
+             style="display:block; margin-top:8px; padding:8px; background:#f5f5f3; color:#0a0a0a;
+                    font-size:7px; letter-spacing:0.2em; text-transform:uppercase; text-align:center;
+                    text-decoration:none; transition:background 0.2s;"
+             onmouseover="this.style.background='#d8d8d4'" onmouseout="this.style.background='#f5f5f3'">
+            Download
+          </a>
         </div>
       </div>
     </div>
@@ -474,34 +481,41 @@
       let endpoint;
 
       if (hasUpper && hasLower) {
-        // Full outfit: OOTDiffusion single session — upper then lower in shared UNet context
+        // Full outfit: top + bottom composited via CatVTON
         formData.append('topProductId',    selectedItems.upper.id);
         formData.append('bottomProductId', selectedItems.lower.id);
         endpoint = '/api/tryon/generate-outfit';
         document.querySelector('#studioLoading p').textContent =
-          'OOTDiffusion outfit (upper + lower, single pass)… 60–180 seconds';
+          'CatVTON outfit (upper + lower)… 60–180 seconds';
       } else {
         // Single garment
         const singleId = hasUpper ? selectedItems.upper.id : selectedItems.lower.id;
         formData.append('productId', singleId);
         endpoint = '/api/tryon/generate';
         document.querySelector('#studioLoading p').textContent =
-          'OOTDiffusion processing… 30–120 seconds';
+          'CatVTON processing… 30–120 seconds';
       }
 
       fetch(endpoint, { method: 'POST', body: formData, headers })
-        .then(r => r.json())
-        .then(data => {
+        .then(async r => {
           document.getElementById('studioLoading').style.display = 'none';
           document.getElementById('studioGenerateBtn').disabled  = false;
           document.getElementById('studioGenerateBtn').style.opacity = '1';
 
-          if (data.resultUrl) {
-            document.getElementById('studioResultImg').src = data.resultUrl + '?t=' + Date.now();
+          if (r.ok && r.headers.get('content-type')?.startsWith('image/')) {
+            const blob = await r.blob();
+            const url  = URL.createObjectURL(blob);
+            const img  = document.getElementById('studioResultImg');
+            if (img._prevObjectUrl) URL.revokeObjectURL(img._prevObjectUrl);
+            img._prevObjectUrl = url;
+            img.src = url;
+            const btn = document.getElementById('studioDownloadBtn');
+            if (btn) btn.href = url;
             document.getElementById('studioResult').style.display = 'block';
             setStudioStatus('Preview generated.');
             window.novaTrack?.('studio_tryon_generate_success');
           } else {
+            const data = await r.json().catch(() => ({}));
             setStudioStatus('Error: ' + (data.error || 'Try-on generation failed'), true);
             window.novaTrack?.('studio_tryon_generate_error');
           }

@@ -104,8 +104,30 @@ mobile-app/ios/Flutter/.last_build_id
 # PYTHON TRY-ON SERVER
 # ────────────────────────────────────────────────────────────────
 python-tryon-server/__pycache__/
+**/__pycache__/
 python-tryon-server/*.pyc
 python-tryon-server/venv/
 python-tryon-server/.venv/
-# OOTDiffusion model weights (~10GB) — see README to clone separately
+python-tryon-server/python          # junk empty file from a stray shell redirect
+
+# Local CatVTON model weights (~4GB) — fetch via `python download_models.py`
+python-tryon-server/weights/
+
+# OOTDiffusion model weights (~10GB) — legacy, no longer used
 python-tryon-server/OOTDiffusion/
+
+# CatVTON source (3rd-party clone, ~38MB, has its own .git) — see README to clone separately
+python-tryon-server/catvton_src/
+
+# Model binaries anywhere — never commit these
+*.pth
+*.pkl
+*.safetensors
+*.bin
+*.onnx
+*.ckpt
+*.gguf
+
+# HuggingFace / Torch caches if they ever land in-repo
+.cache/
+hf_cache/

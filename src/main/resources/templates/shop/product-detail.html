@@ -747,18 +747,25 @@
       if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
 
       fetch('/api/tryon/generate', { method: 'POST', body: formData, headers })
-        .then(r => r.json())
-        .then(data => {
+        .then(async r => {
           clearInterval(stepInterval);
           document.getElementById('tryonLoading').style.display = 'none';
           document.getElementById('tryonGenerateBtn').disabled = false;
 
-          if (data.resultUrl) {
-            document.getElementById('tryonResultImg').src = data.resultUrl + '?t=' + Date.now();
+          if (r.ok && r.headers.get('content-type')?.startsWith('image/')) {
+            const blob = await r.blob();
+            const url  = URL.createObjectURL(blob);
+            const img  = document.getElementById('tryonResultImg');
+            if (img._prevObjectUrl) URL.revokeObjectURL(img._prevObjectUrl);
+            img._prevObjectUrl = url;
+            img.src = url;
+            const btn = document.getElementById('tryonDownloadBtn');
+            if (btn) { btn.href = url; btn.download = 'tryon-preview.jpg'; }
             document.getElementById('tryonResultArea').style.display = 'block';
             setTryOnStatus('Preview generated.');
             window.novaTrack?.('tryon_generate_success', { productId });
           } else {
+            const data = await r.json().catch(() => ({}));
             setTryOnStatus('Error: ' + (data.error || 'Could not generate try-on image.'), true);
             window.novaTrack?.('tryon_generate_error', { productId });
           }
@@ -802,7 +809,7 @@
       <h3 id="tryOnModalTitle" class="font-display text-4xl tracking-wide leading-none text-[#f5f5f3] mb-1">
         Virtual Try-On
       </h3>
-      <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-7">OOTDiffusion &middot; Powered by Nova</p>
+      <p class="text-[0.58rem] tracking-[0.25em] uppercase text-zinc-700 mb-7">CatVTON &middot; Powered by Nova</p>
 
       <div class="tryon-modal-grid">
 
@@ -861,6 +868,12 @@
             <div id="tryonResultArea" style="display:none; text-align:center; width:100%;">
               <img id="tryonResultImg" style="max-height:350px; width:auto; object-fit:contain;" />
               <p class="text-[0.55rem] tracking-widest uppercase text-zinc-800 mt-2">AI Generated Preview</p>
+              <a id="tryonDownloadBtn" href="#"
+                 class="inline-block mt-2 mb-1 min-h-[36px] px-5 bg-[#0a0a0a] text-[#f5f5f3] border-none
+                        font-body text-[0.62rem] tracking-widest uppercase cursor-pointer leading-[36px]
+                        transition-colors duration-200 hover:bg-[#272727] no-underline">
+                Download
+              </a>
               <button type="button" onclick="closeTryOnModal(); document.getElementById('addBtn')?.focus();"
                       class="mt-3 min-h-[44px] w-full bg-[#f5f5f3] text-[#0a0a0a] border-none
                              font-body text-[0.68rem] tracking-widest uppercase cursor-pointer

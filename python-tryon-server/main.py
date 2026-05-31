@@ -1,1354 +1,587 @@
 """
-Virtual Try-On Bridge v5 — HuggingFace Space (PRIMARY) + Local OOTDiffusion (FALLBACK)
+Virtual Try-On Server — port 8081
 
-Priority:
-  1. HuggingFace OOTDiffusion Space API  ← primary, no local GPU needed
-  2. Local OOTDiffusion (cloned repo)    ← auto-fallback when HF quota exhausted
+Two-tier inference (auto-fallback):
+  1. Replicate API (cuuupid/idm-vton) — fast cloud; used while REPLICATE_API_TOKEN
+     has quota. On 402/429 it flips to local (sticky) for the rest of the process.
+  2. Local CatVTON (zhengchong/CatVTON, mix-48k-1024) on GPU — RTX 3050 Ti 4GB fp16,
+     768x1024, VAE slicing/tiling. Default scheduler UniPC @ 20 steps.
 
-Quota Handling:
-  - Detects HF quota/rate-limit errors (429, "exceeded", "rate limit", etc.)
-  - Automatically switches to local inference on quota exhaustion
-  - Logs clearly with timestamps at every mode switch
-  - POST /quota/reset  → retry HF (use after quota resets each month)
-  - GET  /quota/status → see current backend, quota state, call counts
-  - GET  /health       → full system status (both backends)
+Masking: SegFormer human-parser (mattmdjaga/segformer_b2_clothes, ATR 18-class) builds
+a cloth-agnostic mask that protects face/hair/limbs/other-garment. This replaces the
+original AutoMasker (DensePose+SCHP) since detectron2 won't build on Windows.
 
-Configuration env vars:
-  HF_SPACE_ID     - HuggingFace Space ID  (default: "levihsu/OOTDiffusion")
-  HF_TOKEN        - HF API token          (optional, improves rate limits)
-  HF_API_NAME     - Gradio API endpoint   (default: "" = auto-detect)
-                    Auto-detection tries: /predict, /tryon, /run/predict
-                    Override: HF_API_NAME=/predict  (or whatever the Space exposes)
-                    Inspect a Space:  python -c "from gradio_client import Client;
-                                      Client('levihsu/OOTDiffusion').view_api()"
-  USE_HF_PRIMARY  - true/false            (default: true)
-  OOTD_ROOT       - Path to cloned OOTDiffusion repo
-  OOTD_CKPT       - Path to downloaded checkpoints
-  GPU_ID          - GPU device index (0 = first GPU, -1 = CPU)
-  MOCK_INFERENCE  - true/false (dev mode, never use in production)
+Outfit (top + bottom): parse once → derive non-overlapping upper/lower masks → run
+CatVTON twice on the ORIGINAL person → composite each garment region back (NOT chaining).
 
-Startup behavior:
-  - If USE_HF_PRIMARY=true:
-      * Connects to HF Space at startup (fast)
-      * Loads local models in BACKGROUND thread (ready when HF quota runs out)
-  - If USE_HF_PRIMARY=false:
-      * Loads local models eagerly at startup (original behavior)
+Tunable via env: TRYON_STEPS, TRYON_SCHEDULER (unipc|dpm|ddim), TRYON_CFG,
+TRYON_PARSER_DEVICE (cpu|cuda), TRYON_PARSER_MODEL.
 """
 
 import io
 import os
-import sys
-import shutil
-import tempfile
 import time
 import logging
-import threading
-from contextlib import asynccontextmanager
-from datetime import datetime
+import base64
+import asyncio
+import traceback
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-import numpy as np
-from PIL import Image, ImageDraw
+# Load .env
+_env_file = Path(__file__).parent / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
+import httpx
+import replicate
+from replicate.exceptions import ReplicateError
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import Response
+from PIL import Image
 
-# ── App setup ──────────────────────────────────────────────────────────────────
-# Lifespan is defined here (before FastAPI()) so it can be passed to the
-# constructor.  The body calls _do_startup() which is defined later in the
-# file — that's fine in Python because function bodies resolve at call time.
-@asynccontextmanager
-async def _lifespan(_app: FastAPI):
-    await _do_startup()
-    yield  # application runs here; add shutdown logic after yield if needed
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+log = logging.getLogger("tryon-server")
 
-app = FastAPI(title="Virtual Try-On Bridge v5 (HF+Local)", version="5.0.0", lifespan=_lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
+REPLICATE_MODEL = "cuuupid/idm-vton:906425dbca90663ff5427624839572cc56ea7d380343d13e2a4c4b09d3f0c30f"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = logging.getLogger("tryon-v5")
+# CatVTON trained at 768x1024 — keep native res for fidelity (fits 3050Ti 4GB w/ fp16 + VAE slicing)
+INFER_W, INFER_H = 768, 1024
 
-# ── Config ─────────────────────────────────────────────────────────────────────
-MOCK_MODE       = os.environ.get("MOCK_INFERENCE", "false").lower() == "true"
-RESULTS_DIR     = Path("results")
-RESULTS_DIR.mkdir(exist_ok=True)
+# Diffusion steps. CatVTON is an inpaint-concat model → converges fast.
+# With UniPC/DPM++ scheduler, 16-20 steps ≈ DDIM-25 quality. ~2.3s/step on a 3050Ti.
+NUM_STEPS = int(os.getenv("TRYON_STEPS", "20"))
+GUIDANCE = float(os.getenv("TRYON_CFG", "2.5"))
+# Scheduler: 'ddim' (CatVTON default, safe) | 'unipc' | 'dpm' (both converge faster at low steps)
+SCHEDULER = os.getenv("TRYON_SCHEDULER", "unipc").lower()
+# Human-parser device: 'cpu' keeps all 4GB VRAM for diffusion (parse is one-time ~3s).
+PARSER_DEVICE = os.getenv("TRYON_PARSER_DEVICE", "cpu")
+PARSER_MODEL = os.getenv("TRYON_PARSER_MODEL", "mattmdjaga/segformer_b2_clothes")
 
-# HuggingFace Space
-HF_SPACE_ID     = os.environ.get("HF_SPACE_ID",    "levihsu/OOTDiffusion")
-HF_TOKEN        = os.environ.get("HF_TOKEN",        None)
-# Leave empty to auto-detect from the Space's available endpoints.
-# The levihsu/OOTDiffusion Space uses gr.Interface which registers "/predict".
-# Set HF_API_NAME env var to pin a specific name (e.g. "/tryon" for custom Spaces).
-HF_API_NAME     = os.environ.get("HF_API_NAME",    "")
-USE_HF_PRIMARY  = os.environ.get("USE_HF_PRIMARY", "true").lower() == "true"
-
-# Actual API endpoints on levihsu/OOTDiffusion (verified via view_api()):
-#   /process_hd — HD UNet, upper-body only, NO category param
-#   /process_dc — DC UNet, upper/lower/dress, HAS category param
-# These are NOT /predict or /tryon — those names don't exist on this Space.
-_HF_ENDPOINT_HD = "/process_hd"  # upper body
-_HF_ENDPOINT_DC = "/process_dc"  # lower body / dress
-
-# Category string expected by /process_dc
-_HF_DC_CATEGORY = {
-    "upper_body": "Upper-body",
-    "lower_body": "Lower-body",
-    "dresses":    "Dress",
-}
-
-# Local model
-_BRIDGE_DIR     = Path(__file__).parent
-OOTD_ROOT       = Path(os.environ.get("OOTD_ROOT", str(_BRIDGE_DIR / "OOTDiffusion")))
-OOTD_CKPT       = Path(os.environ.get(
-    "OOTD_CKPT",
-    str(OOTD_ROOT / "checkpoints" / "checkpoints")
-))
-GPU_ID          = int(os.environ.get("GPU_ID", "0"))
-
-GARMENT_W, GARMENT_H = 512, 768
-POSE_W,    POSE_H    = 384, 512
-
-# ── Custom error types ─────────────────────────────────────────────────────────
-class ModelNotLoadedError(RuntimeError):
-    """OOTDiffusion repo/checkpoints not found or failed to load."""
-
-class InferenceError(RuntimeError):
-    """Model loaded but inference call failed."""
-
-class QuotaExhaustedError(RuntimeError):
-    """HuggingFace Space quota or rate limit exceeded."""
+_use_local_fallback = False
+_catvton_pipe = None
+_parser = None          # (image_processor, model) for SegFormer human parsing
+_parser_failed = False
+_executor = ThreadPoolExecutor(max_workers=1)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# QUOTA STATE  —  tracks HF quota and active backend
-# ══════════════════════════════════════════════════════════════════════════════
-
-_quota_lock                          = threading.Lock()
-_hf_quota_exhausted: bool           = False
-_hf_quota_since: datetime | None    = None
-
-# Call counters (informational, displayed in /quota/status and /health)
-_stats = {
-    "hf_ok":      0,   # successful HF calls
-    "hf_err":     0,   # non-quota HF errors
-    "hf_quota":   0,   # quota exhaustion events
-    "local_ok":   0,   # successful local calls
-    "local_err":  0,   # local inference errors
-}
+# ── CatVTON local ─────────────────────────────────────────────────────────────
+CATVTON_SRC = str(Path(__file__).parent / "catvton_src")
 
 
-# Keywords that identify quota / rate-limit responses from HF Spaces
-_QUOTA_KEYWORDS = [
-    "429",
-    "quota",
-    "rate limit",
-    "rate_limit",
-    "too many requests",
-    "exceeded your",
-    "limit reached",
-    "usage limit",
-    "daily limit",
-    "monthly limit",
-    "free tier",
-    "gpuquota",
-    "resource_exhausted",
-    "out of capacity",
-    "no capacity",
-]
+def _load_catvton():
+    global _catvton_pipe
+    if _catvton_pipe is not None:
+        return _catvton_pipe
 
+    import sys
+    import torch
+    if CATVTON_SRC not in sys.path:
+        sys.path.insert(0, CATVTON_SRC)
 
-def _is_quota_error(exc: Exception) -> bool:
-    """Return True if the exception looks like an HF quota/rate-limit error."""
-    msg = str(exc).lower()
-    return any(k in msg for k in _QUOTA_KEYWORDS)
+    # Faster conv autotune for fixed input size (we always run 768x1024)
+    torch.backends.cudnn.benchmark = True
 
+    from model.pipeline import CatVTONPipeline
 
-def _mark_quota_exhausted(exc: Exception):
-    """Record that HF quota is exhausted and log the mode switch."""
-    global _hf_quota_exhausted, _hf_quota_since
-    with _quota_lock:
-        _hf_quota_exhausted = True
-        _hf_quota_since     = datetime.now()
-        _stats["hf_quota"] += 1
+    weights_dir = Path(__file__).parent / "weights"
+    sd_path = str(weights_dir / "stable-diffusion-inpainting")
+    catvton_path = str(weights_dir / "CatVTON")
 
-    logger.warning(
-        "\n"
-        "╔══════════════════════════════════════════════════════════════╗\n"
-        "║   ⚠️  HuggingFace QUOTA EXHAUSTED — switching to LOCAL      ║\n"
-        "╠══════════════════════════════════════════════════════════════╣\n"
-        "║  Time : %s                                   ║\n"
-        "║  Error: %s\n"
-        "║  All future requests → local OOTDiffusion inference          ║\n"
-        "║  To retry HF:  POST /quota/reset                            ║\n"
-        "╚══════════════════════════════════════════════════════════════╝",
-        _hf_quota_since.strftime("%Y-%m-%d %H:%M:%S"),
-        str(exc)[:80],
+    log.info("Loading CatVTON | sd=%s | attn=%s", sd_path, catvton_path)
+    pipe = CatVTONPipeline(
+        base_ckpt=sd_path,
+        attn_ckpt=catvton_path,
+        attn_ckpt_version="mix",
+        weight_dtype=torch.float16,
+        device="cuda",
+        skip_safety_check=True,
+        use_tf32=True,
     )
+    # VRAM relief on 4GB: slice/tile the VAE so the 768x2048 concat decode doesn't spike OOM
+    try:
+        pipe.vae.enable_slicing()
+        pipe.vae.enable_tiling()
+    except Exception as e:
+        log.warning("VAE slicing/tiling unavailable: %s", e)
 
-
-def _active_backend() -> str:
-    """Return which backend is currently active."""
-    if MOCK_MODE:
-        return "mock"
-    if not USE_HF_PRIMARY:
-        return "local"
-    if _hf_quota_exhausted:
-        return "local (hf_quota_exhausted)"
-    return "huggingface"
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# HUGGINGFACE SPACE BACKEND
-# ══════════════════════════════════════════════════════════════════════════════
-
-_hf_client        = None
-_hf_client_lock   = threading.Lock()
-_hf_connect_error = None   # cached connection error
-
-
-def _get_hf_client():
-    """
-    Return a cached gradio_client.Client connected to HF_SPACE_ID.
-    Thread-safe, lazy-initialized.
-    """
-    global _hf_client, _hf_connect_error
-
-    if _hf_client is not None:
-        return _hf_client
-    if _hf_connect_error is not None:
-        raise _hf_connect_error
-
-    with _hf_client_lock:
-        if _hf_client is not None:
-            return _hf_client
+    # Faster scheduler: UniPC/DPM++ reach DDIM-25 quality in ~16-20 steps (drop-in,
+    # same step() API the CatVTON pipeline uses).
+    if SCHEDULER in ("unipc", "dpm", "dpm++"):
         try:
-            from gradio_client import Client
-            logger.info("🌐 Connecting to HuggingFace Space: %s …", HF_SPACE_ID)
-            kwargs = {"hf_token": HF_TOKEN} if HF_TOKEN else {}
-            _hf_client = Client(HF_SPACE_ID, **kwargs)
-            logger.info("✅ HuggingFace Space connected: %s", HF_SPACE_ID)
-            return _hf_client
-        except ImportError:
-            err = ImportError("gradio_client not installed. Run: pip install gradio_client")
-            _hf_connect_error = err
-            raise err
+            cfg = pipe.noise_scheduler.config
+            if SCHEDULER == "unipc":
+                from diffusers import UniPCMultistepScheduler
+                pipe.noise_scheduler = UniPCMultistepScheduler.from_config(cfg)
+            else:
+                from diffusers import DPMSolverMultistepScheduler
+                pipe.noise_scheduler = DPMSolverMultistepScheduler.from_config(
+                    cfg, algorithm_type="dpmsolver++")
+            log.info("Scheduler → %s", SCHEDULER)
         except Exception as e:
-            err = RuntimeError(f"Failed to connect to HF Space '{HF_SPACE_ID}': {e}")
-            _hf_connect_error = err
-            logger.error("❌ HF Space connection failed: %s", e)
-            raise err
+            log.warning("Scheduler swap failed (%s) — keeping DDIM", e)
+
+    _catvton_pipe = pipe
+    log.info("CatVTON loaded | steps=%d cfg=%.1f sched=%s parser=%s",
+             NUM_STEPS, GUIDANCE, SCHEDULER, PARSER_DEVICE)
+    return _catvton_pipe
 
 
-def _extract_hf_gallery(result) -> str:
-    """
-    Extract the first image filepath from a Gradio Gallery output.
+# ── Human parsing (SegFormer ATR) → cloth-agnostic mask ─────────────────────────
+# detectron2/DensePose won't build on Windows, so we replace CatVTON's AutoMasker
+# with a SegFormer clothes-parser. Its 18 labels ARE the ATR set, so we can build a
+# body-following agnostic mask that protects face/hair/limbs/other-garment.
+ATR = {
+    "Background": 0, "Hat": 1, "Hair": 2, "Sunglasses": 3, "Upper-clothes": 4,
+    "Skirt": 5, "Pants": 6, "Dress": 7, "Belt": 8, "Left-shoe": 9, "Right-shoe": 10,
+    "Face": 11, "Left-leg": 12, "Right-leg": 13, "Left-arm": 14, "Right-arm": 15,
+    "Bag": 16, "Scarf": 17,
+}
+# Regions to REPAINT (the garment footprint) per try-on category
+MASK_PARTS = {
+    "upper_body": ["Upper-clothes", "Dress", "Belt"],
+    "lower_body": ["Pants", "Skirt", "Dress", "Left-leg", "Right-leg"],
+    "dresses":    ["Upper-clothes", "Dress", "Skirt", "Pants", "Belt", "Left-leg", "Right-leg"],
+}
+# Regions to FORCE-KEEP (never paint over) per category
+PROTECT_PARTS = {
+    "upper_body": ["Face", "Hair", "Hat", "Sunglasses", "Pants", "Skirt",
+                   "Left-leg", "Right-leg", "Left-shoe", "Right-shoe", "Bag"],
+    "lower_body": ["Face", "Hair", "Hat", "Sunglasses", "Upper-clothes",
+                   "Left-arm", "Right-arm", "Left-shoe", "Right-shoe", "Bag", "Scarf"],
+    "dresses":    ["Face", "Hair", "Hat", "Sunglasses", "Left-shoe", "Right-shoe", "Bag"],
+}
 
-    The Space returns: List[Dict(image: filepath, caption: str | None)]
-    Older gradio_client versions return: List[Tuple(filepath, caption)]
-    Handle both, plus bare filepath strings.
-    """
-    if not result:
-        raise InferenceError("HF Space returned an empty gallery")
 
-    item = result[0]
+def _load_parser():
+    global _parser, _parser_failed
+    if _parser is not None or _parser_failed:
+        return _parser
+    try:
+        import torch
+        from transformers import AutoImageProcessor, SegformerForSemanticSegmentation
+        log.info("Loading human parser | %s on %s", PARSER_MODEL, PARSER_DEVICE)
+        proc = AutoImageProcessor.from_pretrained(PARSER_MODEL)
+        model = SegformerForSemanticSegmentation.from_pretrained(PARSER_MODEL).to(PARSER_DEVICE).eval()
+        _parser = (proc, model)
+        log.info("Human parser loaded")
+    except Exception as e:
+        log.warning("Parser load failed (%s) — falling back to rectangle masks", e)
+        _parser_failed = True
+    return _parser
 
-    if isinstance(item, dict):
-        path = item.get("image") or item.get("path") or item.get("name")
-    elif isinstance(item, (list, tuple)):
-        path = item[0]
-    elif isinstance(item, str):
-        path = item
+
+def _human_parse(person_img: Image.Image):
+    """Return an HxW uint8 label map (ATR classes) aligned to person_img, or None."""
+    parser = _load_parser()
+    if parser is None:
+        return None
+    import torch
+    proc, model = parser
+    inputs = proc(images=person_img, return_tensors="pt").to(PARSER_DEVICE)
+    with torch.no_grad():
+        logits = model(**inputs).logits  # [1, C, h/4, w/4]
+    up = torch.nn.functional.interpolate(
+        logits, size=(person_img.height, person_img.width), mode="bilinear", align_corners=False
+    )
+    return up.argmax(dim=1)[0].to("cpu").numpy().astype("uint8")
+
+
+def _rect_mask(w: int, h: int, category: str) -> Image.Image:
+    """Last-resort fallback when the parser is unavailable."""
+    from PIL import ImageDraw, ImageFilter
+    mask = Image.new("L", (w, h), 0)
+    draw = ImageDraw.Draw(mask)
+    if category == "upper_body":
+        draw.rectangle([int(w * 0.12), int(h * 0.18), int(w * 0.88), int(h * 0.60)], fill=255)
+    elif category == "lower_body":
+        draw.rectangle([int(w * 0.15), int(h * 0.48), int(w * 0.85), int(h * 0.97)], fill=255)
     else:
-        raise InferenceError(f"Unexpected gallery item type: {type(item)!r}")
-
-    if not path:
-        raise InferenceError("HF Space gallery item has no image path")
-
-    return str(path)
-
-
-def _run_hf_ootd(
-    person_path: str,
-    garment_path: str,
-    garment_description: str = "a garment",   # kept for API compat, unused by the Space
-    category: str = "upper_body",
-    denoise_steps: int = 20,
-    seed: int = -1,
-) -> str:
-    """
-    Run OOTDiffusion via HuggingFace Space API.
-    Returns local path to the saved result PNG.
-
-    Actual Space endpoints (verified via view_api()):
-
-      /process_hd  — HD UNet, upper-body only:
-        vton_img, garm_img, n_samples, n_steps, image_scale, seed
-        → Gallery[Dict(image, caption)]
-
-      /process_dc  — DC UNet, upper / lower / dress:
-        vton_img, garm_img, category, n_samples, n_steps, image_scale, seed
-        category: 'Upper-body' | 'Lower-body' | 'Dress'
-        → Gallery[Dict(image, caption)]
-
-    Routing:
-      upper_body → /process_hd   (better quality for tops)
-      lower_body → /process_dc   (DC UNet required for bottoms)
-      dresses    → /process_dc
-    """
-    try:
-        from gradio_client import handle_file
-    except ImportError:
-        raise ImportError("gradio_client not installed. Run: pip install gradio_client")
-
-    client = _get_hf_client()
-    _seed  = seed if seed >= 0 else int(time.time() * 1000) % 2147483647
-
-    # Shared params for both endpoints
-    common = dict(
-        vton_img=handle_file(person_path),
-        garm_img=handle_file(garment_path),
-        n_samples=1,
-        n_steps=float(denoise_steps),   # Gradio slider expects float
-        image_scale=2.0,
-        seed=float(_seed),
-    )
-
-    try:
-        if category == "upper_body":
-            logger.info("🌐 HF /process_hd | steps=%d | seed=%d", denoise_steps, _seed)
-            result = client.predict(**common, api_name=_HF_ENDPOINT_HD)
-        else:
-            hf_cat = _HF_DC_CATEGORY.get(category, "Lower-body")
-            logger.info("🌐 HF /process_dc | category=%s | steps=%d | seed=%d",
-                        hf_cat, denoise_steps, _seed)
-            result = client.predict(**common, category=hf_cat, api_name=_HF_ENDPOINT_DC)
-
-    except Exception as e:
-        if _is_quota_error(e):
-            raise QuotaExhaustedError(str(e)) from e
-        with _quota_lock:
-            _stats["hf_err"] += 1
-        raise InferenceError(f"HF Space inference failed: {e}") from e
-
-    # Parse Gallery output and copy to our results dir
-    hf_img_path = _extract_hf_gallery(result)
-    out_path    = str(RESULTS_DIR / f"hf_{category}_{int(time.time() * 1000)}.png")
-    shutil.copy2(hf_img_path, out_path)
-
-    with _quota_lock:
-        _stats["hf_ok"] += 1
-
-    logger.info("✅ HF Space complete → %s", out_path)
-    return out_path
-
-
-def _run_hf_outfit(
-    person_path: str,
-    top_path: str,
-    bottom_path: str,
-    denoise_steps: int = 20,
-    seed: int = -1,
-) -> str:
-    """
-    Full outfit via HF Space:
-      Step 1 — /process_hd: person + top    → result_upper
-      Step 2 — /process_dc: result_upper + bottom → final outfit
-    """
-    logger.info("🌐 HF Space outfit — step 1/2: upper garment (/process_hd)…")
-    result_upper = _run_hf_ootd(
-        person_path=person_path,
-        garment_path=top_path,
-        category="upper_body",
-        denoise_steps=denoise_steps,
-        seed=seed,
-    )
-
-    logger.info("🌐 HF Space outfit — step 2/2: lower garment on upper result…")
-    result_outfit = None
-    try:
-        result_outfit = _run_hf_ootd(
-            person_path=result_upper,
-            garment_path=bottom_path,
-            garment_description="lower body garment",
-            category="lower_body",
-            denoise_steps=denoise_steps,
-            seed=(seed + 1) if seed >= 0 else -1,
-        )
-    finally:
-        # Clean up intermediate result regardless of success/failure
-        try:
-            os.unlink(result_upper)
-        except OSError:
-            pass
-
-    return result_outfit
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# LOCAL OOTDIFFUSION BACKEND  (unchanged from v4)
-# ══════════════════════════════════════════════════════════════════════════════
-
-_ootd_model         = None
-_openpose_model     = None
-_parsing_model      = None
-_model_load_err     = None
-
-# Used when HF is primary — local models load in background so they're
-# ready when quota runs out (avoids a 60-second cold-start on first fallback)
-_local_ready_event  = threading.Event()
-_local_loading      = False
-
-
-def _add_ootd_to_path():
-    """Insert OOTDiffusion directories into sys.path so imports work."""
-    run_dir  = str(OOTD_ROOT / "run")
-    ootd_dir = str(OOTD_ROOT)
-    for d in [ootd_dir, run_dir]:
-        if d not in sys.path:
-            sys.path.insert(0, d)
-
-
-def _load_models():
-    """
-    Load OOTDiffusion + OpenPose + HumanParsing models.
-    Results are cached globally — only called once per process.
-    Raises ModelNotLoadedError with a clear message if anything is missing.
-    """
-    global _ootd_model, _openpose_model, _parsing_model, _model_load_err
-
-    if _ootd_model is not None:
-        return  # Already loaded
-
-    if _model_load_err is not None:
-        raise _model_load_err  # Don't retry a failed load
-
-    if MOCK_MODE:
-        logger.info("MOCK_INFERENCE=true — skipping model load")
-        return
-
-    if not OOTD_ROOT.exists():
-        err = ModelNotLoadedError(
-            f"OOTDiffusion repo not found at {OOTD_ROOT}. "
-            f"Run: git clone https://github.com/levihsu/OOTDiffusion {OOTD_ROOT}"
-        )
-        _model_load_err = err
-        raise err
-
-    if not OOTD_CKPT.exists() or not (OOTD_CKPT / "ootd").exists():
-        err = ModelNotLoadedError(
-            f"OOTDiffusion checkpoints not found at {OOTD_CKPT}. "
-            "Expected: {OOTD_CKPT}/ootd/, /humanparsing/, /openpose/. "
-            "Run: python download_models.py"
-        )
-        _model_load_err = err
-        raise err
-
-    try:
-        _add_ootd_to_path()
-        _patch_checkpoint_paths()
-
-        logger.info("📦 Loading OOTDiffusion models from %s (GPU %d)…", OOTD_ROOT, GPU_ID)
-
-        from preprocess.openpose.run_openpose import OpenPose
-        from preprocess.humanparsing.run_parsing import Parsing
-        from ootd.inference_ootd_hd import OOTDiffusionHD
-
-        _openpose_model = OpenPose(GPU_ID)
-        _parsing_model  = Parsing(GPU_ID)
-        _ootd_model     = OOTDiffusionHD(GPU_ID)
-
-        # ── VRAM optimizations (tiered for RTX 3050 Ti / 4 GB) ───────────────
-        # OOTDiffusion HD at FP16 needs ~4.3 GB without xformers.
-        # With xformers + VAE slicing the footprint drops to ~3.0 GB — fits in 4 GB.
-        # Tiers applied in order (each is additive):
-        #   1. FP16          — mandatory for 4 GB, halves VRAM vs FP32
-        #   2. xformers      — -25 % VRAM, +speed (best option if available)
-        #      OR attention_slicing(1)  — slower but universally supported
-        #   3. VAE slicing   — reduces decode peak, essentially free
-        #   4. VAE tiling    — extra safety for large resolutions
-        #   5. model_cpu_offload — last resort if xformers unavailable & VRAM < 4.5 GB
-        try:
-            import torch
-
-            # Detect GPU capabilities
-            if torch.cuda.is_available() and GPU_ID >= 0:
-                props   = torch.cuda.get_device_properties(GPU_ID)
-                vram_gb = props.total_memory / 1024 ** 3
-                logger.info("🖥️  GPU: %s | VRAM: %.1f GB", props.name, vram_gb)
-            else:
-                vram_gb = 0.0
-
-            # cuDNN auto-tuner — speeds up repeated same-size inferences
-            torch.backends.cudnn.benchmark = True
-
-            if hasattr(_ootd_model, "pipe"):
-                pipe = _ootd_model.pipe
-
-                # Tier 1 — FP16
-                try:
-                    pipe.to("cuda", torch_dtype=torch.float16)
-                    logger.info("✅ FP16 enabled")
-                except Exception as e:
-                    logger.warning("FP16 failed: %s", e)
-
-                # Tier 2 — xformers (preferred)
-                xformers_ok = False
-                try:
-                    pipe.enable_xformers_memory_efficient_attention()
-                    logger.info("✅ xformers memory-efficient attention enabled")
-                    xformers_ok = True
-                except Exception:
-                    logger.warning("xformers unavailable — using attention slicing")
-                    try:
-                        # slice_size=1 is the most aggressive (lowest VRAM peak)
-                        pipe.enable_attention_slicing(slice_size=1)
-                        logger.info("✅ Attention slicing (slice_size=1) enabled")
-                    except Exception as e:
-                        logger.warning("Attention slicing failed: %s", e)
-
-                # Tier 3 — VAE slicing (reduces decode peak, no quality loss)
-                try:
-                    pipe.enable_vae_slicing()
-                    logger.info("✅ VAE slicing enabled")
-                except AttributeError:
-                    pass  # diffusers < 0.18, skip silently
-
-                # Tier 4 — VAE tiling (extra guard for large resolutions)
-                try:
-                    pipe.enable_vae_tiling()
-                    logger.info("✅ VAE tiling enabled")
-                except AttributeError:
-                    pass  # diffusers < 0.20, skip silently
-
-                # Tier 5 — model CPU offload (last resort: VRAM < 4.5 GB + no xformers)
-                # Keeps ~2.5 GB VRAM but is 20-30 % slower per inference.
-                if 0 < vram_gb < 4.5 and not xformers_ok:
-                    try:
-                        pipe.enable_model_cpu_offload(gpu_id=GPU_ID)
-                        logger.info(
-                            "✅ Model CPU offload enabled "
-                            "(VRAM %.1f GB < 4.5 GB, no xformers)", vram_gb,
-                        )
-                    except Exception as e:
-                        logger.warning("CPU offload failed: %s", e)
-
-                # Report final VRAM reservation
-                if vram_gb > 0:
-                    reserved = torch.cuda.memory_reserved(GPU_ID) / 1024 ** 3
-                    logger.info(
-                        "📊 VRAM reserved after optimizations: %.2f / %.1f GB (%.0f %%)",
-                        reserved, vram_gb, reserved / vram_gb * 100,
-                    )
-
-        except Exception as opt_err:
-            logger.warning("VRAM optimization error (inference will still proceed): %s", opt_err)
-
-        _local_ready_event.set()
-        logger.info("✅ Local OOTDiffusion models loaded — local fallback READY")
-
-    except Exception as e:
-        import traceback
-        logger.error("Full traceback:\n%s", traceback.format_exc())
-        err = ModelNotLoadedError(f"Failed to load OOTDiffusion models: {e}")
-        _model_load_err = err
-        _local_ready_event.set()  # unblock any waiters even on failure
-        raise err
-
-
-def _patch_checkpoint_paths():
-    """
-    OOTDiffusion inference modules hardcode checkpoint paths as '../checkpoints/...'
-    Patch those globals to point to our actual OOTD_CKPT location.
-    """
-    import importlib.util
-
-    ootd_hd_path = str(OOTD_ROOT / "ootd" / "inference_ootd_hd.py")
-    if not Path(ootd_hd_path).exists():
-        raise ModelNotLoadedError(
-            f"inference_ootd_hd.py not found at {ootd_hd_path}. "
-            "Is the OOTDiffusion repo cloned correctly?"
-        )
-
-    clip_candidates = [
-        OOTD_CKPT / "clip-vit-large-patch14",
-        OOTD_ROOT / "checkpoints" / "clip-vit-large-patch14",
-    ]
-    clip_path = next((p for p in clip_candidates if p.exists()), clip_candidates[0])
-
-    # HD model (upper body)
-    spec = importlib.util.spec_from_file_location("ootd.inference_ootd_hd", ootd_hd_path)
-    mod  = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    mod.VIT_PATH   = str(clip_path)
-    mod.VAE_PATH   = str(OOTD_CKPT / "ootd")
-    mod.UNET_PATH  = str(OOTD_CKPT / "ootd" / "ootd_hd" / "checkpoint-36000")
-    mod.MODEL_PATH = str(OOTD_CKPT / "ootd")
-    sys.modules["ootd.inference_ootd_hd"] = mod
-    logger.info("Patched HD paths → VIT=%s | UNET=%s", clip_path, OOTD_CKPT / "ootd" / "ootd_hd")
-
-    # DC model (lower body / full outfit)
-    ootd_dc_path = str(OOTD_ROOT / "ootd" / "inference_ootd_dc.py")
-    if Path(ootd_dc_path).exists():
-        spec_dc = importlib.util.spec_from_file_location("ootd.inference_ootd_dc", ootd_dc_path)
-        mod_dc  = importlib.util.module_from_spec(spec_dc)
-        spec_dc.loader.exec_module(mod_dc)
-        mod_dc.VIT_PATH   = str(clip_path)
-        mod_dc.VAE_PATH   = str(OOTD_CKPT / "ootd")
-        mod_dc.UNET_PATH  = str(OOTD_CKPT / "ootd" / "ootd_dc" / "checkpoint-36000")
-        mod_dc.MODEL_PATH = str(OOTD_CKPT / "ootd")
-        sys.modules["ootd.inference_ootd_dc"] = mod_dc
-        logger.info("Patched DC paths → UNET=%s", OOTD_CKPT / "ootd" / "ootd_dc")
-
-
-def _run_local_ootd(
-    person_path: str,
-    garment_path: str,
-    category: str,
-    model_type: str = "hd",
-    num_steps: int  = 20,
-    image_scale: float = 2.0,
-    seed: int = -1,
-) -> str:
-    """
-    Run local OOTDiffusion inference.
-    category: 'upper_body' | 'lower_body' | 'dresses'
-    model_type: 'hd' (upper only) | 'dc' (lower/dress)
-    """
-    _load_models()
-
-    from utils_ootd import get_mask_location
-
-    _util_to_model = {
-        "upper_body": "upperbody",
-        "lower_body": "lowerbody",
-        "dresses":    "dress",
-    }
-    if category not in _util_to_model:
-        raise InferenceError(f"Invalid category '{category}'. Use: upper_body | lower_body | dresses")
-    model_category = _util_to_model[category]
-
-    if model_type == "hd" and category != "upper_body":
-        raise InferenceError(
-            "model_type='hd' only supports category='upper_body'. "
-            "Use model_type='dc' for lower_body or dresses."
-        )
-
-    logger.info(
-        "🖥️  Local OOTDiffusion | model_type=%s | category=%s | steps=%d | scale=%.1f | seed=%d",
-        model_type, category, num_steps, image_scale, seed
-    )
-
-    try:
-        cloth_img = Image.open(garment_path).convert("RGB").resize(
-            (GARMENT_W, GARMENT_H), Image.LANCZOS
-        )
-        model_img = Image.open(person_path).convert("RGB").resize(
-            (GARMENT_W, GARMENT_H), Image.LANCZOS
-        )
-
-        logger.info("Running OpenPose…")
-        keypoints = _openpose_model(model_img.resize((POSE_W, POSE_H)))
-
-        logger.info("Running HumanParsing…")
-        model_parse, _ = _parsing_model(model_img.resize((POSE_W, POSE_H)))
-
-        mask, mask_gray = get_mask_location(model_type, category, model_parse, keypoints)
-        mask      = mask.resize((GARMENT_W, GARMENT_H), Image.NEAREST)
-        mask_gray = mask_gray.resize((GARMENT_W, GARMENT_H), Image.NEAREST)
-
-        masked_vton = Image.composite(mask_gray, model_img, mask)
-
-        logger.info("Running OOTDiffusion denoising (%d steps)…", num_steps)
-        images = _ootd_model(
-            model_type=model_type,
-            category=model_category,
-            image_garm=cloth_img,
-            image_vton=masked_vton,
-            mask=mask,
-            image_ori=model_img,
-            num_samples=1,
-            num_steps=num_steps,
-            image_scale=image_scale,
-            seed=seed,
-        )
-
-        if not images:
-            raise InferenceError("OOTDiffusion returned empty image list")
-
-        result_path = str(RESULTS_DIR / f"local_{category}_{int(time.time() * 1000)}.png")
-        images[0].save(result_path, "PNG")
-
-        with _quota_lock:
-            _stats["local_ok"] += 1
-
-        logger.info("✅ Local inference complete → %s", result_path)
-
-        try:
-            import torch
-            torch.cuda.empty_cache()
-        except Exception:
-            pass
-
-        return result_path
-
-    except (ModelNotLoadedError, InferenceError):
-        raise
-    except Exception as e:
-        with _quota_lock:
-            _stats["local_err"] += 1
-        raise InferenceError(f"Local OOTDiffusion inference failed: {e}") from e
-
-
-def _run_outfit_local(
-    person_path: str,
-    top_path: str,
-    bottom_path: str,
-    num_steps: int = 20,
-    image_scale: float = 2.0,
-    seed: int = -1,
-) -> str:
-    """
-    Full outfit via two sequential local OOTDiffusion calls.
-    Upper result feeds as person image for lower — same GPU, same session.
-    """
-    _load_models()
-
-    logger.info("🖥️  Local outfit — step 1/2: upper garment (HD)…")
-    result_upper = _run_local_ootd(
-        person_path=person_path,
-        garment_path=top_path,
-        category="upper_body",
-        model_type="hd",
-        num_steps=num_steps,
-        image_scale=image_scale,
-        seed=seed,
-    )
-
-    logger.info("🖥️  Local outfit — step 2/2: lower garment (DC) on upper result…")
-    result_outfit = None
-    try:
-        result_outfit = _run_local_ootd(
-            person_path=result_upper,
-            garment_path=bottom_path,
-            category="lower_body",
-            model_type="dc",
-            num_steps=num_steps,
-            image_scale=image_scale,
-            seed=seed + 1,
-        )
-    finally:
-        try:
-            os.unlink(result_upper)
-        except OSError:
-            pass
-
-    return result_outfit
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# SMART ROUTING  —  HF primary → local fallback
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _wait_for_local_ready(timeout: float = 120.0):
-    """
-    If local models are loading in background, wait up to `timeout` seconds.
-    Raises ModelNotLoadedError if they never finished loading.
-    """
-    global _local_loading
-    if _local_loading and not _local_ready_event.is_set():
-        logger.info("⏳ Waiting for local models to finish loading (HF quota just hit)…")
-        _local_ready_event.wait(timeout=timeout)
-
-    if _model_load_err is not None:
-        raise _model_load_err
-
-
-def _local_is_available() -> bool:
-    """True if local OOTDiffusion is loaded or can be loaded (repo exists)."""
-    return _ootd_model is not None or OOTD_ROOT.exists()
-
-
-def _route_ootd(
-    person_path: str,
-    garment_path: str,
-    garment_description: str = "a garment",
-    category: str = "upper_body",
-    denoise_steps: int = 20,
-    seed: int = -1,
-) -> tuple[str, str]:
-    """
-    Smart-route a single-garment try-on request.
-    Returns (result_path, backend_name).
-
-    Routing logic:
-      1. MOCK_MODE → offline mock
-      2. USE_HF_PRIMARY=true AND quota not exhausted → try HF
-           QuotaExhaustedError  → mark quota permanently, fall through to local
-           ImportError          → gradio_client missing, hard-fail (can't fix at runtime)
-           InferenceError / any → log + fall through to local if available, else re-raise
-      3. Local (primary when USE_HF_PRIMARY=false, or fallback after any HF failure)
-    """
-    if MOCK_MODE:
-        return _generate_mock(person_path, garment_path), "mock"
-
-    if USE_HF_PRIMARY and not _hf_quota_exhausted:
-        try:
-            result = _run_hf_ootd(
-                person_path=person_path,
-                garment_path=garment_path,
-                garment_description=garment_description,
-                category=category,
-                denoise_steps=denoise_steps,
-                seed=seed,
-            )
-            return result, "huggingface"
-
-        except QuotaExhaustedError as qe:
-            _mark_quota_exhausted(qe)
-            # Fall through to local permanently
-
-        except ImportError as ie:
-            # gradio_client not installed — cannot use HF at all
-            raise InferenceError(
-                f"gradio_client is not installed. Run: pip install gradio_client\n{ie}"
-            ) from ie
-
-        except Exception as hf_err:
-            # Any other HF failure (wrong API name, network error, model error, etc.)
-            # Fall back to local if available; otherwise surface the error.
-            if _local_is_available():
-                logger.warning(
-                    "⚠️  HF Space failed — falling back to local for this request.\n"
-                    "    Reason: %s", hf_err,
-                )
-                with _quota_lock:
-                    _stats["hf_err"] += 1
-                # Fall through to local below
-            else:
-                raise InferenceError(
-                    f"HF Space failed and no local OOTDiffusion available: {hf_err}"
-                ) from hf_err
-
-    # ── Local inference (fallback or primary) ──────────────────────────────────
-    if _hf_quota_exhausted or USE_HF_PRIMARY:
-        _wait_for_local_ready()
-        if _hf_quota_exhausted:
-            logger.info(
-                "🔄 LOCAL FALLBACK | HF quota exhausted since %s",
-                _hf_quota_since.strftime("%Y-%m-%d %H:%M:%S") if _hf_quota_since else "unknown",
-            )
-
-    model_type = "hd" if category == "upper_body" else "dc"
-    result = _run_local_ootd(
-        person_path=person_path,
-        garment_path=garment_path,
-        category=category,
-        model_type=model_type,
-        num_steps=denoise_steps,
-        seed=seed,
-    )
-    return result, "local"
-
-
-def _route_outfit(
-    person_path: str,
-    top_path: str,
-    bottom_path: str,
-    denoise_steps: int = 20,
-    seed: int = -1,
-) -> tuple[str, str]:
-    """
-    Smart-route a full outfit (top + bottom) request.
-    Returns (result_path, backend_name).
-    Same fallback logic as _route_ootd.
-    """
-    if MOCK_MODE:
-        return _generate_mock(person_path, top_path, bottom_path), "mock"
-
-    if USE_HF_PRIMARY and not _hf_quota_exhausted:
-        try:
-            result = _run_hf_outfit(
-                person_path=person_path,
-                top_path=top_path,
-                bottom_path=bottom_path,
-                denoise_steps=denoise_steps,
-                seed=seed,
-            )
-            return result, "huggingface"
-
-        except QuotaExhaustedError as qe:
-            _mark_quota_exhausted(qe)
-            # Fall through to local permanently
-
-        except ImportError as ie:
-            raise InferenceError(
-                f"gradio_client is not installed. Run: pip install gradio_client\n{ie}"
-            ) from ie
-
-        except Exception as hf_err:
-            if _local_is_available():
-                logger.warning(
-                    "⚠️  HF Space failed (outfit) — falling back to local for this request.\n"
-                    "    Reason: %s", hf_err,
-                )
-                with _quota_lock:
-                    _stats["hf_err"] += 1
-                # Fall through to local below
-            else:
-                raise InferenceError(
-                    f"HF Space failed and no local OOTDiffusion available: {hf_err}"
-                ) from hf_err
-
-    # ── Local inference ────────────────────────────────────────────────────────
-    if _hf_quota_exhausted or USE_HF_PRIMARY:
-        _wait_for_local_ready()
-        if _hf_quota_exhausted:
-            logger.info(
-                "🔄 LOCAL FALLBACK (outfit) | HF quota exhausted since %s",
-                _hf_quota_since.strftime("%Y-%m-%d %H:%M:%S") if _hf_quota_since else "unknown",
-            )
-
-    result = _run_outfit_local(
-        person_path=person_path,
-        top_path=top_path,
-        bottom_path=bottom_path,
-        num_steps=denoise_steps,
-        seed=seed,
-    )
-    return result, "local"
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# GARMENT UTILITIES
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _remove_background(image_path: str) -> Image.Image:
-    try:
-        from rembg import remove
-        with open(image_path, "rb") as f:
-            img_bytes = f.read()
-        return Image.open(io.BytesIO(remove(img_bytes))).convert("RGBA")
-    except ImportError:
-        logger.warning("rembg not installed — skipping background removal")
-        return Image.open(image_path).convert("RGBA")
-    except Exception as e:
-        logger.warning("Background removal failed (%s) — using original", e)
-        return Image.open(image_path).convert("RGBA")
-
-
-def _normalize_garment(image_path: str) -> str:
-    """Remove background + letterbox to GARMENT_W×GARMENT_H on white canvas."""
-    rgba = _remove_background(image_path)
-    canvas = Image.new("RGB", (GARMENT_W, GARMENT_H), (255, 255, 255))
-    rgba.thumbnail((GARMENT_W, GARMENT_H), Image.LANCZOS)
-    ox = (GARMENT_W - rgba.width)  // 2
-    oy = (GARMENT_H - rgba.height) // 2
-    canvas.paste(rgba, (ox, oy), rgba.split()[3])
-    out = tempfile.NamedTemporaryFile(delete=False, suffix="_normalized.png")
-    canvas.save(out.name, "PNG")
-    out.close()
-    logger.info("Garment normalized → %dx%d at %s", GARMENT_W, GARMENT_H, out.name)
-    return out.name
-
-
-def _save_upload(upload: UploadFile, suffix: str = ".jpg") -> str:
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    shutil.copyfileobj(upload.file, tmp)
-    tmp.close()
-    return tmp.name
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# MOCK  (dev only — MOCK_INFERENCE=true)
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _generate_mock(person_path: str, *garment_paths: str) -> str:
-    """
-    Offline mock for development only.
-    NEVER called automatically as fallback — only when MOCK_INFERENCE=true.
-    """
-    person = Image.open(person_path).convert("RGB")
-    draw   = ImageDraw.Draw(person)
-    for i, gp in enumerate(garment_paths):
-        garment = Image.open(gp).convert("RGB")
-        thumb   = garment.resize((person.width // 4, person.height // 4))
-        person.paste(thumb, (person.width - thumb.width - 10, 10 + i * (thumb.height + 5)))
-    draw.text((10, person.height - 30), "MOCK TRY-ON v5", fill=(255, 80, 80))
-    out = str(RESULTS_DIR / f"mock_{int(time.time())}.png")
-    person.save(out)
-    logger.warning("⚠️  Mock result generated (MOCK_INFERENCE=true)")
+        draw.rectangle([int(w * 0.12), int(h * 0.18), int(w * 0.88), int(h * 0.97)], fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(radius=8))
+    return mask.point(lambda x: 255 if x > 64 else 0)
+
+
+def _parts_to_mask(parse, names) -> "np.ndarray":
+    import numpy as np
+    m = np.zeros(parse.shape, dtype=np.uint8)
+    for n in names:
+        m |= (parse == ATR[n]).astype(np.uint8)
+    return m
+
+
+def _hull_mask(mask_area):
+    """Convex hull per blob to fill gaps inside the garment region.
+    Inlined from CatVTON's cloth_masker so our mask path needs no detectron2/SCHP."""
+    import numpy as np, cv2
+    _, binary = cv2.threshold(mask_area, 127, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    out = np.zeros_like(mask_area)
+    for c in contours:
+        hull = cv2.convexHull(c)
+        out = cv2.fillPoly(np.zeros_like(mask_area), [hull], 255) | out
     return out
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# STARTUP
-# ══════════════════════════════════════════════════════════════════════════════
+def _agnostic_mask(parse, category: str) -> Image.Image:
+    """Body-following inpaint mask from a parse map: garment region (convex-hulled,
+    dilated) minus the protected regions (face/hair/limbs/other-garment)."""
+    import numpy as np, cv2
 
-async def _do_startup():
-    """Called by the lifespan context manager at application startup."""
-    global _local_loading
+    cat = category if category in MASK_PARTS else "upper_body"
+    h, w = parse.shape
+    k = max(w, h) // 100
+    k = k + 1 if k % 2 == 0 else k
+    kernel = np.ones((k, k), np.uint8)
 
-    if MOCK_MODE:
-        logger.info("🟡 MOCK_INFERENCE=true — all model loading skipped")
-        return
+    garment = _parts_to_mask(parse, MASK_PARTS[cat])
+    if garment.sum() < (w * h) * 0.005:           # parser found ~nothing → fall back
+        return _rect_mask(w, h, category)
 
-    if USE_HF_PRIMARY:
-        # Connect to HF Space (fast — just HTTP handshake)
+    mask = _hull_mask(garment * 255) // 255        # fill gaps inside the garment blob
+    mask = cv2.dilate(mask, kernel, iterations=2)  # grow a touch past the seam
+
+    protect = _parts_to_mask(parse, PROTECT_PARTS[cat])
+    protect = cv2.dilate(protect, kernel, iterations=1)
+    mask = mask & (~protect.astype(bool)).astype(np.uint8)
+
+    blur = max(w, h) // 80
+    blur = blur + 1 if blur % 2 == 0 else blur
+    mask = cv2.GaussianBlur(mask * 255, (blur, blur), 0)
+    mask[mask < 64] = 0
+    mask[mask >= 64] = 255
+    return Image.fromarray(mask.astype(np.uint8), mode="L")
+
+
+def _build_mask(person_proc: Image.Image, category: str) -> Image.Image:
+    """Parse + agnostic mask for a single garment; rectangle fallback on any failure."""
+    try:
+        parse = _human_parse(person_proc)
+        if parse is not None:
+            return _agnostic_mask(parse, category)
+    except Exception as e:
+        log.warning("Mask build failed (%s) — using rectangle", e)
+    return _rect_mask(person_proc.width, person_proc.height, category)
+
+
+def _catvton_infer(
+    person_img: Image.Image,
+    garment_img: Image.Image,
+    category: str,
+    num_steps: int = NUM_STEPS,
+    person_proc: Image.Image = None,
+    mask: Image.Image = None,
+):
+    """Run one CatVTON pass. Returns (result_img, person_proc, mask).
+    person_proc/mask may be passed in to reuse across an outfit's two passes."""
+    import torch
+    import sys
+    if CATVTON_SRC not in sys.path:
+        sys.path.insert(0, CATVTON_SRC)
+    from utils import resize_and_crop
+
+    pipe = _load_catvton()
+    if person_proc is None:
+        person_proc = resize_and_crop(person_img.convert("RGB"), (INFER_W, INFER_H))
+    if mask is None:
+        mask = _build_mask(person_proc, category)
+
+    result = pipe(
+        image=person_proc,
+        condition_image=garment_img.convert("RGB"),  # pipe pads to ratio internally
+        mask=mask,
+        num_inference_steps=num_steps,
+        guidance_scale=GUIDANCE,
+        height=INFER_H,
+        width=INFER_W,
+        generator=torch.Generator(device="cuda").manual_seed(42),
+    )
+    out = result[0] if isinstance(result, list) else result
+    return out, person_proc, mask
+
+
+def _local_tryon_sync(
+    person_bytes: bytes,
+    garment_bytes: bytes,
+    category: str = "upper_body",
+    description: str = "",
+) -> bytes:
+    person_img = Image.open(io.BytesIO(person_bytes)).convert("RGB")
+    garment_img = Image.open(io.BytesIO(garment_bytes)).convert("RGB")
+
+    log.info("CatVTON local | category=%s | steps=%d", category, NUM_STEPS)
+    t0 = time.time()
+    result_img, _, _ = _catvton_infer(person_img, garment_img, category)
+    log.info("CatVTON done in %.1fs", time.time() - t0)
+
+    buf = io.BytesIO()
+    result_img.save(buf, format="JPEG", quality=90)
+    return buf.getvalue()
+
+
+def _local_outfit_sync(
+    person_bytes: bytes,
+    top_bytes: bytes,
+    bottom_bytes: bytes,
+    top_desc: str = "",
+    bottom_desc: str = "",
+) -> bytes:
+    """Full outfit, the CORRECT way: parse the person ONCE, run two CatVTON passes
+    on the ORIGINAL person (upper + lower), then composite each garment region back
+    onto the crisp original. No chaining → no JPEG/denoise damage, no overlap."""
+    import sys
+    from PIL import ImageFilter
+    if CATVTON_SRC not in sys.path:
+        sys.path.insert(0, CATVTON_SRC)
+    from utils import resize_and_crop
+
+    person_img = Image.open(io.BytesIO(person_bytes)).convert("RGB")
+    top_img = Image.open(io.BytesIO(top_bytes)).convert("RGB")
+    bottom_img = Image.open(io.BytesIO(bottom_bytes)).convert("RGB")
+
+    person_proc = resize_and_crop(person_img, (INFER_W, INFER_H))
+    # Parse once, derive both non-overlapping masks (upper protects legs, lower protects arms)
+    t0 = time.time()
+    upper_mask = _build_mask(person_proc, "upper_body")
+    lower_mask = _build_mask(person_proc, "lower_body")
+    log.info("Outfit masks ready in %.1fs", time.time() - t0)
+
+    t1 = time.time()
+    res_up, _, _ = _catvton_infer(person_img, top_img, "upper_body",
+                                  person_proc=person_proc, mask=upper_mask)
+    log.info("CatVTON upper done in %.1fs", time.time() - t1)
+    t2 = time.time()
+    res_lo, _, _ = _catvton_infer(person_img, bottom_img, "lower_body",
+                                  person_proc=person_proc, mask=lower_mask)
+    log.info("CatVTON lower done in %.1fs", time.time() - t2)
+
+    # Composite: take only each garment region (feathered) onto the original person
+    final = person_proc.copy()
+    final = Image.composite(res_up, final, upper_mask.filter(ImageFilter.GaussianBlur(4)))
+    final = Image.composite(res_lo, final, lower_mask.filter(ImageFilter.GaussianBlur(4)))
+    log.info("Outfit composited | total %.1fs", time.time() - t0)
+
+    buf = io.BytesIO()
+    final.save(buf, format="JPEG", quality=90)
+    return buf.getvalue()
+
+
+async def _local_tryon_async(person_bytes, garment_bytes, category="upper_body", description=""):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _executor, _local_tryon_sync, person_bytes, garment_bytes, category, description
+    )
+
+
+async def _local_outfit_async(person_bytes, top_bytes, bottom_bytes, top_desc="", bottom_desc=""):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _executor, _local_outfit_sync, person_bytes, top_bytes, bottom_bytes, top_desc, bottom_desc
+    )
+
+
+def _composite_outfit_bytes(upper_bytes: bytes, lower_bytes: bytes) -> bytes:
+    """Merge two FINISHED single-garment images (e.g. from Replicate) into one outfit:
+    base = upper try-on (new top + original bottom); paste the new bottom region from
+    the lower try-on using its parse mask."""
+    import sys
+    from PIL import ImageFilter
+    if CATVTON_SRC not in sys.path:
+        sys.path.insert(0, CATVTON_SRC)
+    from utils import resize_and_crop
+    up = resize_and_crop(Image.open(io.BytesIO(upper_bytes)).convert("RGB"), (INFER_W, INFER_H))
+    lo = resize_and_crop(Image.open(io.BytesIO(lower_bytes)).convert("RGB"), (INFER_W, INFER_H))
+    final = up
+    try:
+        parse = _human_parse(lo)
+        if parse is not None:
+            lower_mask = _agnostic_mask(parse, "lower_body")
+            final = Image.composite(lo, up, lower_mask.filter(ImageFilter.GaussianBlur(4)))
+    except Exception as e:
+        log.warning("Cloud outfit composite failed (%s) — returning upper", e)
+    buf = io.BytesIO()
+    final.save(buf, format="JPEG", quality=90)
+    return buf.getvalue()
+
+
+# ── Replicate API ─────────────────────────────────────────────────────────────
+class QuotaExceededError(Exception):
+    pass
+
+
+async def _replicate_tryon(person_bytes, garment_bytes, category="upper_body", description=""):
+    if not REPLICATE_API_TOKEN:
+        raise ValueError("No API token")
+
+    person_uri = f"data:{_mime(person_bytes)};base64,{base64.b64encode(person_bytes).decode()}"
+    garment_uri = f"data:{_mime(garment_bytes)};base64,{base64.b64encode(garment_bytes).decode()}"
+
+    input_data = {
+        "human_img": person_uri,
+        "garm_img": garment_uri,
+        "garment_des": description or "clothing item",
+        "category": category if category in ("upper_body", "lower_body", "dresses") else "upper_body",
+        "is_checked": True,
+        "is_checked_crop": False,
+        "denoise_steps": 20,
+        "seed": 42,
+    }
+
+    log.info("Replicate IDM-VTON | category=%s", category)
+    t0 = time.time()
+    try:
+        output = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: replicate.run(REPLICATE_MODEL, input=input_data)
+        )
+        log.info("Replicate done in %.1fs", time.time() - t0)
+        if isinstance(output, list):
+            output = output[0]
+        result_url = getattr(output, "url", None) or str(output)
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.get(result_url)
+            resp.raise_for_status()
+            return resp.content
+    except ReplicateError as e:
+        msg = str(e)
+        if any(x in msg for x in ("quota", "limit", "402", "429", "credit", "Insufficient")):
+            log.warning("Replicate quota exhausted")
+            raise QuotaExceededError(msg)
+        raise
+
+
+def _mime(data: bytes) -> str:
+    if data[:4] == b"\x89PNG": return "image/png"
+    if data[:2] == b"\xff\xd8": return "image/jpeg"
+    return "image/jpeg"
+
+
+# ── Dispatcher ────────────────────────────────────────────────────────────────
+async def run_tryon(person_bytes, garment_bytes, category="upper_body", description=""):
+    global _use_local_fallback
+    if REPLICATE_API_TOKEN and not _use_local_fallback:
         try:
-            _get_hf_client()
-            logger.info("🌐 HF Space ready as PRIMARY backend")
+            return await _replicate_tryon(person_bytes, garment_bytes, category, description)
+        except QuotaExceededError:
+            _use_local_fallback = True
         except Exception as e:
-            logger.warning(
-                "⚠️  HF Space connection failed at startup (%s). "
-                "Will retry on first request. Local fallback will be used if HF unavailable.", e
-            )
-
-        # Load local models in background so they're ready when quota runs out.
-        # This avoids a 60-second cold-start on the FIRST fallback request.
-        if OOTD_ROOT.exists():
-            logger.info(
-                "📦 Starting background local model loading "
-                "(will be ready when HF quota runs out)…"
-            )
-            _local_loading = True
-
-            def _bg_load():
-                global _local_loading
-                try:
-                    _load_models()
-                except ModelNotLoadedError as e:
-                    logger.warning("⚠️  Local fallback will be unavailable: %s", e)
-                finally:
-                    _local_loading = False
-
-            bg = threading.Thread(target=_bg_load, daemon=True, name="local-model-loader")
-            bg.start()
-        else:
-            logger.warning(
-                "Local OOTDiffusion repo not found at %s. "
-                "Only HF Space will be available (no local fallback).", OOTD_ROOT
-            )
-    else:
-        # Local primary mode: eager load (fail fast)
-        logger.info("🖥️  USE_HF_PRIMARY=false — loading local models eagerly…")
-        try:
-            _load_models()
-        except ModelNotLoadedError as e:
-            logger.error("❌ STARTUP FAILED — local models not ready: %s", e)
-            logger.error(
-                "Fix: clone repo and download checkpoints, then restart.\n"
-                "  git clone https://github.com/levihsu/OOTDiffusion %s\n"
-                "  python download_models.py", OOTD_ROOT
-            )
+            log.error("Replicate error: %s - trying local", e)
+    return await _local_tryon_async(person_bytes, garment_bytes, category, description)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ENDPOINTS
-# ══════════════════════════════════════════════════════════════════════════════
+
+# ── FastAPI ───────────────────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    log.info("Try-On server starting on port 8081")
+    log.info("Replicate token: %s", "SET" if REPLICATE_API_TOKEN else "NOT SET - local only")
+    if not REPLICATE_API_TOKEN:
+        _executor.submit(_load_catvton)
+        _executor.submit(_load_parser)
+    yield
+    _executor.shutdown(wait=False)
+
+
+app = FastAPI(title="Virtual Try-On Server", version="3.0", lifespan=lifespan)
+
 
 @app.get("/health")
 async def health():
-    """Full system status: both backends, quota state, call counts."""
-    hf_client_ok = _hf_client is not None
-    local_ready  = _ootd_model is not None
-
     return {
-        "status":       "ok" if (hf_client_ok or local_ready or MOCK_MODE) else "degraded",
-        "version":      "5.0",
-        "active_backend": _active_backend(),
-
-        # ── HuggingFace backend ──
-        "huggingface": {
-            "space_id":        HF_SPACE_ID,
-            "enabled":         USE_HF_PRIMARY,
-            "client_ready":    hf_client_ok,
-            "quota_exhausted": _hf_quota_exhausted,
-            "quota_since":     _hf_quota_since.isoformat() if _hf_quota_since else None,
-            "connect_error":   str(_hf_connect_error) if _hf_connect_error else None,
-        },
-
-        # ── Local backend ──
-        "local": {
-            "ootd_root":   str(OOTD_ROOT),
-            "checkpoints": str(OOTD_CKPT),
-            "model_ready": local_ready,
-            "loading":     _local_loading,
-            "load_error":  str(_model_load_err) if _model_load_err else None,
-        },
-
-        # ── Call stats ──
-        "stats": _stats,
-
-        "mock_mode": MOCK_MODE,
+        "status": "online",
+        "mode": "local" if _use_local_fallback else ("api" if REPLICATE_API_TOKEN else "local_only"),
+        "model": "IDM-VTON (Replicate)" if (REPLICATE_API_TOKEN and not _use_local_fallback) else "CatVTON (local)",
     }
-
-
-@app.get("/quota/status")
-async def quota_status():
-    """Current quota state and backend selection."""
-    return {
-        "active_backend":       _active_backend(),
-        "hf_space_id":          HF_SPACE_ID,
-        "use_hf_primary":       USE_HF_PRIMARY,
-        "hf_quota_exhausted":   _hf_quota_exhausted,
-        "hf_quota_since":       _hf_quota_since.isoformat() if _hf_quota_since else None,
-        "local_model_ready":    _ootd_model is not None,
-        "local_model_loading":  _local_loading,
-        "stats":                _stats,
-        "hint": (
-            "POST /quota/reset to retry HuggingFace (use when your monthly quota resets)"
-            if _hf_quota_exhausted else
-            "HuggingFace quota is OK"
-        ),
-    }
-
-
-@app.post("/quota/reset")
-async def quota_reset():
-    """
-    Reset the quota-exhausted flag so the next request retries HuggingFace.
-    Use this when your HF Space quota has reset (typically monthly).
-    """
-    global _hf_quota_exhausted, _hf_quota_since, _hf_client, _hf_connect_error
-
-    if not USE_HF_PRIMARY:
-        return JSONResponse(
-            status_code=400,
-            content={"error": "USE_HF_PRIMARY=false — HF Space is disabled, nothing to reset"}
-        )
-
-    old_state = _hf_quota_exhausted
-    with _quota_lock:
-        _hf_quota_exhausted = False
-        _hf_quota_since     = None
-        # Also reset cached client so a fresh connection is made
-        _hf_client          = None
-        _hf_connect_error   = None
-
-    logger.info(
-        "🔄 Quota flag reset by /quota/reset (was: %s → now: False). "
-        "Next request will try HuggingFace again.", old_state
-    )
-
-    return {
-        "reset": True,
-        "previous_quota_exhausted": old_state,
-        "active_backend": _active_backend(),
-        "message": "HuggingFace will be tried on the next request",
-    }
-
-
-@app.post("/preprocess/garment")
-async def preprocess_garment(garment_image: UploadFile = File(...)):
-    """Remove background + normalize garment to GARMENT_W×GARMENT_H white canvas."""
-    raw_path = _save_upload(garment_image, ".png")
-    try:
-        normalized = _normalize_garment(raw_path)
-        return FileResponse(normalized, media_type="image/png", filename="garment_processed.png")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Garment preprocessing failed: {e}")
-    finally:
-        try:
-            os.unlink(raw_path)
-        except OSError:
-            pass
 
 
 @app.post("/tryon")
-async def tryon(
-    person_image:        UploadFile = File(...),
-    garment_image:       UploadFile = File(...),
-    garment_description: str        = Form("a garment"),
-    category:            str        = Form("upper_body"),
-    denoise_steps:       int        = Form(20),
-    seed:                int        = Form(-1),
+async def tryon_single(
+    person_image: UploadFile = File(...),
+    garment_image: UploadFile = File(...),
+    category: str = Form("upper_body"),
+    garment_description: str = Form(""),
 ):
-    """
-    Single-garment try-on.
-    Tries HuggingFace Space first; falls back to local on quota exhaustion.
-    category: 'upper_body' | 'lower_body' | 'dresses'
-    """
-    person_path  = _save_upload(person_image)
-    garment_path = _save_upload(garment_image)
-    result_path  = None
-
+    person_bytes = await person_image.read()
+    garment_bytes = await garment_image.read()
+    if not person_bytes or not garment_bytes:
+        raise HTTPException(400, "Empty image")
+    log.info("/tryon | category=%s | person=%dKB | garment=%dKB",
+             category, len(person_bytes) // 1024, len(garment_bytes) // 1024)
     try:
-        result_path, backend = _route_ootd(
-            person_path=person_path,
-            garment_path=garment_path,
-            garment_description=garment_description,
-            category=category,
-            denoise_steps=denoise_steps,
-            seed=seed,
-        )
-        logger.info("✅ /tryon complete | backend=%s | result=%s", backend, result_path)
-
-        from starlette.background import BackgroundTask
-
-        def _cleanup():
-            for p in [person_path, garment_path, result_path]:
-                try:
-                    if p and os.path.exists(p):
-                        os.unlink(p)
-                except OSError:
-                    pass
-
-        response = FileResponse(
-            result_path,
-            media_type="image/png",
-            filename="tryon_result.png",
-            background=BackgroundTask(_cleanup),
-        )
-        response.headers["X-Backend"] = backend
-        return response
-
-    except ModelNotLoadedError as e:
-        logger.error("Local model not loaded: %s", e)
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error":   "Local OOTDiffusion model is not loaded",
-                "reason":  str(e),
-                "fix":     f"Clone repo to {OOTD_ROOT} and run download_models.py, then restart.",
-                "backend": "local",
-            },
-        )
-    except InferenceError as e:
-        logger.error("Inference failed: %s", e)
-        raise HTTPException(
-            status_code=500,
-            detail={"error": "Inference failed", "reason": str(e)},
-        )
+        result = await run_tryon(person_bytes, garment_bytes, category, garment_description)
     except Exception as e:
-        logger.exception("Unexpected error in /tryon")
-        raise HTTPException(status_code=500, detail={"error": "Unexpected error", "reason": str(e)})
-    finally:
-        if result_path is None:
-            for p in [person_path, garment_path]:
-                try:
-                    os.unlink(p)
-                except OSError:
-                    pass
+        log.error("Tryon error:\n%s", traceback.format_exc())
+        raise HTTPException(503, str(e))
+    return Response(content=result, media_type="image/jpeg")
 
 
 @app.post("/tryon/outfit")
 async def tryon_outfit(
-    person_image:         UploadFile = File(...),
-    top_garment_image:    UploadFile = File(...),
+    person_image: UploadFile = File(...),
+    top_garment_image: UploadFile = File(...),
     bottom_garment_image: UploadFile = File(...),
-    top_description:      str        = Form("a top garment"),
-    bottom_description:   str        = Form("a bottom garment"),
-    denoise_steps:        int        = Form(20),
-    seed:                 int        = Form(-1),
+    top_description: str = Form(""),
+    bottom_description: str = Form(""),
 ):
-    """
-    Full outfit try-on (upper + lower).
-    Tries HuggingFace Space first; falls back to local on quota exhaustion.
+    person_bytes = await person_image.read()
+    top_bytes = await top_garment_image.read()
+    bottom_bytes = await bottom_garment_image.read()
+    if not person_bytes or not top_bytes or not bottom_bytes:
+        raise HTTPException(400, "Empty image")
+    log.info("/tryon/outfit | person=%dKB | top=%dKB | bottom=%dKB",
+             len(person_bytes) // 1024, len(top_bytes) // 1024, len(bottom_bytes) // 1024)
 
-    Pipeline:
-      1. Normalize both garments (rembg + letterbox)
-      2. HF Space OR local: person + top → result_upper
-      3. HF Space OR local: result_upper + bottom → final outfit
-    """
-    person_path     = _save_upload(person_image)
-    top_raw_path    = _save_upload(top_garment_image)
-    bottom_raw_path = _save_upload(bottom_garment_image)
-    top_path        = None
-    bottom_path     = None
-    result_path     = None
-
+    global _use_local_fallback
     try:
-        logger.info("Normalizing garments…")
-        top_path    = _normalize_garment(top_raw_path)
-        bottom_path = _normalize_garment(bottom_raw_path)
-
-        result_path, backend = _route_outfit(
-            person_path=person_path,
-            top_path=top_path,
-            bottom_path=bottom_path,
-            denoise_steps=denoise_steps,
-            seed=seed,
-        )
-        logger.info("✅ /tryon/outfit complete | backend=%s | result=%s", backend, result_path)
-
-        from starlette.background import BackgroundTask
-
-        cleanup_inputs = [p for p in [
-            person_path, top_raw_path, bottom_raw_path, top_path, bottom_path
-        ] if p]
-
-        def _cleanup():
-            for p in cleanup_inputs:
-                try:
-                    if os.path.exists(p):
-                        os.unlink(p)
-                except OSError:
-                    pass
+        if REPLICATE_API_TOKEN and not _use_local_fallback:
             try:
-                if result_path and os.path.exists(result_path):
-                    os.unlink(result_path)
-            except OSError:
-                pass
-
-        response = FileResponse(
-            result_path,
-            media_type="image/png",
-            filename="outfit_result.png",
-            background=BackgroundTask(_cleanup),
-        )
-        response.headers["X-Backend"] = backend
-        return response
-
-    except ModelNotLoadedError as e:
-        logger.error("Local model not loaded: %s", e)
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error":   "Local OOTDiffusion model is not loaded",
-                "reason":  str(e),
-                "fix":     f"Clone repo to {OOTD_ROOT} and run download_models.py, then restart.",
-                "backend": "local",
-            },
-        )
-    except InferenceError as e:
-        logger.error("Inference failed: %s", e)
-        raise HTTPException(
-            status_code=500,
-            detail={"error": "Inference failed", "reason": str(e)},
-        )
+                upper_result, lower_result = await asyncio.gather(
+                    _replicate_tryon(person_bytes, top_bytes, "upper_body", top_description),
+                    _replicate_tryon(person_bytes, bottom_bytes, "lower_body", bottom_description),
+                )
+                outfit_result = await asyncio.get_event_loop().run_in_executor(
+                    _executor, _composite_outfit_bytes, upper_result, lower_result
+                )
+            except QuotaExceededError:
+                _use_local_fallback = True
+                outfit_result = await _local_outfit_async(
+                    person_bytes, top_bytes, bottom_bytes, top_description, bottom_description)
+            except Exception as e:
+                log.error("Replicate outfit error: %s - trying local", e)
+                outfit_result = await _local_outfit_async(
+                    person_bytes, top_bytes, bottom_bytes, top_description, bottom_description)
+        else:
+            # Local: two passes on the ORIGINAL person + composite (no chaining)
+            log.info("Local outfit: upper + lower from original → composite")
+            outfit_result = await _local_outfit_async(
+                person_bytes, top_bytes, bottom_bytes, top_description, bottom_description)
     except Exception as e:
-        logger.exception("Unexpected error in /tryon/outfit")
-        raise HTTPException(status_code=500, detail={"error": "Unexpected error", "reason": str(e)})
-    finally:
-        if result_path is None:
-            for p in [person_path, top_raw_path, bottom_raw_path, top_path, bottom_path]:
-                if p:
-                    try:
-                        os.unlink(p)
-                    except OSError:
-                        pass
+        log.error("Outfit error:\n%s", traceback.format_exc())
+        raise HTTPException(503, str(e))
+
+    log.info("Outfit done | %dKB", len(outfit_result) // 1024)
+    return Response(content=outfit_result, media_type="image/jpeg")
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+@app.post("/preprocess/garment")
+async def preprocess_garment(garment_image: UploadFile = File(...)):
+    data = await garment_image.read()
+    if not data:
+        raise HTTPException(400, "Empty image")
+    try:
+        from rembg import remove
+        result = remove(data)
+        return Response(content=result, media_type="image/png")
+    except Exception as e:
+        log.error("rembg failed: %s", e)
+        return Response(content=data, media_type="image/png")
+
+
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", "8081"))
-    mode = "MOCK" if MOCK_MODE else (
-        f"HF_PRIMARY={'quota_exhausted' if _hf_quota_exhausted else HF_SPACE_ID}"
-        if USE_HF_PRIMARY else "LOCAL_ONLY"
-    )
-    logger.info(
-        "Starting Virtual Try-On Bridge v5 | port=%d | mode=%s | ootd_root=%s",
-        port, mode, OOTD_ROOT
-    )
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8081, log_level="info")

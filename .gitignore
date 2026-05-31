@@ -1,65 +1,111 @@
-HELP.md
+# ================================================================
+# NOVA Clothing Store — .gitignore
+# Team goal: git pull → run → everything works
+# ================================================================
+
+# ────────────────────────────────────────────────────────────────
+# SPRING BOOT / MAVEN
+# ────────────────────────────────────────────────────────────────
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-*.log
 *.class
 *.jar
 *.war
-*.iml
+!.mvn/wrapper/maven-wrapper.jar
+
+# ────────────────────────────────────────────────────────────────
+# IDE (personal config — do not commit)
+# ────────────────────────────────────────────────────────────────
 .idea/
+*.iml
+*.iws
+*.ipr
 .vscode/
-node_modules/
-.DS_Store
-### STS ###
-.apt_generated
+.settings/
 .classpath
-.factorypath
 .project
-.settings
+.factorypath
 .springBeans
 .sts4-cache
+.apt_generated
+nbproject/
+nbbuild/
+nbdist/
+.nb-gradle/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-### Environment ###
+# ────────────────────────────────────────────────────────────────
+# SECRETS — NEVER commit
+# ────────────────────────────────────────────────────────────────
 .env
+.env.*
 application-local.properties
+application-secret.properties
+*.pem
+*.key
+*.p12
+*.jks
+mobile-app/android/key.properties
 
-### Logs ###
+# ────────────────────────────────────────────────────────────────
+# LOGS & OS
+# ────────────────────────────────────────────────────────────────
+*.log
 logs/
+.DS_Store
+Thumbs.db
 
-### Claude Code & Claude Kit (local AI assistant config) ###
+# ────────────────────────────────────────────────────────────────
+# NODE (Tailwind build tooling)
+# ────────────────────────────────────────────────────────────────
+node_modules/
+
+# ────────────────────────────────────────────────────────────────
+# UPLOADS
+# Include: products/ (demo product images — team needs these)
+# Exclude: tryon-* (temp AI try-on files, large & regeneratable)
+# ────────────────────────────────────────────────────────────────
+uploads/tryon-persons/
+uploads/tryon-garments/
+
+# ────────────────────────────────────────────────────────────────
+# CLAUDE CODE — local AI assistant state
+# ────────────────────────────────────────────────────────────────
 .claude/
-.claudee/
 
-### Flutter / Dart ###
-mobile-app/.dart_tool/
+# ────────────────────────────────────────────────────────────────
+# FLUTTER
+# Committed:   pubspec.yaml, pubspec.lock, lib/, assets/fonts/, android/*, ios/*
+# Not committed: build output, local machine cache files
+# ────────────────────────────────────────────────────────────────
+
+# Build output
 mobile-app/build/
+
+# Dart tool cache (auto-recreated by flutter pub get)
+mobile-app/.dart_tool/
+mobile-app/.packages
 mobile-app/.flutter-plugins
 mobile-app/.flutter-plugins-dependencies
-mobile-app/.packages
-mobile-app/.pub-cache/
+
+# Android local machine files (auto-created by Android Studio/SDK)
+mobile-app/android/.gradle/
 mobile-app/android/local.properties
 
-### Android Gradle ###
-mobile-app/android/.gradle/
+# iOS build artifacts
+mobile-app/ios/Pods/
+mobile-app/ios/.symlinks/
+mobile-app/ios/Flutter/.last_build_id
+
+# ────────────────────────────────────────────────────────────────
+# GRADLE local cache
+# ────────────────────────────────────────────────────────────────
 .gradle/
+
+# ────────────────────────────────────────────────────────────────
+# PYTHON TRY-ON SERVER
+# ────────────────────────────────────────────────────────────────
+python-tryon-server/__pycache__/
+python-tryon-server/*.pyc
+python-tryon-server/venv/
+python-tryon-server/.venv/
+# OOTDiffusion model weights (~10GB) — see README to clone separately
+python-tryon-server/OOTDiffusion/

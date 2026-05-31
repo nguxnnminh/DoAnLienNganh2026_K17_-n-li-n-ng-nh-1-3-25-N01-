@@ -87,7 +87,7 @@ public class ApiExceptionHandler {
             HttpServletRequest request) {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ApiErrorResponse(401, "UNAUTHORIZED", "Email hoặc mật khẩu không đúng", request.getRequestURI())
+                new ApiErrorResponse(401, "UNAUTHORIZED", "Invalid email or password", request.getRequestURI())
         );
     }
 
@@ -171,7 +171,7 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 new ApiErrorResponse(500, "INTERNAL_ERROR",
-                        "Đã xảy ra lỗi hệ thống", request.getRequestURI())
+                        "An internal server error occurred", request.getRequestURI())
         );
     }
 }

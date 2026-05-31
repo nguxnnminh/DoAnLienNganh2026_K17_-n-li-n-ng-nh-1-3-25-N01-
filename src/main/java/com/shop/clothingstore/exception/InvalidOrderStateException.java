@@ -6,7 +6,7 @@ import java.util.Set;
 public class InvalidOrderStateException extends AppException {
     public InvalidOrderStateException(OrderStatus from, OrderStatus to, Set<OrderStatus> allowed) {
         super(String.format(
-            "Không thể chuyển trạng thái đơn hàng từ %s sang %s. Trạng thái hợp lệ: %s",
+            "Cannot transition order from %s to %s. Valid transitions: %s",
             from, to, allowed));
     }
 }

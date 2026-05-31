@@ -8,10 +8,10 @@ import lombok.Data;
 @Data
 public class CartRequest {
 
-    @NotNull(message = "variantId không được null")
+    @NotNull(message = "variantId is required")
     private Long variantId;
 
-    @Min(value = 1, message = "Số lượng tối thiểu là 1")
-    @Max(value = 99, message = "Số lượng tối đa là 99")
+    @Min(value = 1, message = "Quantity must be at least 1")
+    @Max(value = 99, message = "Quantity cannot exceed 99")
     private int quantity = 1;
 }

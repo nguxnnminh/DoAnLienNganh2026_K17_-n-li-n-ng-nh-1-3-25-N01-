@@ -3,10 +3,13 @@ package com.shop.clothingstore.controller.api;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,6 +78,43 @@ public class CouponApiController {
                 savedAmount
         ));
     }
+
+    // =====================================================
+    // GET /api/coupons/my  (requires auth)
+    // Returns all coupons for the logged-in user
+    // =====================================================
+    @GetMapping("/my")
+    public ResponseEntity<List<MyCouponResponse>> myCoupons(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+        User user = userService.findByEmail(principal.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
+
+        List<MyCouponResponse> result = couponService.getAllCouponsForUser(user).stream()
+                .map(dto -> new MyCouponResponse(
+                        dto.getCode(),
+                        dto.getDescription(),
+                        dto.getDiscountValue(),
+                        dto.getMinOrderAmount(),
+                        dto.getExpiryDate(),
+                        dto.isUsed(),
+                        dto.isExpired(),
+                        dto.isUsable()
+                ))
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    public record MyCouponResponse(
+            String code,
+            String description,
+            BigDecimal discountValue,
+            BigDecimal minOrderAmount,
+            LocalDateTime expiryDate,
+            boolean used,
+            boolean expired,
+            boolean usable) {}
 
     @Data
     public static class ValidateRequest {

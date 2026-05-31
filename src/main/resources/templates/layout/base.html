@@ -1173,16 +1173,16 @@
                         background:#212121; border:1px solid #2a2a2a;
                         padding:10px 13px; font-size:0.76rem; line-height:1.65;
                         color:#c0c0bc; border-radius:0 10px 10px 10px;
-                    ">Xin chào! Mình là trợ lý NOVA 👋 Bạn cần tìm gì hôm nay?</div>
+                    ">Hi! I'm NOVA assistant 👋 What are you looking for today?</div>
                 </div>
 
                 <!-- Quick-reply chips -->
                 <div id="chat-quick-replies" style="display:flex; flex-wrap:wrap; gap:6px; padding-left:30px;">
-                    <button type="button" onclick="quickAsk('Sản phẩm bán chạy')" class="chat-chip">🔥 Bán chạy</button>
-                    <button type="button" onclick="quickAsk('Tư vấn size cho tôi')" class="chat-chip">📏 Tư vấn size</button>
-                    <button type="button" onclick="quickAsk('Chính sách đổi trả')" class="chat-chip">🔄 Đổi trả</button>
-                    <button type="button" onclick="quickAsk('Phí vận chuyển bao nhiêu')" class="chat-chip">📦 Vận chuyển</button>
-                    <button type="button" onclick="quickAsk('Tìm áo hoodie dưới 500k')" class="chat-chip">🧥 Hoodie dưới 500k</button>
+                    <button type="button" onclick="quickAsk('Best sellers')" class="chat-chip">🔥 Best sellers</button>
+                    <button type="button" onclick="quickAsk('Help me find my size')" class="chat-chip">📏 Size guide</button>
+                    <button type="button" onclick="quickAsk('Return policy')" class="chat-chip">🔄 Returns</button>
+                    <button type="button" onclick="quickAsk('Shipping cost')" class="chat-chip">📦 Shipping</button>
+                    <button type="button" onclick="quickAsk('Find hoodies under $30')" class="chat-chip">🧥 Hoodies</button>
                 </div>
             </div>
 
@@ -1468,7 +1468,7 @@
                     }
                 };
 
-                typeWriter(textEl, data.message || 'Xin lỗi, mình chưa hiểu ý bạn.', renderProducts);
+                typeWriter(textEl, data.message || "Sorry, I didn't quite understand that.", renderProducts);
             } catch (err) {
                 document.getElementById(typingId)?.remove();
                 msgs.innerHTML += `
@@ -1516,7 +1516,7 @@
                     + 'padding:12px 16px;max-width:320px;box-shadow:0 12px 32px rgba(0,0,0,.55);'
                     + 'opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;';
                 el.innerHTML = '<p style="font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#e8e8e4;margin-bottom:4px;">'
-                    + (title || 'Thông báo') + '</p>'
+                    + (title || 'Notification') + '</p>'
                     + '<p style="font-size:.72rem;color:#9a9a96;line-height:1.5;">' + (message || '') + '</p>';
                 wrap.appendChild(el);
                 requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });

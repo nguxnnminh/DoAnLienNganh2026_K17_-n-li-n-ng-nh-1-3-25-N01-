@@ -129,12 +129,12 @@
 
         <!-- REFERRAL -->
         <div class="border border-zinc-900 p-6 md:p-10" th:if="${user.referralCode != null}">
-          <p class="text-[0.58rem] tracking-widest3 uppercase text-zinc-600 mb-3">Giới thiệu bạn bè</p>
+          <p class="text-[0.58rem] tracking-widest3 uppercase text-zinc-600 mb-3">Refer a Friend</p>
           <p class="text-xs text-zinc-500 leading-relaxed mb-6">
-            Chia sẻ mã của bạn. Khi bạn bè mua đơn đầu tiên, <span class="text-[#e8e8e4]">cả hai</span> nhận voucher giảm 50.000₫.
+            Share your code. When a friend makes their first purchase, <span class="text-[#e8e8e4]">both of you</span> get a discount voucher.
           </p>
 
-          <label class="pf-label">Mã giới thiệu của bạn</label>
+          <label class="pf-label">Your Referral Code</label>
           <div class="flex gap-2 mb-5 mt-2">
             <input id="refCode" class="pf-input" type="text" th:value="${user.referralCode}" readonly
                    style="flex:1; letter-spacing:.2em; font-weight:600;" />
@@ -142,7 +142,7 @@
               class="px-4 bg-zinc-800 text-[#e8e8e4] border-none text-[0.58rem] tracking-widest uppercase cursor-pointer hover:bg-zinc-700">Copy</button>
           </div>
 
-          <label class="pf-label">Link giới thiệu</label>
+          <label class="pf-label">Referral Link</label>
           <div class="flex gap-2 mt-2">
             <input id="refLink" class="pf-input" type="text" th:value="${user.referralCode}" readonly style="flex:1; font-size:.62rem;" />
             <button type="button" onclick="copyRef('refLink', this)"

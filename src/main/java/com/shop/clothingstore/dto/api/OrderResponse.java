@@ -29,7 +29,7 @@ public class OrderResponse {
 
     private List<OrderItemInfo> items;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     @Data

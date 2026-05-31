@@ -51,22 +51,22 @@ public class CartService {
     // =====================================================
     public void addToCart(Long variantId, int quantity) {
         if (variantId == null || quantity < 1) {
-            throw new IllegalStateException("Du lieu khong hop le");
+            throw new IllegalStateException("Invalid request data");
         }
 
         ProductVariant variant = variantRepository
                 .findById(variantId)
-                .orElseThrow(() -> new IllegalStateException("San pham khong ton tai"));
+                .orElseThrow(() -> new IllegalStateException("Product not found"));
 
         if (!variant.getProduct().isActive()) {
             throw new IllegalStateException(
-                    "San pham " + variant.getProduct().getName() + " hien khong con ban");
+                    "Product " + variant.getProduct().getName() + " is no longer available");
         }
 
         int stock = variant.getStock();
         if (stock <= 0) {
             throw new IllegalStateException(
-                    "San pham " + variant.getProduct().getName() + " da het hang");
+                    "Product " + variant.getProduct().getName() + " is out of stock");
         }
 
         HttpSession session = getSession();
@@ -89,6 +89,8 @@ public class CartService {
         int finalQty = Math.min(quantity, stock);
         CartItemDTO newItem = new CartItemDTO();
         newItem.setVariantId(variantId);
+        newItem.setProductId(variant.getProduct().getId());
+        newItem.setProductSlug(variant.getProduct().getSlug());
         newItem.setProductName(variant.getProduct().getName());
         newItem.setImageUrl(
                 variant.getProduct().getImages().isEmpty()
@@ -99,7 +101,6 @@ public class CartService {
                         .orElse(""));
         newItem.setSize(variant.getSize());
         newItem.setColor(variant.getColor());
-        // getPrice() now returns BigDecimal directly — no conversion needed
         newItem.setPrice(variant.getPrice());
         newItem.setQuantity(finalQty);
 
@@ -112,16 +113,16 @@ public class CartService {
     // =====================================================
     public void updateQuantity(Long variantId, int quantity) {
         if (variantId == null || quantity < 1) {
-            throw new IllegalStateException("Du lieu khong hop le");
+            throw new IllegalStateException("Invalid request data");
         }
 
         ProductVariant variant = variantRepository
                 .findById(variantId)
-                .orElseThrow(() -> new IllegalStateException("San pham khong ton tai"));
+                .orElseThrow(() -> new IllegalStateException("Product not found"));
 
         if (!variant.getProduct().isActive()) {
             throw new IllegalStateException(
-                    "San pham " + variant.getProduct().getName() + " hien khong con ban");
+                    "Product " + variant.getProduct().getName() + " is no longer available");
         }
 
         int clampedQty = Math.min(quantity, variant.getStock());

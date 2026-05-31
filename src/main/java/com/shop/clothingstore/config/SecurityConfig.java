@@ -55,11 +55,16 @@ public class SecurityConfig {
                 .securityMatcher("/api/**")
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
+                // IF_REQUIRED allows session for cart (session-based), while JWT auth
+                // remains stateless — JWT filter handles auth independently of session
                 .sessionManagement(session
-                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                        "/api/auth/**",
+                        "/api/auth/login",
+                        "/api/auth/register",
+                        "/api/auth/forgot-password",
+                        "/api/auth/reset-password",
                         "/api/products/**",
                         "/api/categories/**",
                         "/api/subcategories/**",
@@ -70,6 +75,8 @@ public class SecurityConfig {
                         "/api/tryon/**"
                 ).permitAll()
                 .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/api/profile/**").authenticated()
+                .requestMatchers("/api/coupons/my").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/orders/checkout").permitAll()
                 .requestMatchers("/api/analytics/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -109,7 +116,7 @@ public class SecurityConfig {
                         "/tryon-studio",
                         "/contact", "/returns", "/sizing",
                         "/forgot-password", "/reset-password",
-                        "/css/**", "/js/**", "/images/**"
+                        "/css/**", "/js/**", "/images/**", "/uploads/**"
                 ).permitAll()
                 .requestMatchers("/my-orders", "/my-coupons", "/profile", "/orders/**", "/reviews/**", "/wishlist/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")

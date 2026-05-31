@@ -8,6 +8,8 @@ public class CartItemDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long variantId;
+    private Long productId;
+    private String productSlug;
     private String productName;
     private String imageUrl;
     private String size;
@@ -21,6 +23,22 @@ public class CartItemDTO implements Serializable {
 
     public void setVariantId(Long variantId) {
         this.variantId = variantId;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public String getProductSlug() {
+        return productSlug;
+    }
+
+    public void setProductSlug(String productSlug) {
+        this.productSlug = productSlug;
     }
 
     public String getProductName() {

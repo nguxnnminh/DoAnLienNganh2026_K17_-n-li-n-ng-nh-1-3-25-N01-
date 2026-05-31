@@ -33,7 +33,7 @@ public class Coupon extends BaseEntity {
 
     // BigDecimal for all monetary/percentage values — never Double for finance
     @NotNull
-    @DecimalMin(value = "0.01", message = "Giá trị giảm giá phải lớn hơn 0")
+    @DecimalMin(value = "0.01", message = "Discount value must be greater than 0")
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal discountValue;
 

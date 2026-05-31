@@ -18,7 +18,7 @@ public class CorsConfig {
      * Set CORS_ORIGINS env var in production (e.g. "https://yourapp.com").
      * Falls back to localhost dev origins when env var is not set.
      */
-    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:19006,http://localhost:8081}")
+    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:19006,http://localhost:8081,http://10.0.2.2:8080}")
     private String allowedOriginsRaw;
 
     @Bean

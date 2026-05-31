@@ -8,20 +8,19 @@ import lombok.Data;
 @Data
 public class CheckoutRequest {
 
-    @NotBlank(message = "Tên khách hàng không được trống")
+    @NotBlank(message = "Customer name is required")
     private String customerName;
 
-    @NotBlank(message = "Số điện thoại không được trống")
-    @Pattern(regexp = "^(0|\\+84)(\\d{9}|\\d{10})$", message = "Số điện thoại không hợp lệ")
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^(0|\\+84)(\\d{9}|\\d{10})$", message = "Invalid phone number format")
     private String phone;
 
-    @NotBlank(message = "Địa chỉ không được trống")
-    @Size(max = 500, message = "Địa chỉ quá dài")
+    @NotBlank(message = "Delivery address is required")
+    @Size(max = 500, message = "Address is too long")
     private String address;
 
-    // Optional — null nếu không dùng coupon
     private String couponCode;
 
-    @Size(max = 500, message = "Ghi chú quá dài")
+    @Size(max = 500, message = "Note is too long")
     private String note;
 }

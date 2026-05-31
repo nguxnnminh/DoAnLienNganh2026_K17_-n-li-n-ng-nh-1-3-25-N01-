@@ -28,7 +28,12 @@ public class WebConfig implements WebMvcConfigurer {
         // Check filesystem upload dir first (user-uploaded files),
         // then fall back to classpath static images (design assets like banners/category images).
         registry.addResourceHandler("/images/**")
-                .addResourceLocations(fileRoot, "classpath:/static/images/")
+                .addResourceLocations(fileRoot + "images/", fileRoot, "classpath:/static/images/")
                 .setCachePeriod(0); // no caching for dev
+
+        // Also serve /uploads/** directly from filesystem upload dir
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations(fileRoot)
+                .setCachePeriod(0);
     }
 }
